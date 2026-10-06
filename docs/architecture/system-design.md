@@ -2,15 +2,15 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.1（基于 V1.0《系统架构设计说明书》修订） |
-| 状态 | 草案（Draft），待评审 |
+| 文档版本 | V1.2（在 V1.1 基础上修订；V1.1 基于 V1.0《系统架构设计说明书》修订） |
+| 状态 | 草案（Draft）：产品形态、目标市场、自研已确认，其余待评审 |
 | 更新日期 | 2026-10-06 |
 | 项目代号 | B2B Web Platform |
 | 定位 | 模块化、可扩展、SEO 原生、设计系统驱动的企业网站与询盘获客平台 |
 
 > 阅读提示：
 > - 标注 **【V1】** 的内容属于第一版交付范围；标注 **【V2+】** 的为预留设计，V1 只保证数据结构和接口不阻碍其实现。
-> - 第 0.4 节列出了本文依赖的关键假设，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
+> - 第 0.4 节列出了本文依赖的关键假设，第 0.5 节记录了 V1.2 已确认的决策，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
 
 ## 目录
 
@@ -19,7 +19,7 @@
 - [2. 架构总览](#2-架构总览)
 - [3. 模块化设计](#3-模块化设计)
 - [4. 领域事件](#4-领域事件)
-- [5. 租户、站点与语言](#5-租户站点与语言)
+- [5. 站点与语言](#5-站点与语言)
 - [6. 内容内核（Content Kernel）](#6-内容内核content-kernel)
 - [7. 分类体系（Taxonomy）](#7-分类体系taxonomy)
 - [8. 产品模块（Product）](#8-产品模块product)
@@ -81,7 +81,7 @@
 | 10 | 事件补全为成对的生命周期（发布/下线/删除/路径变化…）；事件可靠性采用 Outbox | V1.0 没有下线事件，也没有可靠性设计 |
 | 11 | 缓存失效改为 **Cache Tag** 精确失效 | V1.0 的失效粒度过粗 |
 | 12 | 编辑器画布采用 **iframe 嵌入 Nuxt 预览**，组件 Schema 在前后端之间共享 | V1.0 没有设计画布渲染 |
-| 13 | 新增租户 → 站点 → 语言三级上下文，隔离覆盖 DB、Redis、存储、搜索、CDN | V1.0 只预留了 tenant_id |
+| 13 | 新增站点 → 语言两级上下文（自用，不设租户层），隔离覆盖 DB、Redis、存储、搜索、CDN | V1.0 只预留了 tenant_id，未设计站点与语言；确认自用后不再需要租户层 |
 | 14 | 开发顺序改为垂直切片（M0–M5） | V1.0 中前台与多语言排得过晚 |
 | 15 | 新增安全、运维、测试、治理章节；架构规则全部配套自动化检查 | V1.0 的规则只停留在文字层面 |
 
@@ -89,8 +89,7 @@
 
 | 术语 | 含义 |
 |---|---|
-| Tenant（租户） | 数据与配置的最高隔离单位，通常对应一个客户企业 |
-| Site（站点） | 租户下的一个对外网站（一个主域名），可以有多种语言 |
+| Site（站点） | 一个对外网站（一个主域名）。企业可以有多个站点（品牌站、国家站），每个站点可以有多种语言 |
 | Locale（语言） | 站点启用的语言，如 `en`、`de`、`es`，采用 BCP 47 代码 |
 | Content（内容） | 所有可被路由、被关联、被 SEO 的对象的语言无关抽象 |
 | Localization（本地化） | 内容在某一语言下的版本，拥有独立的 slug、标题、SEO 与发布状态 |
@@ -114,13 +113,23 @@
 
 | 编号 | 假设 | 影响章节 |
 |---|---|---|
-| A1 | V1 面向“一家企业自用（可多品牌、多站点）”；服务商可按“一客户一实例”交付。不开放 SaaS 自助注册，但数据与隔离按多租户设计 | 3、5、25 |
-| A2 | 目标客户在海外，单站 2–8 种语言，默认英语 | 5、13、14 |
-| A3 | 服务器部署在海外（靠近目标市场），后台用户主要在中国大陆 | 27 |
+| A1 | **已确认**：自用。一家企业，可以有多个品牌站或国家站；不做 SaaS，不为其他企业交付 | 3、5、25 |
+| A2 | **已确认**：目标市场为欧盟、英国与北美；默认英语，单站 2–8 种语言（建议首批 en、de、fr、es、it） | 5、13、14 |
+| A3 | 服务器部署在欧盟（默认法兰克福）+ 全球 CDN；后台用户主要在中国大陆 | 27 |
 | A4 | 单站规模：≤ 1 万产品、≤ 5 千篇文章、≤ 10 种语言、询盘 ≤ 1 千条/天 | 1.5、19、25 |
 | A5 | 不展示价格、不在线交易；转化目标是询盘、索样、资料下载 | 8、17 |
 | A6 | 团队 2–6 人，Java + Vue 技术栈，使用 Claude Code 辅助开发 | 29、附录 A |
 | A7 | 多数客户已有旧站，需要迁移内容与 URL | 8.6、13.5 |
+
+### 0.5 V1.2 修订记录
+
+V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿用 V1.1。
+
+| 确认事项 | 主要影响 | 涉及章节 |
+|---|---|---|
+| 自用 | 去掉租户层，站点为最高隔离单位；用户全局唯一，角色按站点分配；单套生产环境；未来多企业采用一企业一实例 | 0、1、2.5、3、4、5、6、12、19、22、25、26、27、28、30、32、附录 B |
+| 欧美为主 | 首批语种建议；欧盟部署与数据驻留；GDPR / UK GDPR / ePrivacy / CCPA 合规基线；询盘改为隐私告知 + 可选的营销同意；法律页面；双单位显示；德语 slug 音译；Google 与 Bing | 0、1、2、5、8、11、13、14、16、17、18、20、26、27、30、31、32、附录 B |
+| 自研 | ADR-000 确认（Accepted） | 2.5、32、附录 B |
 
 ---
 
@@ -142,7 +151,7 @@
 
 | 角色 | 主要职责 | 典型权限 |
 |---|---|---|
-| 平台管理员 | 租户、站点、模块、系统设置 | 全部 |
+| 系统管理员 | 站点、模块、系统设置 | 全部（所有站点） |
 | 站点管理员 | 站点设置、主题、导航、用户与角色 | 站点内全部 |
 | 内容编辑 | 创建、编辑产品、文章、页面 | 编辑、提交审核 |
 | 审核 / 发布者 | 审核并发布内容 | 审核、发布、下线 |
@@ -158,10 +167,10 @@
 
 | 编号 | 场景 | 验收要点 |
 |---|---|---|
-| S1 | 编辑新建一个产品（中、英、德三语），选择分类、应用、行业，上传图片与 Datasheet，提交审核并发布 | 三种语言页面可访问；SSR 输出完整 HTML；Meta、canonical、hreflang、Product 与 BreadcrumbList JSON-LD 自动生成；sitemap 自动更新；相关产品与文章自动出现 |
+| S1 | 编辑新建一个产品（英、德、法三语），选择分类、应用、行业，上传图片与 Datasheet，提交审核并发布 | 三种语言页面可访问；SSR 输出完整 HTML；Meta、canonical、hreflang、Product 与 BreadcrumbList JSON-LD 自动生成；sitemap 自动更新；相关产品与文章自动出现 |
 | S2 | 编辑修改已发布产品的 slug | 旧 URL 自动 301 到新 URL；不产生重定向链；内链与 sitemap 自动更新 |
 | S3 | 运营不写代码，用页面编辑器搭建 Landing Page（Hero + 优势 + 产品网格 + 案例 + FAQ + 询盘表单），并在三种设备尺寸下预览 | 只能使用设计系统内的组件与变体；草稿不影响线上；可以分享预览链接 |
-| S4 | 海外采购商从 Google 广告进入落地页，浏览两个产品后提交询盘（附图纸） | 询盘记录首次与末次来源、UTM、gclid、落地页、浏览过的产品；通过反垃圾校验；按国家与产品自动分配；销售 1 分钟内收到邮件；客户收到对应语言的自动回复；GA4 收到转化事件 |
+| S4 | 海外采购商从 Google 广告进入落地页，浏览两个产品后提交询盘（附图纸） | 询盘记录首次与末次来源、UTM、gclid、落地页、浏览过的产品；通过反垃圾校验；按国家与产品自动分配；销售 1 分钟内收到邮件；客户收到对应语言的自动回复；GA4 按访客的同意状态（Consent Mode v2）收到转化事件 |
 | S5 | 采购商下载需要留资的产品目录 PDF | 填写表单后获得下载链接；生成一条 DOWNLOAD 类型线索 |
 | S6 | 编辑从 Excel 批量导入 300 个产品 | 异步执行；先校验预览再提交；逐行报告错误；可重复导入（按型号更新） |
 | S7 | 从旧站迁移：导入旧 URL → 新 URL 映射表 | 批量生成 301；检测循环与链；上线后旧 URL 全部可以跳转 |
@@ -173,26 +182,26 @@
 
 **V1 包含（In Scope）**
 
-- **平台**：租户、站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典。
-- **内容**：内容内核（多语言、修订、发布、定时发布、预览、回滚、回收站、单级审核）；分类体系；产品；文章（新闻、博客、案例、FAQ）；页面。
-- **呈现**：Design Token；1 套主题（≥ 20 个组件，每个 2–3 个变体）；模板；页面编辑器（Section 级）；全局区块；导航；站点资料。
+- **平台**：站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典。
+- **内容**：内容内核（多语言、修订、发布、定时发布、预览、回滚、回收站、单级审核）；分类体系；产品；文章（新闻、博客、案例、FAQ）；页面；产品属性双单位显示（公制 + 英制）。
+- **呈现**：Design Token；1 套主题（≥ 20 个组件，每个 2–3 个变体）；模板；页面编辑器（Section 级）；全局区块；导航；站点资料；法律页面（隐私政策、Cookie 政策、条款、Imprint）。
 - **媒体**：上传、文件夹、多语言 alt、图片变换（WebP/AVIF/响应式）、引用追踪、私有文件。
 - **SEO**：URL、slug、重定向；Meta 自动生成与覆盖；canonical、robots、hreflang、Schema.org、Sitemap、IndexNow；内链（导航、面包屑、相关内容、正文引用）；SEO 健康检查。
 - **关系**：Content Graph（人工关系 + 基于分类的规则评分）。
 - **获客**：表单引擎；询盘（分配、去重、状态、备注、附件、导出）；反垃圾；来源归因；资料下载留资；询价篮。
 - **通知**：邮件（询盘通知、自动回复、SLA 提醒）、Webhook。
 - **搜索**：站内搜索、产品分面筛选。
-- **追踪**：GA4 / GTM / Pixel 配置、Consent Mode、Cookie 同意、转化事件。
+- **追踪**：GA4 / GTM / Pixel 配置（可切换为欧盟托管的统计工具）、Consent Mode v2、Cookie 事先同意与同意记录、GPC、转化事件。
 - **工具**：产品 Excel 导入导出、重定向导入。
 - **工程**：CI/CD、监控、备份、自动化架构守护。
 
 **V1 不包含（Out of Scope，V2+）**
 
 - 运行时热插拔模块、第三方模块市场；
-- SaaS 自助注册、计费；
+- 多企业 SaaS（不在规划中；如未来需要，采用一企业一实例部署）；
 - CRM、报价单、WhatsApp / 企业微信集成、Newsletter、客户门户；
 - AI（翻译、写作、SEO 建议、语义相似度、垃圾识别模型）；
-- 自建访问统计（V1 依赖 GA4，只提供询盘来源报表）；
+- 自建访问统计（V1 依赖 GA4 或欧盟托管的统计工具，如 Matomo、Plausible，只提供询盘来源报表）；
 - 自由布局编辑（像素级拖拽）、多主题市场；
 - 多级审批流、实时协同编辑；
 - 产品价格、购物车、在线支付。
@@ -215,8 +224,8 @@
 | | 后台 | 99.5% |
 | 数据 | 备份 | RPO ≤ 15 分钟，RTO ≤ 4 小时，每季度做一次恢复演练 |
 | 安全 | 标准 | OWASP ASVS Level 2；后台高权限账号强制 2FA |
-| 合规 | 隐私 | 满足 GDPR、CCPA 基本要求（同意、数据导出与删除、保留期）；遵循数据最小化 |
-| 无障碍 | 前台 | WCAG 2.2 AA |
+| 合规 | 隐私 | GDPR、UK GDPR、ePrivacy（Cookie 事先同意）；CCPA/CPRA 等美国州隐私法（GPC、退出“出售 / 共享”）；数据驻留欧盟；数据主体请求按法定时限处理 |
+| 无障碍 | 前台 | WCAG 2.2 AA；提供无障碍声明页。欧洲无障碍法案（EAA）自 2025-06-28 起适用，主要针对面向消费者的产品与服务，B2B 站点是否适用由法务确认；美国存在基于 ADA 的网站无障碍诉讼风险 |
 | 兼容性 | 前台 | 主流浏览器最新两个版本、iOS Safari 16+；后台：Chrome / Edge / Safari 最新两个版本 |
 | SEO | 抓取 | 所有可索引页面无需执行 JS 即可获得主要内容、链接与结构化数据 |
 | 可维护性 | 架构 | 模块边界、依赖方向、Design Token 的使用均由 CI 自动检查 |
@@ -304,6 +313,7 @@
 - Nuxt 服务端渲染时通过内网调用 Delivery API，并携带站点域名与内部令牌（见 26.7）。
 - 后台 SPA 与 Admin API 同源部署（`admin` 域名下 `/api/admin` 反向代理到后端），避免 CORS，Cookie 可以使用 SameSite。
 - 原 V1.0 中的“API Gateway”在本设计中由反向代理承担，不引入独立网关产品。
+- 部署区域：CDN 以下的全部组件（反向代理、后端、Nuxt、imgproxy、MySQL、Redis、Meilisearch、对象存储）及备份都位于欧盟区域（默认法兰克福）；全球 CDN 覆盖欧美访客（见 ADR-015、27.1）。
 
 ### 2.4 技术选型
 
@@ -311,12 +321,12 @@
 |---|---|---|
 | 后端运行时 | JDK 25 LTS（最低 21） | 使用虚拟线程处理 I/O 密集任务（数据源并行解析、通知发送） |
 | 后端框架 | Spring Boot 4.x + Spring Modulith 2.x | Modulith 负责模块边界验证、事件发布登记（Outbox）、模块集成测试 |
-| 持久层 | MyBatis-Plus | SQL 可控，团队熟悉；内置多租户拦截器 |
-| 数据库 | MySQL 8.4 LTS | JSON 列保存快照、布局文档与设置 |
+| 持久层 | MyBatis-Plus | SQL 可控，团队熟悉；行级拦截器（TenantLineInnerInterceptor，列名配置为 `site_id`）用于站点过滤（见 25.7） |
+| 数据库 | MySQL 8.4 LTS | JSON 列保存快照、布局文档与设置；生产使用欧盟区域的托管服务 |
 | 数据库迁移 | Flyway（每个模块独立的 history 表） | 由模块管理器按依赖顺序执行（见 3.6） |
 | 缓存 / 会话 / 限流 | Redis 7（或兼容的 Valkey）+ Spring Session + Bucket4j | |
 | 搜索 | Meilisearch | 多语言、分面筛选、容错；作为可重建的读模型 |
-| 对象存储 | S3 兼容 API（AWS S3、Cloudflare R2、阿里云 OSS、MinIO） | 本地开发使用 MinIO |
+| 对象存储 | S3 兼容 API（AWS S3、Cloudflare R2、阿里云 OSS、MinIO） | 生产存储桶与备份位于欧盟区域；本地开发使用 MinIO |
 | 图片处理 | imgproxy（签名 URL）+ CDN | |
 | 任务 | Spring Scheduling + ShedLock；Core 提供持久化异步任务框架 | |
 | 安全 | Spring Security；Argon2id 密码哈希；TOTP 2FA | |
@@ -328,10 +338,10 @@
 | Design Token | DTCG 格式 JSON + Style Dictionary | 生成 CSS 变量与 TS 常量 |
 | 前端工程 | pnpm workspace；ESLint、Stylelint、Vitest、Playwright | |
 | 人机验证 | Cloudflare Turnstile | |
-| 邮件 | SMTP（兼容 SES、Postmark 等服务）；开发环境用 Mailpit | |
-| 可观测性 | Micrometer + Prometheus + Grafana；OpenTelemetry；Loki；Sentry | |
-| 部署 | Docker；V1 使用 Docker Compose（单区域多实例），V2 可迁移到 Kubernetes | |
-| CDN | 支持按 Cache-Tag / Surrogate-Key 清除的 CDN（如 Cloudflare、Fastly） | |
+| 邮件 | SMTP / API（兼容 SES 欧盟区域、Mailgun EU、Brevo 等服务）；开发环境用 Mailpit | 优先选择提供欧盟数据区域的服务商 |
+| 可观测性 | Micrometer + Prometheus + Grafana；OpenTelemetry；Loki；Sentry（欧盟数据区域） | 自建组件部署在欧盟区域；第三方托管服务选择欧盟数据区域 |
+| 部署 | Docker；V1 生产使用 Docker Compose（欧盟单区域、多实例，见 27.1），V2 可迁移到 Kubernetes | 单机 Docker Compose 只用于本地开发与演示 |
+| CDN | 支持按 Cache-Tag / Surrogate-Key 清除的 CDN（如 Cloudflare、Fastly） | 全球节点覆盖欧美访客（见 ADR-015） |
 | CI/CD | GitHub Actions | |
 
 > 版本说明：以上为选型方向。M0 阶段需要对 Spring Boot、Spring Modulith、MyBatis-Plus、Flyway、Nuxt 的具体版本做一次兼容性验证，锁定组合后写入 ADR-011。
@@ -342,7 +352,7 @@
 
 | ADR | 主题 | 决策 |
 |---|---|---|
-| 000 | 自研还是基于现有 Headless CMS | 自研。SEO 引擎、内容图谱、模块扩展、Java 技术栈统一是核心竞争力，现有 Headless CMS 难以深度定制且技术栈不一致。代价是内容内核与页面编辑器工作量大，靠严格的 V1 范围控制（**待评审确认**） |
+| 000 | 自研还是基于现有 Headless CMS | **自研（已确认，Accepted）**。SEO 引擎、内容图谱、模块扩展、Java 技术栈统一是核心竞争力，现有 Headless CMS 难以深度定制且技术栈不一致。代价是内容内核与页面编辑器工作量大，靠严格的 V1 范围控制 |
 | 001 | 模块形态 | 编译期模块 + 站点级运行时启用开关；不做热插拔 |
 | 002 | 模块通信 | 只允许公开 API、领域事件、扩展点三种方式；所有跨模块契约放在 `platform-api` |
 | 003 | 事件可靠性 | 事务提交后投递 + Spring Modulith Event Publication Registry（数据库 Outbox）；V1 不引入 MQ |
@@ -351,12 +361,14 @@
 | 006 | 渲染方式 | 系统内容使用“模板 + 插槽”，营销页使用页面编辑器；前台只读快照 |
 | 007 | 编辑器画布 | Admin 中通过 iframe 嵌入 Nuxt 预览路由，用 postMessage 通信；组件 Schema 放在共享包中 |
 | 008 | SEO 数据归属 | SEO 模块拥有 SEO 数据；自动值与覆盖值分离；发布时写入快照 |
-| 009 | 租户与站点 | Tenant → Site → Locale；业务表全部带 tenant_id 与 site_id；由拦截器自动注入 |
+| 009 | 站点与语言 | 单企业、多站点，不设租户层（Site → Locale）；站点级表带 site_id，由拦截器自动追加过滤条件；未来多企业采用一企业一实例 |
 | 010 | 认证 | 后台使用 Session + HttpOnly Cookie + CSRF + TOTP；前台没有登录 |
 | 011 | 技术版本 | M0 验证兼容组合后锁定 |
 | 012 | 缓存 | CDN + 后端 Redis 两级，按 Cache Tag 精确失效；Nuxt 层不缓存 HTML |
 | 013 | 搜索 | Meilisearch 作为发布态读模型，负责搜索与分面；可以从数据库全量重建 |
 | 014 | ID | 64 位 TSID（时间有序），在 JSON 中序列化为字符串 |
+| 015 | 部署区域与数据驻留 | 源站与数据（数据库、对象存储、备份）在欧盟（默认法兰克福），全球 CDN 覆盖欧美访客；第三方服务优先选择欧盟数据区域 |
+| 016 | 隐私合规基线 | GDPR / UK GDPR / ePrivacy + CCPA/CPRA：非必要 Cookie 事先同意并保存同意记录；识别 GPC；询盘以订立合同前的步骤为合法性基础，不强制勾选同意，营销同意单独勾选；数据主体请求按法定时限处理 |
 
 ---
 
@@ -376,7 +388,7 @@
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ L1 platform-api      跨模块契约：服务接口、扩展点接口、事件、共享值对象            │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ L0 platform-core     租户/站点、身份、权限、模块管理、设置、审计、事件基础、任务、  │
+│ L0 platform-core     站点、身份、权限、模块管理、设置、审计、事件基础、任务、       │
 │                      字典、界面文案、站点资料                                    │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ infrastructure       技术适配器：对象存储、邮件传输、搜索客户端、缓存、CDN 清除     │
@@ -388,7 +400,7 @@
 
 | 模块 | 层 | 职责 | 表前缀 | 可停用 | 范围 |
 |---|---|---|---|---|---|
-| platform-core | L0 | 租户、站点、语言、用户、角色、权限、数据范围、模块注册与生命周期、设置、站点资料、审计、任务、字典、界面文案 | `sys_` | 否 | V1 |
+| platform-core | L0 | 站点、语言、用户、角色、权限、数据范围、模块注册与生命周期、设置、站点资料、审计、数据主体请求、任务、字典、界面文案 | `sys_` | 否 | V1 |
 | platform-api | L1 | 跨模块契约（无实现） | — | — | V1 |
 | content | L2 | 内容内核：类型注册、本地化、修订、发布状态机、快照、投影、预览、回收站、审核 | `cnt_` | 否 | V1 |
 | url | L2 | 路由表、slug、URL 规则、重定向、规范化、404 日志 | `url_` | 否 | V1 |
@@ -405,7 +417,7 @@
 | seo | L4 | SEO 元数据、生成规则、Schema.org、Sitemap、robots、链接索引、健康检查、IndexNow | `seo_` | 否 | V1 |
 | graph | L4 | 内容关系、关系类型、评分计算、相关推荐 | `grh_` | 否 | V1 |
 | search | L4 | 搜索索引、站内搜索、分面筛选 | 索引在 Meilisearch | 是 | V1 |
-| tracking | L4 | 统计代码、同意管理、转化事件配置 | `trk_` | 是 | V1 |
+| tracking | L4 | 统计代码、同意管理（含同意记录、GPC）、转化事件配置 | `trk_` | 是 | V1 |
 | crm、quotation、whatsapp、newsletter、ai、analytics、portal | L3/L4 | 见 1.4 | 各自前缀 | 是 | V2+ |
 
 ### 3.3 依赖规则
@@ -544,7 +556,7 @@ public interface PlatformModule {
     /** 停用前的影响分析，例如“该站点有 120 篇已发布文章将不可访问” */
     default ImpactReport analyzeDisableImpact(SiteModuleContext ctx) { return ImpactReport.none(); }
 
-    /** 彻底删除模块数据（仅 CLI / 平台管理员，需二次确认） */
+    /** 彻底删除模块数据（仅 CLI / 系统管理员，需二次确认） */
     default void onPurge(ModuleContext ctx) {}
 }
 ```
@@ -621,14 +633,13 @@ public interface DomainEvent {
     String  eventId();        // TSID
     int     schemaVersion();  // 事件结构版本
     Instant occurredAt();
-    long    tenantId();
-    Long    siteId();
+    Long    siteId();         // 可空：系统级事件为空
     String  actor();          // 用户 ID，或 "system"
 }
 
 public record ContentPublishedEvent(
         String eventId, int schemaVersion, Instant occurredAt,
-        long tenantId, Long siteId, String actor,
+        Long siteId, String actor,
         long contentId, String contentType, String locale,
         long localizationId, long revisionId, int revisionNo,
         String path, String previousPath, boolean firstPublish, boolean contentChanged
@@ -691,29 +702,32 @@ content.publish(localizationId, expectedVersion)        ──── 同一个�
 
 ---
 
-## 5. 租户、站点与语言
+## 5. 站点与语言
 
 ### 5.1 模型
 
+系统自用：一次部署 = 一家企业，不设租户层。**站点（Site）是最高隔离单位**：企业可以有多个品牌站或国家站（如 `brand-a.com`、`brand-b.de`），每个站点可以有多种语言。
+
 ```text
-Tenant（租户）
- ├── User（用户属于租户）
- └── Site（站点：主域名、主题、默认语言、URL 策略、时区）
-       ├── SiteDomain（主域名 / 别名域名 / V2：语言独立域名）
-       ├── SiteLocale（站点语言：URL 前缀、hreflang 值、是否公开、排序）
-       ├── SiteModule（站点启用的模块）
-       ├── SiteProfile（站点资料：公司信息、Logo、联系方式，见 16.3）
-       └── UserSiteRole（用户在该站点的角色）
+User（用户：全局唯一，不属于某个站点）
+Site（站点：主域名、主题、默认语言、URL 策略、时区）
+ ├── SiteDomain（主域名 / 别名域名 / V2：语言独立域名）
+ ├── SiteLocale（站点语言：URL 前缀、hreflang 值、是否公开、排序）
+ ├── SiteModule（站点启用的模块）
+ ├── SiteProfile（站点资料：公司信息、Logo、联系方式，见 16.3）
+ └── UserSiteRole（用户在该站点的角色）
 ```
 
 | 表 | 关键字段 |
 |---|---|
-| `sys_tenant` | code、name、status |
-| `sys_site` | tenant_id、code、name、theme_key、default_locale、url_strategy、trailing_slash、timezone、status |
+| `sys_site` | code、name、theme_key、default_locale、url_strategy、trailing_slash、timezone、status |
 | `sys_site_domain` | site_id、domain、type（PRIMARY / ALIAS / LOCALE）、locale |
 | `sys_site_locale` | site_id、locale、url_prefix、hreflang、public、sort |
 | `sys_site_module` | site_id、module_id、enabled、config（JSON） |
 | `sys_user_site_role` | user_id、site_id、role_id |
+
+- 用户全局唯一；角色按站点分配（`sys_user_site_role`）。
+- **系统管理员**管理站点、模块与系统设置，拥有所有站点的权限。
 
 ### 5.2 请求上下文解析
 
@@ -721,33 +735,36 @@ Tenant（租户）
 |---|---|
 | 前台（Nuxt → Delivery） | Nuxt 把请求的 Host 放入 `X-Site-Host`，连同内部令牌发送给后端；`SiteResolver` 根据域名找到站点（结果缓存）；路径前缀决定语言；访问别名域名或 http 时 301 到主域名 https |
 | 前台（浏览器 → Public API） | 反向代理透传 Host 与真实 IP；后端用同样的方式解析站点 |
-| 后台 | 用户登录到租户；界面上选择当前站点，请求头带 `X-Site-Id`；后端校验用户在该站点有角色 |
-| 异步任务与事件 | 事件与任务显式携带 tenantId、siteId；执行器在运行前设置上下文 |
+| 后台 | 用户登录后在界面上选择当前站点，请求头带 `X-Site-Id`；后端校验用户在该站点有角色 |
+| 异步任务与事件 | 事件与任务显式携带 siteId（系统级为空）；执行器在运行前设置上下文 |
 
 上下文保存在 `RequestContext` 中（ScopedValue / ThreadLocal），通过 `TaskDecorator` 传递给异步线程。
 
-### 5.3 隔离策略
+### 5.3 站点隔离
 
 | 资源 | 隔离方式 |
 |---|---|
-| MySQL | 所有业务表都有 tenant_id，站点级数据加 site_id；MyBatis 拦截器自动追加过滤条件；跨租户查询只允许平台管理接口；V2 可以把大租户拆到独立数据库 |
-| Redis | Key 前缀 `t{tenantId}:s{siteId}:…` |
-| 对象存储 | 路径前缀 `{tenantId}/{siteId}/…`；公开桶与私有桶分离 |
-| Meilisearch | 每个站点的每种语言一个索引：`t{tenant}_s{site}_{locale}_content` |
+| MySQL | 站点级表带 site_id；MyBatis-Plus 行级拦截器（`TenantLineInnerInterceptor`，列名配置为 `site_id`）自动追加 `site_id` 条件；全局表（`sys_user`、`sys_user_mfa`、`sys_role`、`sys_permission`、`sys_module`、系统级设置等）没有 site_id，列入豁免清单（见 25.7）；`sys_audit_log` 带可空的 site_id；跨站点查询只允许系统管理接口 |
+| Redis | Key 前缀 `s{siteId}:…`；系统级数据 `sys:…` |
+| 对象存储 | 路径 `{siteId}/{yyyy}/{mm}/{id}-{slug化的原文件名}.{ext}`（见 12.2）；公开桶与私有桶分离 |
+| Meilisearch | 每个站点的每种语言一个索引：`s{site}_{locale}_content` |
 | CDN Cache Tag | 标签带站点前缀 `s{siteId}:…` |
-| 日志与指标 | 带 tenant、site 维度 |
-| 后台会话 | 会话绑定租户；切换站点需要校验成员资格 |
+| 日志、指标与链路追踪 | 带 site 维度 |
+| 后台会话 | 会话绑定用户；切换站点需要校验用户在该站点有角色 |
 
-CI 中有专门的租户隔离测试：准备两个租户的数据，遍历所有后台接口，验证不会越权读写（见 28）。
+CI 中有专门的站点隔离测试：准备两个站点的数据，以及只在其中一个站点拥有角色的用户，遍历所有后台接口，验证不能越权读写另一个站点的数据（见 28）。
+
+未来如果需要为其他企业提供本系统，采用“一企业一实例”独立部署（独立数据库与存储），不在一套部署中共享多家企业的数据（见 ADR-009）。
 
 ### 5.4 语言与 URL 策略
 
+- **语种**：默认语言 `en`。建议首批语言：**en、de、fr、es、it**；按需扩展 nl、pl、pt。具体清单待确认（见 32 章 Q2）。
 - **默认采用子目录策略**：默认语言不加前缀（`/products/x`），其他语言加前缀（`/de/produkte/x`）；可以配置为“全部语言都加前缀”。V2 支持每种语言使用独立域名（`example.de`）。
-- 语言代码使用 BCP 47（`en`、`de`、`pt-BR`、`zh-Hans`）；hreflang 值单独配置（例如 `en-US`）；`x-default` 指向默认语言版本。
+- 语言代码使用 BCP 47（`en`、`de`、`pt-BR`、`zh-Hans`）；hreflang 值可以单独配置，**默认只用语言代码**（`en`、`de`、`fr`…）：英语只做一个版本，同时服务美国与英国；以后需要区分 `en-US` / `en-GB` 时再增加区域变体。`x-default` 指向 `en` 版本。
 - 根路径**不按 Accept-Language 自动跳转**（对爬虫不友好），只显示语言建议条。
 - **内容不跨语言回退**：某内容没有 `de` 本地化时，`de` 下就不存在该页面，列表与推荐中也不出现。
 - 界面文案（按钮、表单标签等）有回退链：站点覆盖 → 主题默认 → 英文。
-- 为 RTL 语言预留：前台样式全部使用 CSS 逻辑属性（`margin-inline-start` 等），`<html dir>` 由语言配置决定。
+- RTL 语言不在 V1 范围；前台样式仍全部使用 CSS 逻辑属性（`margin-inline-start` 等），成本低，保留扩展性；`<html dir>` 由语言配置决定。
 
 ### 5.5 翻译工作流
 
@@ -765,7 +782,7 @@ CI 中有专门的租户隔离测试：准备两个租户的数据，遍历所�
 
 ```text
 cnt_content（语言无关）
- ├── id、tenant_id、site_id、type、owner_module、routable、primary_locale、trashed_at
+ ├── id、site_id、type、owner_module、routable、primary_locale、trashed_at
  │
  ├── cnt_localization（每种语言一条）
  │     ├── locale、slug、draft_title、draft_state、draft_hash
@@ -900,7 +917,7 @@ public interface PublishContributor {
 
 ### 6.5 预览
 
-- 后台点击“预览”时生成预览令牌（签名，包含 tenant、site、localizationId、模式 `draft` 或 `revision:n`；有效期 1 小时；分享链接最长 7 天）。
+- 后台点击“预览”时生成预览令牌（签名，包含 site、localizationId、模式 `draft` 或 `revision:n`；有效期 1 小时；分享链接最长 7 天）。
 - Nuxt 路由 `/__preview/{token}` 调用 `GET /api/public/v1/delivery/preview`；Delivery 调用各 `PublishContributor.contribute()` 从草稿**临时**组装快照（与发布同一套代码，但不持久化）后渲染。
 - 预览响应带 `X-Robots-Tag: noindex, nofollow` 与 `Cache-Control: no-store`。
 - 页面编辑器中的实时预览通过 postMessage 传递未保存的文档（见 10.8）。
@@ -966,7 +983,7 @@ public interface PublishContributor {
 | `prd_product` | content_id（主键）、model_no、brand、primary_category_term_id、flags（新品、热销、停产）、replacement_content_id、sort |
 | `prd_product_localization` | 名称、副标题、简介、详情（富文本 JSON）、卖点列表、包装信息、交期文本、MOQ 文本 |
 | `prd_attribute_group` + 本地化 | 属性分组（如“电气参数”） |
-| `prd_attribute` + 本地化 | key、group_id、data_type、unit、precision、filterable、searchable、comparable、show_on_card、sort |
+| `prd_attribute` + 本地化 | key、group_id、data_type、unit、precision、dual_unit（双单位显示开关）、secondary_unit（第二单位，如 `in`、`lb`）、filterable、searchable、comparable、show_on_card、sort |
 | `prd_attribute_option` + 本地化 | 枚举选项 |
 | `prd_attribute_set` / `prd_attribute_set_item` | 属性集（哪些属性、是否必填、顺序） |
 | `prd_category_attribute_set` | 产品分类绑定属性集（子分类继承） |
@@ -975,12 +992,14 @@ public interface PublishContributor {
 | `prd_product_media` | product_id、media_id、role（COVER / GALLERY / DIAGRAM）、sort |
 | `prd_product_document` | product_id、media_id、doc_type（DATASHEET / MANUAL / CERTIFICATE / CAD）、locale（可空）、gated_form_key（可空）、sort |
 
-属性数据类型：`TEXT`（可翻译）、`NUMBER`、`RANGE`（最小–最大）、`BOOLEAN`、`ENUM`、`MULTI_ENUM`。数值统一以标准单位存储；【V2+】前台按地区做公制与英制换算。
+属性数据类型：`TEXT`（可翻译）、`NUMBER`、`RANGE`（最小–最大）、`BOOLEAN`、`ENUM`、`MULTI_ENUM`。数值统一以标准单位存储。
+
+**双单位显示**：数值类属性（`NUMBER`、`RANGE`）可以开启“公制 + 英制”双单位显示（`dual_unit`），并指定第二单位（`secondary_unit`），前台显示为 `100 mm (3.94 in)`、`5 kg (11 lb)`。换算在发布时计算并写入快照（见 8.2），前台不做换算。
 
 ### 8.2 属性的存储与查询
 
 - 编辑态使用 EAV 结构（`prd_attribute_value`），满足不同分类的属性差异。
-- 发布时，产品的 `PublishContributor` 把属性展开为快照中的结构化规格：`[{group, items: [{key, label, value, unit}]}]`。
+- 发布时，产品的 `PublishContributor` 把属性展开为快照中的结构化规格：`[{group, items: [{key, label, value, unit, secondaryValue, secondaryUnit}]}]`；开启 `dual_unit` 的属性在此时按 `secondary_unit` 换算出 `secondaryValue`，未开启时这两个字段为空。
 - 同时，`SearchDocumentProvider` 把可筛选属性写入搜索索引的分面字段（如 `attr.voltage`、`attr.color`）。
 - **前台流量永远不查询 EAV 表**：详情页读快照，列表与筛选走搜索索引（见 19）。
 
@@ -1045,6 +1064,8 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 | 页面搭建 | PAGE（首页、关于我们、落地页等） | 完整的布局文档 | 页面编辑器 |
 
 系统内容使用模板，保证上万个产品页结构一致、可批量升级；营销页使用页面编辑器，保证灵活。两者使用同一套组件与布局文档格式。
+
+**法律页面**（每个站点必备）：隐私政策（Privacy Policy）、Cookie 政策（Cookie Policy）、使用条款（Terms of Use）、Imprint（德语 Impressum；面向德国、奥地利时属于法律要求）、无障碍声明（Accessibility Statement，可选，见 11.5）。实现方式：PAGE + `legal` 模板（以正文为主的简洁版式）；Imprint 的正文由站点资料中的法定信息字段自动生成（见 16.3），不手工维护。
 
 ### 10.2 模板定义
 
@@ -1216,6 +1237,8 @@ public interface DataSourceProvider {
 
 由主题实现，读取导航菜单（见 16）与站点资料。站点管理员在“主题设置”中选择变体与选项（是否吸顶、是否显示语言切换、右上角 CTA 等）。V1 不允许用页面编辑器编辑 Header / Footer，以保证全站的设计质量。
 
+页脚由主题固定提供“Cookie 设置”入口，并可配置“Your Privacy Choices”链接（见 20.2）；法律页面（见 10.1）的链接通过页脚菜单配置。
+
 ### 10.8 页面编辑器
 
 ```text
@@ -1293,7 +1316,7 @@ frontend/packages/themes/industrial/
 ├── fonts/            # 自托管 woff2 子集
 ├── layouts/          # default、landing（无导航）、blank
 ├── header/  footer/  # 多个变体
-├── templates/        # product-detail、article-detail、case-detail、term-page …
+├── templates/        # product-detail、article-detail、case-detail、term-page、legal …
 ├── components/       # 组件变体实现：hero/HeroSplit.vue …
 └── index.ts          # defineTheme({...})：注册组件变体与模板（异步组件，按需加载）
 ```
@@ -1327,9 +1350,12 @@ frontend/packages/themes/industrial/
 
 目标 WCAG 2.2 AA：语义化标签与地标、可见的焦点样式、跳转到主内容链接、颜色对比度、`prefers-reduced-motion`、表单标签与错误提示、内容图片必须有 alt、标题层级正确（由 SEO 健康检查辅助）。
 
+- **法规背景**：欧洲无障碍法案（EAA）自 2025-06-28 起适用，主要针对面向消费者的产品与服务，B2B 站点是否适用由法务确认；美国存在基于 ADA 的网站无障碍诉讼风险。无论是否适用，前台都按 WCAG 2.2 AA 实现。
+- **无障碍声明**：提供无障碍声明页（Accessibility Statement，PAGE + `legal` 模板，见 10.1），说明符合程度、已知问题与反馈渠道。
+
 ### 11.6 字体与静态资源
 
-- 字体自托管（woff2，按文字系统切分子集），`font-display: swap`，预加载主字重；系统字体回退时使用 `size-adjust` 减少布局偏移。
+- 字体自托管（woff2，子集为 Latin + Latin Extended，覆盖德、法、西、意、波兰等语言；不需要西里尔与 CJK），`font-display: swap`，预加载主字重；系统字体回退时使用 `size-adjust` 减少布局偏移。
 - 不使用 Google Fonts CDN（欧盟隐私判例风险，以及中国大陆后台预览时的访问问题）。
 
 ---
@@ -1355,7 +1381,7 @@ Admin 上传（V1 经后端流式上传，单文件 ≤ 50 MB；【V2+】大文�
   → 图片：读取尺寸，生成 blurhash 与主色
      SVG：净化（移除 script、事件属性、外部引用）；非管理员角色禁止上传 SVG
   → 文档与压缩包：病毒扫描（ClamAV，异步）→ READY / QUARANTINED
-  → 存储键：{tenantId}/{siteId}/{yyyy}/{mm}/{id}-{slug化的原文件名}.{ext}
+  → 存储键：{siteId}/{yyyy}/{mm}/{id}-{slug化的原文件名}.{ext}
   → 发布 MediaUploadedEvent
 ```
 
@@ -1422,6 +1448,9 @@ public interface ObjectStorage {
 ### 13.3 slug 规则
 
 - 首次创建时根据标题生成：ICU 音译（`Any-Latin; Latin-ASCII; Lower`），只保留 `[a-z0-9-]`，最长 80 个字符。
+- 音译规则按语言配置：
+  - 德语：先替换 `ä→ae、ö→oe、ü→ue、ß→ss`（大写同理），再执行 `Latin-ASCII`，如 `Größe für Häuser` → `groesse-fuer-haeuser`；
+  - 法语、西语、意大利语等：去掉重音（ICU `Latin-ASCII`），如 `Câble résistant` → `cable-resistant`。
 - 按语言配置，可以保留本地文字的 slug（如日语）：以 Unicode NFC 存储，在 HTML 与 sitemap 中输出百分号编码形式。
 - 保留字：`api`、`admin`、`__preview`、`__editor`、`sitemap.xml`、`robots.txt` 等。
 - 在站点内按完整路径唯一；冲突时建议追加 `-2`。
@@ -1504,7 +1533,8 @@ Sitemap: https://www.example.com/sitemap.xml
 ### 14.4 hreflang
 
 - 由同一内容所有**已发布、且站点语言公开**的本地化生成，包含自身；因为来自同一集合，**相互引用天然成立**。
-- `x-default` 指向默认语言版本（若已发布）。
+- hreflang 值默认只用语言代码（`en`、`de`、`fr`…），英语只做一个版本，同时服务美国与英国（见 5.4）。
+- `x-default` 指向默认语言 `en` 的版本（若已发布）。
 - canonical 必须指向本语言自身，禁止跨语言 canonical。
 - 同时输出到 HTML 与 sitemap，两者来自同一数据源，保持一致。
 
@@ -1537,8 +1567,11 @@ Sitemap: https://www.example.com/sitemap.xml
 
 ### 14.7 搜索引擎推送
 
-- **IndexNow**（Bing、Yandex、Seznam、Naver 等支持）：发布、下线、路径变化时，按分钟批量推送；密钥文件由 Nuxt 在 `/{key}.txt` 提供。
+搜索引擎以 **Google 为主、Bing 为辅**。
+
 - **Google**：依靠 sitemap 与 Search Console（Google Indexing API 只适用于招聘与直播类页面，不适用于普通页面）。
+- **IndexNow**（主要用于 Bing 等支持 IndexNow 的搜索引擎）：发布、下线、路径变化时，按分钟批量推送；密钥文件由 Nuxt 在 `/{key}.txt` 提供。
+- **站点验证**：站点设置支持 Google Search Console 与 Bing Webmaster Tools 的验证 meta 标签字段（输出到首页 `<head>`）；也可以使用 DNS 验证（在运维手册中说明）。
 - 【V2+】接入 Search Console API，把收录与表现数据拉回 SEO 面板。
 
 ### 14.8 内链引擎
@@ -1699,9 +1732,17 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 
 ### 16.3 站点资料
 
-由 platform-core 管理：公司名称、法定名称、Logo（浅色 / 深色）、favicon 与应用图标、地址（可多个）、电话、邮箱、WhatsApp、社交账号、营业时间、成立年份；文本类字段可以按语言覆盖。
+由 platform-core 管理（每个站点一份）：
 
-使用方：`Organization` 结构化数据、Header / Footer、联系组件、通知邮件模板。
+| 分组 | 字段 |
+|---|---|
+| 基本信息 | 公司名称、Logo（浅色 / 深色）、favicon 与应用图标、地址（可多个）、电话、邮箱、WhatsApp、社交账号、营业时间、成立年份 |
+| 法定信息 | 法定名称、注册地址、代表人、公司注册号、增值税号（VAT ID）、联系方式（用于 Imprint 的邮箱与电话） |
+
+- 文本类字段可以按语言覆盖。
+- 法定信息用于自动生成 Imprint 页面（见 10.1）；具体内容待确认（见 32 章 Q14）。
+
+使用方：`Organization` 结构化数据、Header / Footer、联系组件、通知邮件模板、Imprint 页面。
 
 ### 16.4 语言切换器
 
@@ -1717,20 +1758,23 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 
 | 表 | 关键字段 |
 |---|---|
-| `frm_form` | site_id、key、purpose（INQUIRY / SAMPLE / DOWNLOAD / CONTACT / CUSTOM；【V2+】NEWSLETTER）、status、fields（JSON）、settings（JSON：反垃圾、附件、成功动作、同意、Turnstile） |
-| `frm_form_localization` | form_id、locale、labels（JSON）、success_message、consent_text、consent_version |
+| `frm_form` | site_id、key、purpose（INQUIRY / SAMPLE / DOWNLOAD / CONTACT / CUSTOM；【V2+】NEWSLETTER）、status、fields（JSON）、settings（JSON：反垃圾、附件、成功动作、是否显示营销同意框、常用国家、Turnstile） |
+| `frm_form_localization` | form_id、locale、labels（JSON）、success_message、privacy_notice_text（简短告知，含隐私政策链接）、marketing_consent_text、privacy_notice_version（两段文本任一修改时递增） |
 | `frm_submission` | site_id、form_id、locale、payload（JSON）、attachment_ids、attribution（JSON）、spam_score、spam_verdict（ACCEPT / QUARANTINE / REJECT）、ip、ip_country、user_agent、created_at |
 
-- 字段类型：文本、邮箱、电话（带国家区号，用 libphonenumber 校验）、多行文本、单选、多选、国家（ISO 列表，按语言显示）、数字、勾选、附件、隐藏字段（上下文）、产品选择（由询价篮或当前产品自动填充）。
+- 字段类型：文本、邮箱、电话（带国家区号，用 libphonenumber 校验，按 E.164 格式保存，如 `+4930123456`）、多行文本、单选、多选、国家（ISO 列表，按语言显示）、数字、勾选、附件、隐藏字段（上下文）、产品选择（由询价篮或当前产品自动填充）。
 - 标准字段 key（映射到询盘）：`name`、`email`、`phone`、`company`、`country`、`job_title`、`message`、`quantity`、`website`。
+- **国家与电话**：国家字段默认按访客 IP 所在国家预选（页面 HTML 有 CDN 缓存，国家随 formToken 一并返回，见 17.2）；电话按所选国家预填区号；国家列表可配置常用国家置顶。
+- **隐私告知与营销同意**：表单只显示简短告知与隐私政策链接，不设强制勾选的同意框；营销同意为单独的、默认不勾选的可选框（表单设置决定是否显示）。依据见 17.11。
 - 成功动作：显示提示语，或跳转到感谢页（`noindex`）。
 
 ### 17.2 提交流程
 
 ```text
 访客在 Nuxt 中打开带表单的页面
-  1. 表单组件获取 formToken（签名：formKey、渲染时间、站点），用于最短填写时间校验与防重放
-  2. 提交：字段 + 附件 ID + 归因数据 + Turnstile 令牌 + Idempotency-Key
+  1. 表单组件获取 formToken（签名：formKey、渲染时间、站点），用于最短填写时间校验与防重放；
+     同时返回访客 IP 所在国家，用于预选国家字段
+  2. 提交：字段（含可选的营销同意）+ 展示的告知版本 + 附件 ID + 归因数据 + Turnstile 令牌 + Idempotency-Key
        │ POST /api/public/v1/form/forms/{key}/submissions
        ▼
 form 模块（同步）
@@ -1743,7 +1787,7 @@ form 模块（同步）
   9. 前端向 dataLayer 推送 generate_lead 事件
 异步
  10. inquiry 监听 FormSubmittedEvent：创建线索 → 去重 → 分配
- 11. inquiry 调用 NotificationApi：通知负责人；向客户发送对应语言的自动回复（仅 ACCEPT）
+ 11. inquiry 调用 NotificationApi：通知负责人；向客户发送对应语言的自动回复（仅 ACCEPT，含预计回复时间，见 17.7）
 ```
 
 ### 17.3 附件
@@ -1768,14 +1812,14 @@ form 模块（同步）
 
 ```text
 inq_inquiry
-├── id、tenant_id、site_id、no（如 INQ-20261006-0001）、type（INQUIRY / SAMPLE / DOWNLOAD / CONTACT）
+├── id、site_id、no（如 INQ-20261006-0001）、type（INQUIRY / SAMPLE / DOWNLOAD / CONTACT）
 ├── status、priority、owner_user_id、assigned_at、first_contacted_at、closed_at、close_reason
 ├── 联系人：name、email、phone、whatsapp、company、job_title、country、website
 ├── message、quantity_text、locale（客户提交时使用的语言）
 ├── submission_id、duplicate_of_id、spam_verdict、is_test
 ├── 归因：landing_url、referrer、utm_source / medium / campaign / term / content、gclid / msclkid / fbclid、
 │        first_touch（JSON）、last_touch（JSON）、viewed_content_ids、ip_country、device
-└── 同意：consent_version、consent_at
+└── 隐私：privacy_notice_version（展示的告知版本）、marketing_consent、marketing_consent_at（可空）
 
 inq_inquiry_item     inquiry_id、content_id、model_id、title_snapshot、model_no_snapshot、url_snapshot、quantity
 inq_activity         inquiry_id、kind（NOTE / STATUS / ASSIGN / EMAIL_SENT / CALL）、content、created_by、created_at
@@ -1802,7 +1846,8 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 - **分配规则**按优先级依次匹配。条件：国家或地区、询盘类型、产品分类（通过 `TaxonomyApi` 查询询盘明细中内容的分类）、语言、来源（utm_source）。负责人：指定用户，或销售组内轮询（跳过停用的成员）。都不匹配时使用站点的默认负责人。支持手动改派。
 - **去重**：同一邮箱（规范化后）7 天内再次提交时，仍创建新询盘，但通过 `duplicate_of_id` 关联，并分配给同一负责人，在详情页中合并展示时间线。
-- **SLA**：分配后超过 X 小时（站点配置，默认 24 小时）未进入 CONTACTED，提醒负责人与主管。
+- **SLA**：销售在中国时区，客户在欧美，因此 SLA 按工作时间计算：站点配置工作时区（如 `Asia/Shanghai`）、工作日与节假日（含调休补班日）；分配后超过 X 个工作小时（站点配置，默认 8 个工作小时，即 1 个工作日）未进入 CONTACTED，提醒负责人与主管。
+- **预计回复时间**：客户自动回复中告知预计回复时间（如“1 个工作日内”），文案随自动回复模板按语言维护（见 18）。
 
 ### 17.8 询价篮
 
@@ -1812,23 +1857,28 @@ CLOSED ──重新打开──▶ ASSIGNED
 ### 17.9 来源归因
 
 - Nuxt 插件在首次访问时记录首次触达：落地页、referrer、UTM、点击 ID（gclid / msclkid / fbclid）、时间；每次会话记录末次触达；会话内记录最近浏览的 10 个内容。
-- **遵循同意**：访客同意分析类 Cookie 后，首次触达写入第一方 Cookie（90 天）；未同意时只保存在 sessionStorage，并随表单提交。
+- **按地区遵循同意**（同意模式见 20.2）：明示同意地区，访客同意分析类 Cookie 后，首次触达才写入第一方 Cookie（90 天）；“告知 + 可退出”地区默认写入，访客退出分析类后删除；不能写入 Cookie 时只保存在 sessionStorage，并随表单提交。
 - 服务端校验并截断（URL ≤ 2048 个字符，UTM ≤ 200 个字符）。
-- IP 通过本地 GeoIP 数据库解析为国家；原始 IP 保留 30 天（用于反欺诈）后置空。
+- IP 通过本地 GeoIP 数据库解析为国家；原始 IP 保留 30 天（用于反欺诈）后置空；应用日志中的 IP 截断记录（IPv4 最后一段置零，IPv6 保留前 48 位，见 27.4）。
 
 ### 17.10 后台功能
 
 - 列表：按状态、负责人、类型、国家、来源、日期、产品筛选；批量分配、批量关闭。
 - 详情：联系人、明细、归因、附件、时间线、备注、状态操作；“复制邮箱 / mailto”并记录跟进活动（系统内直接发邮件属于 V2 的 CRM）。
 - 导出 xlsx：需要 `inquiry:inquiry:export` 权限，记录审计日志。
-- 报表：按来源 / 媒介 / 活动 / 落地页 / 国家 / 产品统计询盘数；首次响应时间。
+- 报表：按来源 / 媒介 / 活动 / 落地页 / 国家 / 产品统计询盘数；首次响应时间（按工作时间计算，见 17.7）。
 
 ### 17.11 隐私
 
-- 同意勾选框（可配置）的文本有版本号，询盘中保存 `consent_version` 与 `consent_at`。
+- **合法性基础**：处理询盘依据 GDPR 第 6 条第 1 款 (b) 项（应数据主体要求在订立合同前采取的步骤），**不需要强制勾选同意**。表单采用“隐私告知 + 可选的营销同意”：
+  - 隐私告知：只显示简短告知与隐私政策链接（指向站点的 Privacy Policy 页面，见 10.1）；告知文本有版本号，询盘保存 `privacy_notice_version`；
+  - 营销同意：单独的、默认不勾选的同意框；勾选时保存 `marketing_consent` 与 `marketing_consent_at`，同意文本的版本通过 `privacy_notice_version` 追溯（见 17.1）。
 - 保留期：REJECT 与垃圾询盘 30 天；已关闭的询盘按站点配置保留（默认 3 年）后匿名化；附件同步删除。
-- 数据主体请求工具：按邮箱查找，导出 JSON 或匿名化（替换联系字段，保留统计）。
+- **数据主体请求**：支持访问、更正、删除、可携带、反对；答复时限为 GDPR / UK GDPR 1 个月内、CCPA 45 天内。后台工具：
+  - 按邮箱跨站点查找；导出 JSON（访问、可携带）；更正联系字段；匿名化（删除：替换联系字段，保留统计）；反对：撤销营销同意；
+  - `sys_dsr_request`（系统级）记录请求、核验、处理与答复时间：type（ACCESS / RECTIFY / ERASE / PORTABILITY / OBJECT）、jurisdiction（GDPR / UK_GDPR / CCPA）、subject_email、received_at、due_at（按法域计算）、verified_at、verification_method、handled_by、completed_at、replied_at、status；临近 due_at 时提醒处理人。
 - 日志中脱敏 PII；按数据范围控制访问；导出操作记录审计日志。
+- 处理活动记录（ROPA）、子处理方清单与 DPA 见 26.8；待法务确认的事项（GDPR 第 27 条欧盟代表与英国代表、中国大陆销售人员访问欧盟个人数据、CCPA 是否适用、同意记录保留期限）见 32 章 Q13。
 
 ---
 
@@ -1843,15 +1893,16 @@ CLOSED ──重新打开──▶ ASSIGNED
 - **调用**：`NotificationApi.send(request)` 在调用方的事务中写入发件箱，由后台任务投递，确保“询盘保存成功就一定会发通知”。
 - **重试**：指数退避，最多 6 次；最终失败时告警（见 27.4）。
 - **模板**：使用会自动转义 HTML 的模板引擎；邮件外层布局带站点品牌；模块通过 `NotificationTemplateProvider` 注册默认模板，站点可以修改。
-- **邮件**：V1 使用 SMTP（兼容主流邮件服务）；发件域名必须配置 SPF、DKIM、DMARC（写入运维手册）；客户自动回复的 Reply-To 设为负责人邮箱。
+- **邮件**：V1 使用 SMTP（兼容主流邮件服务）；优先选择提供欧盟数据区域的服务商（如 SES 的欧盟区域、Mailgun EU、Brevo，见 2.4、ADR-015）；发件域名必须配置 SPF、DKIM、DMARC（写入运维手册）；客户自动回复的 Reply-To 设为负责人邮箱。
 - **Webhook**：按站点配置订阅的事件；请求带 HMAC 签名头并支持重试；可通过中间服务对接企业微信、飞书、Slack 等。
 - 【V2+】通过 `NotificationChannel` 扩展点增加 WhatsApp、企业微信、短信等渠道；退信处理。
+- 【V2+】营销邮件（Newsletter）需要双重确认（double opt-in，德国惯例），并符合 CAN-SPAM（每封邮件带退订链接与发件人实际地址）。
 
 ---
 
 ## 19. 站内搜索（Search）
 
-- **索引**：每个站点的每种语言一个 Meilisearch 索引。文档由各类型的 `SearchDocumentProvider` 在发布时根据快照构建：`id`、`type`、`title`、`summary`、`body_text`（去除标记，≤ 10,000 个字符）、`terms`（ID 与名称）、`attr.*`（分面字段）、`model_nos`、`url`、`cover`、`published_at`。
+- **索引**：每个站点的每种语言一个 Meilisearch 索引，索引名为 `s{site}_{locale}_content`（如 `s1_de_content`）。文档由各类型的 `SearchDocumentProvider` 在发布时根据快照构建：`id`、`type`、`title`、`summary`、`body_text`（去除标记，≤ 10,000 个字符）、`terms`（ID 与名称）、`attr.*`（分面字段）、`model_nos`、`url`、`cover`、`published_at`。
 - **配置**：
   - 搜索字段优先级：title > model_nos > summary > terms > body_text；
   - 型号字段关闭拼写容错；
@@ -1862,7 +1913,7 @@ CLOSED ──重新打开──▶ ASSIGNED
   - 分类落地页的产品筛选：SSR 首屏输出无筛选的默认列表，筛选在客户端通过公开搜索接口完成，URL 同步查询参数（索引规则见 14.3）。
 - **一致性**：事件驱动的增量更新（按 ID + 修订号幂等 upsert）；每晚做一次数量与哈希比对；提供全量重建命令。**Meilisearch 是可重建的读模型，不需要备份**。
 - **降级**：搜索服务不可用时，分类列表降级为基于 MySQL 投影的无分面列表；搜索页显示友好的错误提示。
-- **安全**：前台查询经后端代理，不暴露主密钥；【V2+】使用租户令牌让浏览器直连。
+- **安全**：前台查询经后端代理，不暴露主密钥；【V2+】使用 Meilisearch 签发的受限搜索令牌（限定索引与过滤条件、短期有效）让浏览器直连。
 
 ---
 
@@ -1870,18 +1921,29 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 ### 20.1 统计配置
 
-`trk_setting`（按站点）：GA4 Measurement ID、GTM 容器 ID、Google Ads 转化 ID、Meta Pixel ID、LinkedIn Partner ID、自定义脚本（head / body，按同意类别加载）。
+`trk_setting`（按站点）：统计服务商（GA4，或欧盟托管的 Matomo、Plausible 等）及其 Measurement ID 或站点地址、GTM 容器 ID、Google Ads 转化 ID、Meta Pixel ID、LinkedIn Partner ID、自定义脚本（head / body，按同意类别加载）。
 
+- **统计服务商可切换**：GA4 在欧盟的使用依赖 EU-US Data Privacy Framework；本模块通过配置支持切换到欧盟托管的统计工具（如 Matomo、Plausible），不写死 GA4；标准转化事件（见 20.3）按所选服务商的接口上报。
 - 使用 GTM 时，其他标签建议在 GTM 内管理，避免重复加载；本模块只负责注入 GTM、同意默认值与 dataLayer 事件。
 - 自定义脚本需要 `tracking:script:edit` 权限（开发者角色），修改时记录差异审计；CSP 白名单按已配置的服务商自动更新。
 
 ### 20.2 同意管理
 
 - Cookie 横幅组件（主题提供变体），分类：必要、偏好、分析、营销。
-- 按访客地区设置默认值：欧洲经济区、英国、瑞士默认需要明示同意；其他地区可配置。
-- 支持 Google Consent Mode v2（`ad_storage`、`analytics_storage`、`ad_user_data`、`ad_personalization`），需要同意的地区默认 `denied`。
-- 同意结果保存在第一方 Cookie 中（带版本号，有效期 6–12 个月）；隐私政策版本变化时重新征求；页脚提供“Cookie 设置”入口。
-- 也可以关闭内置横幅，改用第三方 CMP（如 Cookiebot、OneTrust）。
+- **按访客地区确定同意模式**：
+
+| 地区 | 模式 | 要求 |
+|---|---|---|
+| 欧洲经济区、英国、瑞士（GDPR、UK GDPR、ePrivacy） | 明示同意（opt-in） | 非必要 Cookie 必须事先同意后才加载；“全部拒绝”与“全部接受”同样显眼；类别不预先勾选；可随时撤回（页脚“Cookie 设置”） |
+| 美国（CCPA/CPRA 及其他州隐私法） | 告知 + 可退出（站点可配置为与欧盟相同的明示同意模式） | 横幅告知并提供退出入口；识别并遵守 Global Privacy Control（GPC）信号（浏览器端读取 `navigator.globalPrivacyControl`），视为退出营销类 Cookie（“出售 / 共享”）；页脚可配置 “Your Privacy Choices / Do Not Sell or Share My Personal Information” 链接，点击后退出营销类 Cookie |
+| 其他地区 | 可配置 | 选择明示同意或告知 + 可退出 |
+
+是否达到 CCPA 适用门槛由法务确认（见 32 章 Q13）；即使不适用，也按上表实现（B2B 联系人数据自 2023 年起不再豁免）。
+
+- **同意记录**（作为同意证明）：访客每次选择（接受、拒绝、修改、撤回）都通过公开接口（见 24.4）写入 `trk_consent_log`：site_id、consent_id（匿名同意 ID，与同意 Cookie 中的 ID 一致）、text_version（同意文本版本）、categories（选择的类别）、region（访客地区）、gpc（是否收到 GPC 信号）、created_at。保留期限由法务确认（默认 3 年，见 32 章 Q13）。
+- 支持 Google Consent Mode v2（`ad_storage`、`analytics_storage`、`ad_user_data`、`ad_personalization`）：欧洲经济区、英国、瑞士默认 `denied`；“告知 + 可退出”地区在访客退出或收到 GPC 信号时把对应项更新为 `denied`。
+- 同意结果保存在第一方 Cookie 中（带匿名同意 ID 与版本号，有效期 6–12 个月）；隐私政策或同意文本版本变化时重新征求；页脚提供“Cookie 设置”入口。
+- 也可以关闭内置横幅，改用第三方 CMP（如 Cookiebot、OneTrust）；此时同意记录与 GPC 由所选 CMP 负责，需确认其满足上述要求。
 
 ### 20.3 标准转化事件
 
@@ -1894,7 +1956,7 @@ CLOSED ──重新打开──▶ ASSIGNED
 | `search` | 站内搜索 | search_term |
 | `view_item` | 打开产品详情页（可选） | content_id、category |
 
-- 第三方脚本全部异步、延后加载，并且只在获得对应类别的同意后加载。
+- 第三方脚本全部异步、延后加载，并且只在获得对应类别的同意后加载（“告知 + 可退出”地区：访客未退出该类别时加载；收到 GPC 信号时不加载营销类）。
 - 【V2+】服务端 GTM，以及通过 GA4 Measurement Protocol 上报服务端转化。
 
 ---
@@ -2029,7 +2091,7 @@ registerContentTab({
 
 ### 22.6 网络访问
 
-后台与 Admin API 同源（`admin.example.com`，`/api/admin` 由反向代理转发），Cookie 使用 SameSite，无需 CORS。后台用户主要在中国大陆而服务器在海外时，后台静态资源走 CDN，接口响应尽量精简（见 27.1）。
+后台与 Admin API 同源（`admin.example.com`，`/api/admin` 由反向代理转发），Cookie 使用 SameSite，无需 CORS。源站在欧盟（见 ADR-015），后台用户主要在中国大陆，访问延迟较高：后台静态资源走 CDN，接口响应尽量精简，必要时使用加速线路（见 27.1；风险见 31）。
 
 ---
 
@@ -2145,6 +2207,7 @@ ContentPublishedEvent(contentId = 42)
 | `GET /api/public/v1/form/forms/{key}` | 表单定义（通常已内嵌在 resolve 结果中） |
 | `POST /api/public/v1/form/forms/{key}/submissions` | 提交表单 |
 | `POST /api/public/v1/form/attachments` | 上传表单附件 |
+| `POST /api/public/v1/tracking/consents` | 写入同意记录（见 20.2） |
 
 `resolve` 的响应示例：
 
@@ -2212,8 +2275,7 @@ ContentPublishedEvent(contentId = 42)
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | BIGINT | TSID（时间有序的 64 位 ID），由应用生成 |
-| `tenant_id` | BIGINT NOT NULL | 所有业务表都有 |
-| `site_id` | BIGINT | 站点级数据（绝大多数表） |
+| `site_id` | BIGINT | 站点级数据（绝大多数表）；全局表没有（见 25.7） |
 | `created_at` / `updated_at` | DATETIME(3) | UTC |
 | `created_by` / `updated_by` | BIGINT | 用户 ID；系统操作为 0 |
 | `version` | INT | 乐观锁（可编辑实体） |
@@ -2244,17 +2306,17 @@ ALTER TABLE frm_form
 - 使用 expand / contract 模式支持滚动发布：先加可空列并回填 → 下个版本再加约束或删除旧列。
 - 破坏性的数据变更需要 ADR。
 
-### 25.7 多租户过滤
+### 25.7 站点过滤
 
-- MyBatis-Plus 多租户拦截器自动追加 `tenant_id = ?`；站点过滤由自定义拦截器或显式条件完成。
-- 平台级表（如 `sys_tenant`）在豁免清单中。
-- 由租户隔离测试保证（见 28）。
+- 使用 MyBatis-Plus 行级拦截器（`TenantLineInnerInterceptor`，列名配置为 `site_id`），对站点级表自动追加 `site_id = ?`（取自请求上下文中的当前站点，见 5.2）。
+- 全局表（`sys_user`、`sys_user_mfa`、`sys_role`、`sys_permission`、`sys_module`、`sys_dsr_request`、系统级设置等）没有 site_id，在豁免清单中；`sys_audit_log` 带可空的 site_id，同样豁免；跨站点查询只允许系统管理接口。
+- 由站点隔离测试保证（见 28）。
 
 ### 25.8 V1 主要表
 
 | 模块 | 主要表 |
 |---|---|
-| core | `sys_tenant`、`sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_i18n_message`、`sys_dict`、`sys_audit_log`、`sys_job`、`sys_lock`、`event_publication` |
+| core | `sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_i18n_message`、`sys_dict`、`sys_audit_log`、`sys_dsr_request`、`sys_job`、`sys_lock`、`event_publication` |
 | content | `cnt_content`、`cnt_localization`、`cnt_revision`、`cnt_published_term`、`cnt_review`、`cnt_preview_token` |
 | url | `url_route`、`url_redirect`、`url_pattern`、`url_not_found` |
 | media | `mda_media`、`mda_media_localization`、`mda_folder`、`mda_usage` |
@@ -2268,7 +2330,7 @@ ALTER TABLE frm_form
 | navigation | `nav_menu`、`nav_item`、`nav_item_localization` |
 | seo | `seo_meta`、`seo_template`、`seo_link`、`seo_audit`、`seo_robots_rule` |
 | graph | `grh_relation`、`grh_relation_type`、`grh_config` |
-| tracking | `trk_setting`、`trk_script` |
+| tracking | `trk_setting`、`trk_script`、`trk_consent_log` |
 
 完整字段在《领域模型与数据库设计》中给出（附录 C）。
 
@@ -2277,7 +2339,6 @@ ALTER TABLE frm_form
 ```sql
 CREATE TABLE cnt_localization (
   id                      BIGINT        NOT NULL,
-  tenant_id               BIGINT        NOT NULL,
   site_id                 BIGINT        NOT NULL,
   content_id              BIGINT        NOT NULL,
   locale                  VARCHAR(16)   NOT NULL,
@@ -2308,14 +2369,13 @@ CREATE TABLE cnt_localization (
   updated_by              BIGINT        NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uk_cnt_loc_content_locale (content_id, locale),
-  KEY idx_cnt_loc_list (tenant_id, site_id, locale, publish_state, published_at),
+  KEY idx_cnt_loc_list (site_id, locale, publish_state, published_at),
   KEY idx_cnt_loc_schedule (scheduled_publish_at),
   KEY idx_cnt_loc_unschedule (scheduled_unpublish_at)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE cnt_revision (
   id               BIGINT        NOT NULL,
-  tenant_id        BIGINT        NOT NULL,
   site_id          BIGINT        NOT NULL,
   localization_id  BIGINT        NOT NULL,
   revision_no      INT           NOT NULL,
@@ -2330,7 +2390,6 @@ CREATE TABLE cnt_revision (
 
 CREATE TABLE url_redirect (
   id                      BIGINT         NOT NULL,
-  tenant_id               BIGINT         NOT NULL,
   site_id                 BIGINT         NOT NULL,
   source_path             VARCHAR(500)   COLLATE utf8mb4_0900_bin NOT NULL,
   match_type              VARCHAR(10)    NOT NULL DEFAULT 'EXACT' COMMENT 'EXACT / PREFIX / REGEX',
@@ -2353,7 +2412,6 @@ CREATE TABLE url_redirect (
 
 CREATE TABLE grh_relation (
   id                 BIGINT         NOT NULL,
-  tenant_id          BIGINT         NOT NULL,
   site_id            BIGINT         NOT NULL,
   source_content_id  BIGINT         NOT NULL,
   target_content_id  BIGINT         NOT NULL,
@@ -2427,7 +2485,7 @@ CREATE TABLE grh_relation (
 
 ### 26.5 审计
 
-- `sys_audit_log` 只追加：操作人、时间、IP、UA、模块、动作、目标类型与 ID、摘要、变更差异（敏感字段脱敏）。
+- `sys_audit_log` 只追加：操作人、时间、站点（系统级操作为空）、IP、UA、模块、动作、目标类型与 ID、摘要、变更差异（敏感字段脱敏）。
 - 覆盖：所有后台写操作、登录登出与失败、角色与权限变更、数据导出、脚本修改、模块启停、设置修改。
 - 默认保留 1 年（可配置）；后台提供筛选查看；应用内不能修改或删除。
 
@@ -2444,7 +2502,20 @@ CREATE TABLE grh_relation (
 
 ### 26.8 隐私
 
-建立个人信息清单（询盘联系人、IP、附件、后台用户）；数据最小化；保留期任务；数据主体请求工具（见 17.11）；与邮件服务商、CDN 等数据处理方签署 DPA。
+合规基线见 ADR-016（GDPR、UK GDPR、ePrivacy；CCPA/CPRA 等美国州隐私法）；数据驻留欧盟见 ADR-015。
+
+- **个人信息清单**：询盘联系人、IP、附件、后台用户、同意记录；数据最小化；保留期任务（询盘见 17.11；原始 IP 保留 30 天后置空，应用日志中 IP 截断，见 27.4）。
+- **同意记录**：Cookie 同意的证明保存在 `trk_consent_log`（匿名同意 ID、时间、同意文本版本、选择的类别、访客地区），保留期限由法务确认（默认 3 年）；同意管理与 GPC 见 20.2。
+- **数据主体请求**：支持访问、更正、删除、可携带、反对；GDPR 1 个月内答复，CCPA 45 天内答复；`sys_dsr_request` 记录请求、身份核验、处理与答复时间；后台工具见 17.11。
+- **上线前合规清单**：
+
+| 项 | 内容 |
+|---|---|
+| 处理活动记录（ROPA） | 处理目的、数据类别、合法性基础、保留期、接收方 |
+| 子处理方清单 | CDN、邮件服务商、Google、Sentry、云厂商等；记录数据区域与跨境传输依据 |
+| DPA | 与清单中的子处理方签署数据处理协议 |
+| 法律页面 | 每个站点的隐私政策、Cookie 政策、使用条款、Imprint（见 10.1、16.3） |
+| 法务待确认 | GDPR 第 27 条欧盟代表与英国代表；中国大陆销售人员访问欧盟个人数据的合规安排；CCPA 是否适用；同意记录保留期限（见 32 章 Q13）。系统设计中不下结论 |
 
 ---
 
@@ -2452,16 +2523,25 @@ CREATE TABLE grh_relation (
 
 ### 27.1 部署拓扑
 
-两种部署档位：
+自用，一次部署 = 一家企业，只有一套生产环境；另有 staging 与本地开发环境（见 27.2）。单机 Docker Compose 只用于本地开发与演示。
 
-| 档位 | 适用 | 组成 |
-|---|---|---|
-| 单机版 | 小客户、演示 | 一台主机上的 Docker Compose：Nuxt、后端、imgproxy、MySQL、Redis、Meilisearch、MinIO，前置 CDN |
-| 高可用版 | 正式客户 | 后端 × 2+、Nuxt × 2+、imgproxy × 1–2；托管 MySQL（主从 + 自动备份）、托管 Redis；Meilisearch 单节点 + 快照；S3 / R2 对象存储；前置 CDN + WAF |
+生产拓扑：
 
-- 区域：靠近目标市场（如欧洲选法兰克福，北美选美西或美东，东南亚选新加坡）。
-- 后台访问：后台用户主要在中国大陆时，后台静态资源走 CDN，API 响应精简；必要时使用加速线路（风险见 31）。
-- 面向中国大陆的站点需要国内云与 ICP 备案，不在 V1 范围内，但架构可以移植。
+| 组件 | 配置 |
+|---|---|
+| 后端 | × 2+（无状态，会话在 Redis） |
+| Nuxt | × 2+ |
+| imgproxy | × 1–2 |
+| MySQL | 托管服务（主从 + 自动备份） |
+| Redis | 托管服务 |
+| Meilisearch | 单节点 + 快照（可从数据库重建） |
+| 对象存储 | S3 兼容（如 S3、R2），公开桶与私有桶分离 |
+| 边缘 | 全球 CDN + WAF |
+
+- 区域：源站部署在**欧盟**（默认法兰克福，备选阿姆斯特丹、巴黎）；数据库、对象存储、备份全部在欧盟区域；全球 CDN（如 Cloudflare）覆盖欧美访客，美国访客由 CDN 边缘节点提供 HTML 与图片（见 ADR-015）。若美国流量远大于欧洲，可以评估美东源站，但需要处理欧盟 → 美国的数据传输（依赖通过 EU-US Data Privacy Framework 认证的服务商），见 32 章 Q15。
+- 第三方服务：优先选择提供欧盟数据区域的服务，如邮件服务（SES 的欧盟区域、Mailgun EU、Brevo）、Sentry（欧盟数据区域）、欧盟区域的托管数据库。
+- 后台访问：后台用户主要在中国大陆，访问欧盟源站延迟较高；后台静态资源走 CDN，API 响应精简；必要时使用加速线路（风险见 31）。
+- 未来如果需要为其他企业提供系统，采用一企业一实例独立部署（独立数据库与存储），见 ADR-009。
 
 ### 27.2 环境
 
@@ -2491,10 +2571,10 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 
 | 方面 | 设计 |
 |---|---|
-| 日志 | JSON 结构化；字段包含 traceId、spanId、tenantId、siteId、userId、module；PII 脱敏；汇总到 Loki 或 ELK；保留 30 天 |
+| 日志 | JSON 结构化；字段包含 traceId、spanId、siteId、userId、module；PII 脱敏；IP 截断（IPv4 最后一段置零，IPv6 保留前 48 位）；汇总到 Loki 或 ELK（部署在欧盟区域）；保留 30 天 |
 | 指标 | Micrometer → Prometheus：HTTP 请求量、错误率、延迟；JVM；连接池；缓存命中率；未完成事件；任务队列；通知失败；表单提交量与垃圾率；Delivery 延迟；Nuxt 渲染耗时 |
 | 链路追踪 | OpenTelemetry：Nuxt（Node）→ 后端，传递 `traceparent` |
-| 错误 | Sentry：后端、Nuxt 服务端与客户端、Admin |
+| 错误 | Sentry（欧盟数据区域）：后端、Nuxt 服务端与客户端、Admin |
 | 健康检查 | 后端 `/actuator/health/liveness`、`/readiness`（readiness 包含 DB、Redis；不包含 Meilisearch，其故障只算降级）；Nuxt `/__health` |
 
 告警：
@@ -2516,13 +2596,13 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 
 | 数据 | 方式 | 保留 |
 |---|---|---|
-| MySQL | 每日全量 + binlog 时间点恢复（RPO ≤ 15 分钟）；优先使用托管服务 | 30 天；每月快照保留 12 个月 |
-| 对象存储 | 开启版本控制；生产环境跨区域复制 | 旧版本保留 30 天 |
+| MySQL | 每日全量 + binlog 时间点恢复（RPO ≤ 15 分钟）；优先使用欧盟区域的托管服务 | 30 天；每月快照保留 12 个月 |
+| 对象存储 | 开启版本控制；生产环境复制到另一个欧盟区域 | 旧版本保留 30 天 |
 | Redis | 不备份（缓存与会话可以丢失，会话丢失只需重新登录） | — |
 | Meilisearch | 不备份，从数据库重建 | — |
 | 密钥与配置 | 密钥管理服务 | — |
 
-每季度在 staging 上做一次恢复演练。运维手册（`docs/runbooks/`）覆盖：数据库恢复、重建搜索索引、清除 CDN、轮换密钥、迁移失败的回滚。
+所有备份与副本都存放在欧盟区域（见 ADR-015）。每季度在 staging 上做一次恢复演练。运维手册（`docs/runbooks/`）覆盖：数据库恢复、重建搜索索引、清除 CDN、轮换密钥、迁移失败的回滚。
 
 ### 27.6 容量基线（单站，按假设 A4）
 
@@ -2545,7 +2625,7 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 | 架构 | Spring Modulith `verify()`、ArchUnit；前端 dependency-cruiser | 依赖方向、跨模块访问、包结构 | 必须通过 |
 | 模块集成 | `@ApplicationModuleTest` + Testcontainers（MySQL、Redis、Meilisearch） | 单个模块 + 事件场景（Scenario API） | 必须通过 |
 | 契约 | OpenAPI 快照 + oasdiff；组件 Schema 校验 | API 与 Schema 不被无意破坏 | 必须通过 |
-| 租户隔离 | 专用测试套件 | 准备两个租户的数据，遍历后台接口验证不越权 | 必须通过 |
+| 站点隔离 | 专用测试套件 | 准备两个站点的数据，以及只在其中一个站点拥有角色的用户，遍历后台接口，验证不能越权读写另一个站点的数据 | 必须通过 |
 | 组件视觉 | Playwright 截图 `/__gallery` | 组件 × 变体 × 断点 × 主题 | 差异需人工确认 |
 | E2E | Playwright | 场景 S1–S10 | staging 必须通过 |
 | SEO | 自研爬取检查脚本（`tools/seo-check`） | 全站状态码、canonical、hreflang 互链、JSON-LD 校验、不执行 JS 时的内容、重定向链 | staging 必须通过 |
@@ -2656,12 +2736,12 @@ b2b-platform/
 
 | 里程碑 | 目标 | 主要交付 | 验收 |
 |---|---|---|---|
-| **M0 工程底座** | 可持续开发的骨架 | Monorepo；Maven 多模块与 platform-api 骨架；模块管理器（描述符、依赖校验、迁移、启用开关）；扩展点注册表；事件（Modulith）；租户 / 站点上下文；OpenAPI → TS；Nuxt 与 Admin 骨架；Docker Compose；CI 全部门禁；版本兼容验证（ADR-011） | 示例模块违反边界时 CI 失败；按模板新建一个模块并接入 ≤ 1 小时 |
+| **M0 工程底座** | 可持续开发的骨架 | Monorepo；Maven 多模块与 platform-api 骨架；模块管理器（描述符、依赖校验、迁移、启用开关）；扩展点注册表；事件（Modulith）；站点上下文；OpenAPI → TS；Nuxt 与 Admin 骨架；Docker Compose；CI 全部门禁；版本兼容验证（ADR-011） | 示例模块违反边界时 CI 失败；按模板新建一个模块并接入 ≤ 1 小时 |
 | **M1 最小闭环** | 打通“内容 → SEO → 询盘” | 用户、角色、2FA、审计；内容内核（本地化、修订、发布、预览）；URL（路由、自动 301）；媒体（上传、图片变换）；分类体系；产品（基础字段与属性）；SEO（Meta 自动生成与覆盖、canonical、hreflang、Product / Breadcrumb / Organization JSON-LD）；Delivery；Nuxt SSR + 基础主题（产品模板）；表单 + 询盘 + Turnstile + 邮件通知 + 归因 | S1、S2、S4（不含 GA4） |
 | **M2 页面与设计系统** | 运营可以自主搭建页面 | Design Token；主题（≥ 20 个组件）；模板与插槽；页面编辑器（iframe 画布）；全局区块；导航；站点资料；文章、案例、FAQ；审核；定时发布；回滚；Cache Tag + CDN 清除 | S3、S10 |
-| **M3 SEO 与获客完善** | SEO 引擎完整，转化可追踪 | Sitemap（含图片与 hreflang）；robots；IndexNow；链接索引；Content Graph（人工 + 规则评分）；相关内容；SEO 健康；重定向导入；404 日志；追踪与同意；询盘分配规则、去重、SLA、报表；下载留资；询价篮 | S5、S7、S8、S9；Lighthouse 预算达标 |
+| **M3 SEO 与获客完善** | SEO 引擎完整，转化可追踪 | Sitemap（含图片与 hreflang）；robots；IndexNow；链接索引；Content Graph（人工 + 规则评分）；相关内容；SEO 健康；重定向导入；404 日志；追踪与同意（含 GPC、同意记录、法律页面）；询盘分配规则、去重、SLA、报表；下载留资；询价篮 | S5、S7、S8、S9；Lighthouse 预算达标 |
 | **M4 规模化运营** | 支撑大量内容与上线 | 产品 Excel 导入导出；型号表；站内搜索与分面筛选；翻译工作流（过期检测）；完善数据范围；隐私工具（数据主体请求、保留期）；性能与安全加固；上线运维手册 | S6；安全扫描无高危；备份恢复演练通过 |
-| **M5（V2）** | 扩展能力 | AI（翻译、SEO 建议、语义相似、垃圾识别）；CRM；报价；WhatsApp；Newsletter；Analytics；多主题；SaaS 化 | 按各模块的需求文档 |
+| **M5（V2）** | 扩展能力 | AI（翻译、SEO 建议、语义相似、垃圾识别）；CRM；报价；WhatsApp；Newsletter；Analytics；多主题 | 按各模块的需求文档 |
 
 关键调整（相对 V1.0）：**多语言、Nuxt 前台、URL 引擎全部提前到 M1；插件系统降级为编译期模块 + 启用开关；先在 M1 用 PRODUCT 一种类型验证“快照 + 投影”模型，M2 再扩展到其他类型**。
 
@@ -2681,10 +2761,10 @@ b2b-platform/
 | 多语言内容维护成本高 | 高 | 中 | 翻译状态与过期检测；【V2】机器翻译初稿 |
 | 询盘通知失败导致丢单 | 低 | 高 | 通知发件箱 + 重试 + 告警；每日合成测试询盘 |
 | 垃圾询盘泛滥 | 中 | 中 | 多层反垃圾 + 待审区 + 可调整的规则 |
-| 服务器在海外，国内访问后台慢 | 中 | 中 | 后台静态资源走 CDN；接口精简；必要时使用加速线路 |
+| 源站在欧盟，国内访问后台慢 | 中 | 中 | 后台静态资源走 CDN；接口精简；必要时使用加速线路 |
 | Meilisearch 故障 | 低 | 中 | 可以重建；列表降级到 MySQL |
 | 第三方依赖版本不兼容 | 中 | 中 | M0 做版本验证并锁定；Renovate 渐进升级 |
-| 隐私合规风险 | 中 | 高 | 同意管理、保留期、数据主体请求工具；上线前的合规检查清单 |
+| 隐私合规风险 | 中 | 高 | 同意管理、同意记录、GPC、保留期、数据主体请求工具；法务评审（Q13）；上线前的合规检查清单（见 26.8） |
 
 ---
 
@@ -2692,10 +2772,10 @@ b2b-platform/
 
 | # | 问题 | 影响 |
 |---|---|---|
-| Q1 | 产品形态：自用、服务商为多客户交付，还是 SaaS？（对应假设 A1） | 租户、部署、计费 |
-| Q2 | 首批站点的目标市场与语言清单？是否有 RTL 语言？ | 5、11 |
-| Q3 | 云厂商、部署区域、CDN 的选择？ | 27 |
-| Q4 | 首批客户的产品规模与属性复杂度？是否需要型号表？ | 8 |
+| Q1 | 产品形态（对应假设 A1）？**已确认：自用**。一家企业，可以有多个品牌站或国家站；不做 SaaS，不为其他企业交付；站点为最高隔离单位（见 ADR-009） | 3、5、25、27 |
+| Q2 | 首批语种清单（建议 en、de、fr、es、it）？ | 5、11 |
+| Q3 | 云厂商与 CDN 的选择（区域已定为欧盟）？ | 27 |
+| Q4 | 首批站点的产品规模与属性复杂度？是否需要型号表？ | 8 |
 | Q5 | 是否有旧站需要迁移？旧站使用什么平台（如 WordPress）？ | 8.6、13.5 |
 | Q6 | V1 是否需要在系统内直接给客户发邮件？ | 17 |
 | Q7 | 销售团队结构与分配规则？ | 17.7 |
@@ -2703,7 +2783,10 @@ b2b-platform/
 | Q9 | V1 唯一主题的设计方向与设计稿由谁提供？ | 11 |
 | Q10 | 邮件服务商？是否已有 GA4 / GTM 账号？ | 18、20 |
 | Q11 | 团队规模与技能（是否有专职前端与设计师）？ | 30 |
-| Q12 | 是否确认“自研”（ADR-000）？ | 全局 |
+| Q12 | 是否确认“自研”（ADR-000）？**已确认：自研**（ADR-000 为 Accepted） | 全局 |
+| Q13 | 法务确认：是否需要 GDPR 第 27 条欧盟代表与英国代表？中国大陆销售人员访问欧盟个人数据的合规安排？CCPA 是否适用？同意记录保留期限？ | 17、20、26 |
+| Q14 | Imprint 所需的公司法定信息（法定名称、注册号、增值税号、代表人）？ | 16.3 |
+| Q15 | 欧洲与美国的流量占比？是否需要美国源站？ | 27、ADR-015 |
 
 ---
 
@@ -2716,6 +2799,7 @@ b2b-platform/
 
 ## 核心架构
 - 模块化单体：编译期模块 + 站点级启用开关（不做热插拔）
+- 站点是最高隔离单位：站点级数据必须带 site_id 过滤（行级拦截器自动追加；全局表列入豁免清单）
 - 模块通信只有三种：platform-api 中的服务接口、领域事件、扩展点
 - 内容内核：Content + Localization + Revision；发布生成不可变快照与只读投影
 - 前台只读发布态数据（快照与投影），永远不读草稿
@@ -2757,11 +2841,11 @@ b2b-platform/
 
 ## 附录 B：ADR 索引
 
-M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态均为 Proposed，评审通过后改为 Accepted。
+M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态除 ADR-000 为 Accepted 外均为 Proposed，评审通过后改为 Accepted。
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
-| ADR-000 | `docs/adr/0000-build-vs-buy.md` | 自研还是基于现有 Headless CMS |
+| ADR-000 | `docs/adr/0000-build-vs-buy.md` | 自研还是基于现有 Headless CMS（Accepted：自研） |
 | ADR-001 | `docs/adr/0001-compile-time-modules.md` | 编译期模块 + 运行时启用开关 |
 | ADR-002 | `docs/adr/0002-module-communication.md` | 公开 API、事件、扩展点；契约集中在 platform-api |
 | ADR-003 | `docs/adr/0003-event-reliability.md` | 事务后投递 + Event Publication Registry |
@@ -2770,12 +2854,14 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态均为 Propos
 | ADR-006 | `docs/adr/0006-template-and-page-builder.md` | 模板 + 插槽与页面搭建两种模式 |
 | ADR-007 | `docs/adr/0007-editor-canvas-iframe.md` | 编辑器画布使用 iframe |
 | ADR-008 | `docs/adr/0008-seo-data-ownership.md` | SEO 数据归属与自动值 / 覆盖值 |
-| ADR-009 | `docs/adr/0009-tenant-site-locale.md` | 租户 → 站点 → 语言与隔离 |
+| ADR-009 | `docs/adr/0009-site-and-locale.md` | 站点与语言模型（不设租户层） |
 | ADR-010 | `docs/adr/0010-admin-authentication.md` | 后台认证方案 |
 | ADR-011 | `docs/adr/0011-technology-versions.md` | 技术版本锁定 |
 | ADR-012 | `docs/adr/0012-cache-tags.md` | 两级缓存与 Cache Tag |
 | ADR-013 | `docs/adr/0013-search-read-model.md` | Meilisearch 作为搜索读模型 |
 | ADR-014 | `docs/adr/0014-id-strategy.md` | TSID 与字符串序列化 |
+| ADR-015 | `docs/adr/0015-hosting-region-and-data-residency.md` | 部署区域与数据驻留：源站与数据在欧盟，全球 CDN |
+| ADR-016 | `docs/adr/0016-privacy-compliance-baseline.md` | 隐私合规基线：GDPR / UK GDPR / ePrivacy + CCPA/CPRA |
 
 ---
 
