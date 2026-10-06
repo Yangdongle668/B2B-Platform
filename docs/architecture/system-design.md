@@ -127,8 +127,8 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 
 | 确认事项 | 主要影响 | 涉及章节 |
 |---|---|---|
-| 自用 | 去掉租户层，站点为最高隔离单位；用户全局唯一，角色按站点分配；单套生产环境；未来多企业采用一企业一实例 | 0、1、2.5、3、4、5、6、12、19、22、25、26、27、28、30、32、附录 B |
-| 欧美为主 | 首批语种建议；欧盟部署与数据驻留；GDPR / UK GDPR / ePrivacy / CCPA 合规基线；询盘改为隐私告知 + 可选的营销同意；法律页面；双单位显示；德语 slug 音译；Google 与 Bing | 0、1、2、5、8、11、13、14、16、17、18、20、26、27、30、31、32、附录 B |
+| 自用 | 去掉租户层，站点为最高隔离单位；用户全局唯一，角色按站点分配；单套生产环境；未来多企业采用一企业一实例 | 0、1、2.4、2.5、3、4、5、6、12、19、22、25、26、27、28、30、32、附录 A、附录 B |
+| 欧美为主 | 首批语种建议；欧盟部署与数据驻留；GDPR / UK GDPR / ePrivacy / CCPA 合规基线；询盘改为隐私告知 + 可选的营销同意；法律页面；双单位显示；德语 slug 音译；Google 与 Bing | 0、1、2、3、5、8、10、11、12、13、14、16、17、18、20、22、24、25、26、27、30、31、32、附录 B |
 | 自研 | ADR-000 确认（Accepted） | 2.5、32、附录 B |
 
 ---
@@ -182,7 +182,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 
 **V1 包含（In Scope）**
 
-- **平台**：站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典。
+- **平台**：站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典；数据主体请求工具与保留期任务。
 - **内容**：内容内核（多语言、修订、发布、定时发布、预览、回滚、回收站、单级审核）；分类体系；产品；文章（新闻、博客、案例、FAQ）；页面；产品属性双单位显示（公制 + 英制）。
 - **呈现**：Design Token；1 套主题（≥ 20 个组件，每个 2–3 个变体）；模板；页面编辑器（Section 级）；全局区块；导航；站点资料；法律页面（隐私政策、Cookie 政策、条款、Imprint）。
 - **媒体**：上传、文件夹、多语言 alt、图片变换（WebP/AVIF/响应式）、引用追踪、私有文件。
@@ -224,7 +224,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | | 后台 | 99.5% |
 | 数据 | 备份 | RPO ≤ 15 分钟，RTO ≤ 4 小时，每季度做一次恢复演练 |
 | 安全 | 标准 | OWASP ASVS Level 2；后台高权限账号强制 2FA |
-| 合规 | 隐私 | GDPR、UK GDPR、ePrivacy（Cookie 事先同意）；CCPA/CPRA 等美国州隐私法（GPC、退出“出售 / 共享”）；数据驻留欧盟；数据主体请求按法定时限处理 |
+| 合规 | 隐私 | GDPR、UK GDPR、ePrivacy（Cookie 事先同意；英国为 PECR）；CCPA/CPRA 等美国州隐私法（GPC、退出“出售 / 共享”）；加拿大（PIPEDA、魁北克第 25 号法律、CASL）的要求由法务确认；数据驻留欧盟（设计决策：数据库、对象存储、备份存放在欧盟，见 ADR-015；经全球 CDN 的传输、美国服务商的处理以及中国大陆员工的访问是否构成跨境传输、需要何种传输机制，由法务确认，见 32 章 Q13）；数据主体请求按法定时限处理 |
 | 无障碍 | 前台 | WCAG 2.2 AA；提供无障碍声明页。欧洲无障碍法案（EAA）自 2025-06-28 起适用，主要针对面向消费者的产品与服务，B2B 站点是否适用由法务确认；美国存在基于 ADA 的网站无障碍诉讼风险 |
 | 兼容性 | 前台 | 主流浏览器最新两个版本、iOS Safari 16+；后台：Chrome / Edge / Safari 最新两个版本 |
 | SEO | 抓取 | 所有可索引页面无需执行 JS 即可获得主要内容、链接与结构化数据 |
@@ -303,7 +303,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
           └──────┬──────────────┬──────────────┬──────────────┬──────────────┘
                  ▼              ▼              ▼              ▼
              MySQL 8.4       Redis 7       Meilisearch     对象存储（S3 兼容）
-           （主 + 从/托管）  （缓存、会话、  （搜索读模型，   （公开桶、私有桶）
+           （托管，主从）    （缓存、会话、  （搜索读模型，   （公开桶、私有桶）
                              限流、锁）      可重建）
 ```
 
@@ -321,7 +321,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 |---|---|---|
 | 后端运行时 | JDK 25 LTS（最低 21） | 使用虚拟线程处理 I/O 密集任务（数据源并行解析、通知发送） |
 | 后端框架 | Spring Boot 4.x + Spring Modulith 2.x | Modulith 负责模块边界验证、事件发布登记（Outbox）、模块集成测试 |
-| 持久层 | MyBatis-Plus | SQL 可控，团队熟悉；行级拦截器（TenantLineInnerInterceptor，列名配置为 `site_id`）用于站点过滤（见 25.7） |
+| 持久层 | MyBatis-Plus | SQL 可控，团队熟悉；行级拦截器（`TenantLineInnerInterceptor`，列名配置为 `site_id`）用于站点过滤（见 25.7） |
 | 数据库 | MySQL 8.4 LTS | JSON 列保存快照、布局文档与设置；生产使用欧盟区域的托管服务 |
 | 数据库迁移 | Flyway（每个模块独立的 history 表） | 由模块管理器按依赖顺序执行（见 3.6） |
 | 缓存 / 会话 / 限流 | Redis 7（或兼容的 Valkey）+ Spring Session + Bucket4j | |
@@ -368,7 +368,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 013 | 搜索 | Meilisearch 作为发布态读模型，负责搜索与分面；可以从数据库全量重建 |
 | 014 | ID | 64 位 TSID（时间有序），在 JSON 中序列化为字符串 |
 | 015 | 部署区域与数据驻留 | 源站与数据（数据库、对象存储、备份）在欧盟（默认法兰克福），全球 CDN 覆盖欧美访客；第三方服务优先选择欧盟数据区域 |
-| 016 | 隐私合规基线 | GDPR / UK GDPR / ePrivacy + CCPA/CPRA：非必要 Cookie 事先同意并保存同意记录；识别 GPC；询盘以订立合同前的步骤为合法性基础，不强制勾选同意，营销同意单独勾选；数据主体请求按法定时限处理 |
+| 016 | 隐私合规基线 | GDPR / UK GDPR / ePrivacy（英国为 PECR）+ CCPA/CPRA：非必要 Cookie 事先同意并保存同意记录；识别 GPC；询盘的合法性基础（订立合同前的步骤或正当利益）由法务确认，不强制勾选同意，营销同意单独勾选；数据主体请求按法定时限处理 |
 
 ---
 
@@ -515,7 +515,7 @@ backend/modules/product/
                                               UPGRADING ──成功──▶ INSTALLED(vY)
                                                    └─失败─▶ FAILED（阻止启动，保留现场）
 （构建中移除了模块）──▶ MISSING：数据保留，相关引用降级处理
-（管理员显式执行，且所有站点均已停用）──▶ PURGED：删除模块数据（需二次确认 + 先备份）
+（系统管理员显式执行，且所有站点均已停用）──▶ PURGED：删除模块数据（需二次确认 + 先备份）
 ```
 
 **站点级状态**：`ENABLED` / `DISABLED`，保存在 `sys_site_module`。核心模块（`disableable = false`）不能停用。
@@ -596,6 +596,7 @@ V1 扩展点清单：
 | `MediaReferenceCollector` | 收集内容引用的媒体，用于引用追踪 | product、article、page、seo、core | media |
 | `ContentVariantProvider` | 提供内容下可选择的子项（如产品型号），用于询价篮与询盘明细 | product | inquiry |
 | `NotificationTemplateProvider` | 注册默认通知模板 | inquiry、content | notification |
+| `PersonalDataProvider` | 数据主体请求：按邮箱查找、导出、更正、匿名化本模块保存的个人数据 | inquiry、form、notification | core（数据主体请求工具） |
 
 ### 3.8 模块停用时的行为
 
@@ -1065,7 +1066,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 
 系统内容使用模板，保证上万个产品页结构一致、可批量升级；营销页使用页面编辑器，保证灵活。两者使用同一套组件与布局文档格式。
 
-**法律页面**（每个站点必备）：隐私政策（Privacy Policy）、Cookie 政策（Cookie Policy）、使用条款（Terms of Use）、Imprint（德语 Impressum；面向德国、奥地利时属于法律要求）、无障碍声明（Accessibility Statement，可选，见 11.5）。实现方式：PAGE + `legal` 模板（以正文为主的简洁版式）；Imprint 的正文由站点资料中的法定信息字段自动生成（见 16.3），不手工维护。
+**法律页面**（每个站点必备）：隐私政策（Privacy Policy）、Cookie 政策（Cookie Policy）、使用条款（Terms of Use）、Imprint（德语 Impressum；面向德国、奥地利时通常属于法律要求，适用范围与必填字段由法务确认，见 32 章 Q14）、无障碍声明（Accessibility Statement，可选，见 11.5）。实现方式：PAGE + `legal` 模板（以正文为主的简洁版式）；Imprint 的正文由站点资料中的法定信息字段自动生成（见 16.3），不手工维护。
 
 ### 10.2 模板定义
 
@@ -1395,7 +1396,7 @@ Admin 上传（V1 经后端流式上传，单文件 ≤ 50 MB；【V2+】大文�
 
 ### 12.4 视频
 
-- 推荐使用 YouTube / Vimeo，并采用“外观占位”方式：先显示缩略图，点击后才加载 iframe（兼顾性能与隐私同意，YouTube 使用 nocookie 域名）。
+- 推荐使用 YouTube / Vimeo，并采用“外观占位”方式：缩略图自托管（存入媒体库），页面加载时不请求第三方；点击后才加载 iframe。明示同意地区在点击前提示“将加载第三方内容并向其传输数据”，或要求访客已同意对应类别，具体由法务确认。YouTube 仍使用 nocookie 域名，但它只能减少播放前的 Cookie，不能代替同意。`embed` 组件同样适用。
 - 自托管 MP4（≤ 50 MB）只用于静音循环的背景视频，必须提供封面图。
 - 视频组件输出 `VideoObject` 结构化数据。
 
@@ -1511,8 +1512,8 @@ public interface ObjectStorage {
 | 预览与编辑器 | `noindex, nofollow` + `Cache-Control: no-store` |
 | 站内搜索结果页 | `noindex, follow`（不在 robots.txt 中屏蔽，以便爬虫读到 noindex） |
 | 列表分页 `?page=2` | canonical 指向自身，可以索引（不 canonical 到第 1 页） |
-| 带单个筛选参数的列表 | `noindex, follow`，canonical 指向不带筛选的列表；有价值的筛选组合应建成 TERM_PAGE 或 PAGE |
-| 带多个筛选或排序参数 | `noindex, follow`，筛选链接加 `rel="nofollow"`，避免爬虫陷阱 |
+| 带单个筛选参数的列表 | `noindex, follow`，canonical 指向自身（保留筛选参数；不同时使用 noindex 与指向其他 URL 的 canonical，Google 视为相互矛盾的信号）；有价值的筛选组合应建成 TERM_PAGE 或 PAGE |
+| 带多个筛选或排序参数 | `noindex, follow`，canonical 同样指向自身；筛选链接加 `rel="nofollow"`，避免爬虫陷阱 |
 | 询盘成功页、下载门控页 | `noindex` |
 | 公开的 PDF 附件 | 可以索引；留资文档没有直接 URL |
 | 未翻译的语言 | 页面不存在（404），不输出该语言的 hreflang |
@@ -1737,7 +1738,7 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 | 分组 | 字段 |
 |---|---|
 | 基本信息 | 公司名称、Logo（浅色 / 深色）、favicon 与应用图标、地址（可多个）、电话、邮箱、WhatsApp、社交账号、营业时间、成立年份 |
-| 法定信息 | 法定名称、注册地址、代表人、公司注册号、增值税号（VAT ID）、联系方式（用于 Imprint 的邮箱与电话） |
+| 法定信息 | 法定名称（含法律形式，如 GmbH / Ltd.）、注册地址（可送达地址）、授权代表人、登记机关（如商业登记法院）与注册号、增值税号（VAT ID）、联系方式（可快速电子联系的邮箱，以及电话等第二联系渠道）、监管机关（经营活动需要许可时）、内容负责人（站点含新闻、博客等编辑内容时） |
 
 - 文本类字段可以按语言覆盖。
 - 法定信息用于自动生成 Imprint 页面（见 10.1）；具体内容待确认（见 32 章 Q14）。
@@ -1760,7 +1761,8 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 |---|---|
 | `frm_form` | site_id、key、purpose（INQUIRY / SAMPLE / DOWNLOAD / CONTACT / CUSTOM；【V2+】NEWSLETTER）、status、fields（JSON）、settings（JSON：反垃圾、附件、成功动作、是否显示营销同意框、常用国家、Turnstile） |
 | `frm_form_localization` | form_id、locale、labels（JSON）、success_message、privacy_notice_text（简短告知，含隐私政策链接）、marketing_consent_text、privacy_notice_version（两段文本任一修改时递增） |
-| `frm_submission` | site_id、form_id、locale、payload（JSON）、attachment_ids、attribution（JSON）、spam_score、spam_verdict（ACCEPT / QUARANTINE / REJECT）、ip、ip_country、user_agent、created_at |
+| `frm_form_notice_version` | form_id、locale、version、privacy_notice_text、marketing_consent_text、created_at；每个版本一条（含当前版本），告知或营销同意文本修改时追加，只追加不修改，用于追溯同意文本 |
+| `frm_submission` | site_id、form_id、locale、payload（JSON）、attachment_ids、attribution（JSON）、privacy_notice_version（展示的告知版本）、marketing_consent、marketing_consent_at（可空）、gpc、opt_out_sale_share、spam_score、spam_verdict（ACCEPT / QUARANTINE / REJECT）、ip、ip_country、user_agent、created_at |
 
 - 字段类型：文本、邮箱、电话（带国家区号，用 libphonenumber 校验，按 E.164 格式保存，如 `+4930123456`）、多行文本、单选、多选、国家（ISO 列表，按语言显示）、数字、勾选、附件、隐藏字段（上下文）、产品选择（由询价篮或当前产品自动填充）。
 - 标准字段 key（映射到询盘）：`name`、`email`、`phone`、`company`、`country`、`job_title`、`message`、`quantity`、`website`。
@@ -1774,7 +1776,7 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 访客在 Nuxt 中打开带表单的页面
   1. 表单组件获取 formToken（签名：formKey、渲染时间、站点），用于最短填写时间校验与防重放；
      同时返回访客 IP 所在国家，用于预选国家字段
-  2. 提交：字段（含可选的营销同意）+ 展示的告知版本 + 附件 ID + 归因数据 + Turnstile 令牌 + Idempotency-Key
+  2. 提交：字段（含可选的营销同意）+ 展示的告知版本 + GPC 与退出“出售 / 共享”状态 + 附件 ID + 归因数据 + Turnstile 令牌 + Idempotency-Key
        │ POST /api/public/v1/form/forms/{key}/submissions
        ▼
 form 模块（同步）
@@ -1786,7 +1788,7 @@ form 模块（同步）
   8. 返回 201 与成功动作；DOWNLOAD 类型（非 REJECT）同时返回签名下载链接
   9. 前端向 dataLayer 推送 generate_lead 事件
 异步
- 10. inquiry 监听 FormSubmittedEvent：创建线索 → 去重 → 分配
+ 10. inquiry 监听 FormSubmittedEvent：创建线索（从提交记录复制隐私字段到 inq_inquiry）→ 去重 → 分配
  11. inquiry 调用 NotificationApi：通知负责人；向客户发送对应语言的自动回复（仅 ACCEPT，含预计回复时间，见 17.7）
 ```
 
@@ -1819,7 +1821,7 @@ inq_inquiry
 ├── submission_id、duplicate_of_id、spam_verdict、is_test
 ├── 归因：landing_url、referrer、utm_source / medium / campaign / term / content、gclid / msclkid / fbclid、
 │        first_touch（JSON）、last_touch（JSON）、viewed_content_ids、ip_country、device
-└── 隐私：privacy_notice_version（展示的告知版本）、marketing_consent、marketing_consent_at（可空）
+└── 隐私：privacy_notice_version（展示的告知版本）、marketing_consent、marketing_consent_at（可空）、gpc、opt_out_sale_share
 
 inq_inquiry_item     inquiry_id、content_id、model_id、title_snapshot、model_no_snapshot、url_snapshot、quantity
 inq_activity         inquiry_id、kind（NOTE / STATUS / ASSIGN / EMAIL_SENT / CALL）、content、created_by、created_at
@@ -1857,7 +1859,10 @@ CLOSED ──重新打开──▶ ASSIGNED
 ### 17.9 来源归因
 
 - Nuxt 插件在首次访问时记录首次触达：落地页、referrer、UTM、点击 ID（gclid / msclkid / fbclid）、时间；每次会话记录末次触达；会话内记录最近浏览的 10 个内容。
-- **按地区遵循同意**（同意模式见 20.2）：明示同意地区，访客同意分析类 Cookie 后，首次触达才写入第一方 Cookie（90 天）；“告知 + 可退出”地区默认写入，访客退出分析类后删除；不能写入 Cookie 时只保存在 sessionStorage，并随表单提交。
+- **按地区遵循同意**（同意模式见 20.2；未获同意时的具体做法由法务确认）：
+  - 明示同意地区：访客同意相应类别之前，不在 Cookie、localStorage、sessionStorage 中写入归因数据（ePrivacy 对这些存储方式同样适用）；只在当前页面的内存中保留本页的落地页、referrer 与 UTM，随表单提交；访客同意分析类后，才写入首次触达（第一方 Cookie，90 天）以及末次触达与浏览记录（会话内）。
+  - “告知 + 可退出”地区：默认写入，访客退出分析类后删除。
+  - 点击 ID（gclid / msclkid / fbclid）属于广告标识，归入营销类：明示同意地区只在访客同意营销类后保存；“告知 + 可退出”地区在访客退出营销类或收到 GPC 信号时删除。
 - 服务端校验并截断（URL ≤ 2048 个字符，UTM ≤ 200 个字符）。
 - IP 通过本地 GeoIP 数据库解析为国家；原始 IP 保留 30 天（用于反欺诈）后置空；应用日志中的 IP 截断记录（IPv4 最后一段置零，IPv6 保留前 48 位，见 27.4）。
 
@@ -1870,15 +1875,18 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 ### 17.11 隐私
 
-- **合法性基础**：处理询盘依据 GDPR 第 6 条第 1 款 (b) 项（应数据主体要求在订立合同前采取的步骤），**不需要强制勾选同意**。表单采用“隐私告知 + 可选的营销同意”：
+- **合法性基础**（由法务确认，见 32 章 Q13）：询价人本人为合同一方时，回复询盘通常可依据 GDPR 第 6 条第 1 款 (b) 项（应数据主体要求在订立合同前采取的步骤）；询价人代表所在企业时，通常依据第 6 条第 1 款 (f) 项（正当利益）。下载留资（DOWNLOAD）与一般联系（CONTACT）线索的后续跟进通常不属于订立合同前的步骤，其依据由法务确认。无论采用哪种依据，都**不需要强制勾选同意**；向线索主动发送推广邮件须遵守 ePrivacy 各国转化法（各国对企业间推广邮件的要求不同，如德国同样要求事先同意），以 `marketing_consent` 为准。表单采用“隐私告知 + 可选的营销同意”：
   - 隐私告知：只显示简短告知与隐私政策链接（指向站点的 Privacy Policy 页面，见 10.1）；告知文本有版本号，询盘保存 `privacy_notice_version`；
-  - 营销同意：单独的、默认不勾选的同意框；勾选时保存 `marketing_consent` 与 `marketing_consent_at`，同意文本的版本通过 `privacy_notice_version` 追溯（见 17.1）。
-- 保留期：REJECT 与垃圾询盘 30 天；已关闭的询盘按站点配置保留（默认 3 年）后匿名化；附件同步删除。
-- **数据主体请求**：支持访问、更正、删除、可携带、反对；答复时限为 GDPR / UK GDPR 1 个月内、CCPA 45 天内。后台工具：
-  - 按邮箱跨站点查找；导出 JSON（访问、可携带）；更正联系字段；匿名化（删除：替换联系字段，保留统计）；反对：撤销营销同意；
-  - `sys_dsr_request`（系统级）记录请求、核验、处理与答复时间：type（ACCESS / RECTIFY / ERASE / PORTABILITY / OBJECT）、jurisdiction（GDPR / UK_GDPR / CCPA）、subject_email、received_at、due_at（按法域计算）、verified_at、verification_method、handled_by、completed_at、replied_at、status；临近 due_at 时提醒处理人。
+  - 营销同意：单独的、默认不勾选的同意框；勾选时保存 `marketing_consent` 与 `marketing_consent_at`，同意文本的版本通过 `privacy_notice_version` 追溯（见 17.1）；
+  - 【V2+】营销同意按“站点 + 规范化邮箱”维护当前状态与变更历史；撤回或反对时写入退订名单，任何营销发送前都要检查该名单；询盘表单中勾选的营销同意，在用于推广邮件前先通过确认邮件完成双重确认（与 Newsletter 共用同一机制，见 18）。V1 不在系统内发送营销邮件。
+- 保留期：REJECT 与垃圾询盘 30 天；已关闭的询盘按站点配置保留（默认 3 年）后匿名化；附件同步删除；`frm_submission` 的保留期与询盘一致；`ntf_message` 发送成功后按较短期限（如 90 天）清理。
+- **数据主体请求**：支持访问、更正、删除、可携带、反对、限制处理，以及 CCPA 的退出“出售 / 共享”。答复时限：GDPR / UK GDPR 自收到请求起 1 个月内，必要时可延长两个月（须在 1 个月内告知理由）；CCPA 的访问、删除、更正请求 45 个日历日内答复，必要时可再延长 45 天（须在首个 45 天内告知），并在 10 个工作日内确认收到；退出“出售 / 共享”请求 15 个工作日内处理。具体时限以法务确认为准。后台工具由 platform-core 提供，通过 `PersonalDataProvider` 扩展点收集各模块保存的个人数据（见 3.7）；属于系统管理接口（跨站点），需要 `system:dsr:manage` 权限（高危权限，强审计）：
+  - 按邮箱跨站点查找；导出 JSON（访问、可携带）；更正联系字段；匿名化（删除：替换联系字段，保留统计；覆盖范围见下）；反对：撤销营销同意；
+  - 删除的覆盖范围：同一邮箱在所有站点的 `inq_inquiry` 联系字段、`inq_activity` 的备注内容、`frm_submission`（payload、ip、user_agent）、表单与询盘附件、`ntf_message`（收件人与 payload）；邮件服务商的发送记录通过其接口删除，或按其保留期自动过期（写入处理者清单）。备份不做单条删除：记录删除台账，从备份恢复后重新执行台账中的删除；
+  - `sys_dsr_request`（系统级）记录请求、核验、处理与答复时间：type（ACCESS / RECTIFY / ERASE / PORTABILITY / OBJECT / RESTRICT / OPT_OUT_SALE_SHARE）、jurisdiction（GDPR / UK_GDPR / CCPA）、subject_email、received_at、acknowledged_at、due_at（按法域与延期计算）、extended_until、extension_reason、verified_at、verification_method、handled_by、completed_at、replied_at、status；临近 due_at 时提醒处理人。
+- **受理与身份核验**：Privacy Policy 中公布受理渠道（专用邮箱；是否另设请求表单，以及美国是否需要免费电话等其他渠道，由法务确认）。核验默认向记录中的邮箱发送一次性确认链接，核验通过前不导出、不删除；导出文件只通过短期有效的私有下载链接发送到记录中的邮箱，不发送到请求中新提供的地址。CCPA 授权代理人代为提交时，需要本人的书面授权并核验本人身份。无法核验时按法定方式答复，并记录原因。
 - 日志中脱敏 PII；按数据范围控制访问；导出操作记录审计日志。
-- 处理活动记录（ROPA）、子处理方清单与 DPA 见 26.8；待法务确认的事项（GDPR 第 27 条欧盟代表与英国代表、中国大陆销售人员访问欧盟个人数据、CCPA 是否适用、同意记录保留期限）见 32 章 Q13。
+- 处理活动记录（ROPA）、处理者清单与 DPA 见 26.8；待法务确认的事项（GDPR 第 27 条欧盟代表与英国代表、询盘与下载留资的合法性基础、中国大陆销售人员访问欧盟个人数据及其他跨境传输的合规安排、CCPA 是否适用、加拿大的要求、同意记录保留期限）见 32 章 Q13。
 
 ---
 
@@ -1893,10 +1901,10 @@ CLOSED ──重新打开──▶ ASSIGNED
 - **调用**：`NotificationApi.send(request)` 在调用方的事务中写入发件箱，由后台任务投递，确保“询盘保存成功就一定会发通知”。
 - **重试**：指数退避，最多 6 次；最终失败时告警（见 27.4）。
 - **模板**：使用会自动转义 HTML 的模板引擎；邮件外层布局带站点品牌；模块通过 `NotificationTemplateProvider` 注册默认模板，站点可以修改。
-- **邮件**：V1 使用 SMTP（兼容主流邮件服务）；优先选择提供欧盟数据区域的服务商（如 SES 的欧盟区域、Mailgun EU、Brevo，见 2.4、ADR-015）；发件域名必须配置 SPF、DKIM、DMARC（写入运维手册）；客户自动回复的 Reply-To 设为负责人邮箱。
-- **Webhook**：按站点配置订阅的事件；请求带 HMAC 签名头并支持重试；可通过中间服务对接企业微信、飞书、Slack 等。
+- **邮件**：V1 使用 SMTP 或服务商 API（兼容主流邮件服务）；优先选择提供欧盟数据区域的服务商（如 SES 的欧盟区域、Mailgun EU、Brevo，见 2.4、ADR-015）；发件域名必须配置 SPF、DKIM、DMARC（写入运维手册）；客户自动回复的 Reply-To 设为负责人邮箱。
+- **Webhook**：按站点配置订阅的事件；请求带 HMAC 签名头并支持重试；可通过中间服务对接企业微信、飞书、Slack 等。载荷默认只含事件类型、询盘编号与后台链接，不含联系人信息；需要包含联系人信息时（尤其是接收方在欧盟以外），是否允许由法务确认（见 32 章 Q13）；Webhook 接收方纳入处理者清单（见 26.8）。
 - 【V2+】通过 `NotificationChannel` 扩展点增加 WhatsApp、企业微信、短信等渠道；退信处理。
-- 【V2+】营销邮件（Newsletter）需要双重确认（double opt-in，德国惯例），并符合 CAN-SPAM（每封邮件带退订链接与发件人实际地址）。
+- 【V2+】营销邮件（Newsletter）：以订阅者事先同意为前提（欧盟为 ePrivacy 各国转化法，英国为 PECR），采用双重确认（double opt-in，德国用于证明同意的通行做法）；加拿大需符合 CASL；美国需符合 CAN-SPAM（发件信息与主题不得误导、标明广告性质、提供退订方式并在 10 个工作日内生效、带发件人有效的实际邮寄地址）；大批量发送还需满足 Gmail、Yahoo 等对批量发件人的要求（如一键退订 `List-Unsubscribe-Post`）。具体要求由法务确认。
 
 ---
 
@@ -1923,7 +1931,7 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 `trk_setting`（按站点）：统计服务商（GA4，或欧盟托管的 Matomo、Plausible 等）及其 Measurement ID 或站点地址、GTM 容器 ID、Google Ads 转化 ID、Meta Pixel ID、LinkedIn Partner ID、自定义脚本（head / body，按同意类别加载）。
 
-- **统计服务商可切换**：GA4 在欧盟的使用依赖 EU-US Data Privacy Framework；本模块通过配置支持切换到欧盟托管的统计工具（如 Matomo、Plausible），不写死 GA4；标准转化事件（见 20.3）按所选服务商的接口上报。
+- **统计服务商可切换**：GA4 在欧盟的使用以访客事先同意为前提；跨境传输目前依靠 Google 的 EU-US Data Privacy Framework（DPF）认证（英国数据适用 DPF 的英国扩展）及标准合同条款，由法务确认。DPF 存在被欧盟法院推翻的风险，因此本模块通过配置支持切换到欧盟托管的统计工具（如 Matomo、Plausible），不写死 GA4；标准转化事件（见 20.3）按所选服务商的接口上报。
 - 使用 GTM 时，其他标签建议在 GTM 内管理，避免重复加载；本模块只负责注入 GTM、同意默认值与 dataLayer 事件。
 - 自定义脚本需要 `tracking:script:edit` 权限（开发者角色），修改时记录差异审计；CSP 白名单按已配置的服务商自动更新。
 
@@ -1934,15 +1942,20 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 | 地区 | 模式 | 要求 |
 |---|---|---|
-| 欧洲经济区、英国、瑞士（GDPR、UK GDPR、ePrivacy） | 明示同意（opt-in） | 非必要 Cookie 必须事先同意后才加载；“全部拒绝”与“全部接受”同样显眼；类别不预先勾选；可随时撤回（页脚“Cookie 设置”） |
-| 美国（CCPA/CPRA 及其他州隐私法） | 告知 + 可退出（站点可配置为与欧盟相同的明示同意模式） | 横幅告知并提供退出入口；识别并遵守 Global Privacy Control（GPC）信号（浏览器端读取 `navigator.globalPrivacyControl`），视为退出营销类 Cookie（“出售 / 共享”）；页脚可配置 “Your Privacy Choices / Do Not Sell or Share My Personal Information” 链接，点击后退出营销类 Cookie |
+| 欧洲经济区（GDPR、ePrivacy 指令的各国转化法）、英国（UK GDPR、PECR）、瑞士（瑞士联邦数据保护法 FADP、电信法） | 明示同意（opt-in） | 非必要 Cookie 必须事先同意后才加载；“全部拒绝”与“全部接受”同样显眼；类别不预先勾选；可随时撤回（页脚“Cookie 设置”） |
+| 美国（CCPA/CPRA 及其他州隐私法） | 告知 + 可退出（站点可配置为与欧盟相同的明示同意模式） | 横幅告知并提供退出入口；识别并遵守 Global Privacy Control（GPC）信号（浏览器端读取 `navigator.globalPrivacyControl`），视为退出营销类 Cookie 与“出售 / 共享”；页脚可配置“Do Not Sell or Share My Personal Information”或“Your Privacy Choices”链接（后者须附加法规规定的退出图标），点击后进入退出“出售 / 共享”的设置：立即停止营销类标签并记录退出状态（Cookie 横幅本身不能代替退出“出售 / 共享”的方式）。退出状态（含 GPC）同样适用于同一浏览器关联的线索：表单提交时把 `gpc` 与 `opt_out_sale_share` 一并保存到询盘（见 17.5）；向广告平台回传数据（如【V2+】离线转化导入、服务端 GTM 与 Measurement Protocol）时排除已退出的访客。分析类工具是否构成“出售 / 共享”（如 GA4 开启 Google 信号或关联 Google Ads）由法务确认 |
+| 加拿大（PIPEDA、魁北克第 25 号法律） | 由法务确认；确认前按明示同意处理 | 魁北克对用于识别、定位或画像的技术有专门的告知与启用要求 |
 | 其他地区 | 可配置 | 选择明示同意或告知 + 可退出 |
 
 是否达到 CCPA 适用门槛由法务确认（见 32 章 Q13）；即使不适用，也按上表实现（B2B 联系人数据自 2023 年起不再豁免）。
 
-- **同意记录**（作为同意证明）：访客每次选择（接受、拒绝、修改、撤回）都通过公开接口（见 24.4）写入 `trk_consent_log`：site_id、consent_id（匿名同意 ID，与同意 Cookie 中的 ID 一致）、text_version（同意文本版本）、categories（选择的类别）、region（访客地区）、gpc（是否收到 GPC 信号）、created_at。保留期限由法务确认（默认 3 年，见 32 章 Q13）。
-- 支持 Google Consent Mode v2（`ad_storage`、`analytics_storage`、`ad_user_data`、`ad_personalization`）：欧洲经济区、英国、瑞士默认 `denied`；“告知 + 可退出”地区在访客退出或收到 GPC 信号时把对应项更新为 `denied`。
-- 同意结果保存在第一方 Cookie 中（带匿名同意 ID 与版本号，有效期 6–12 个月）；隐私政策或同意文本版本变化时重新征求；页脚提供“Cookie 设置”入口。
+瑞士法律对 Cookie 总体采用告知 + 可拒绝的模式，此处按明示同意处理，属于从严的统一实现；英国 PECR 已由《2025 年数据（使用与访问）法》修订，部分统计类 Cookie 的同意豁免是否适用、何时生效，由法务确认。
+
+- **访客地区判定**：内容页 HTML 有 CDN 缓存（见 21.3），访客地区不写入缓存的 HTML，也不按地区区分缓存；浏览器端在页面加载时通过不缓存的轻量请求获取地区（由 CDN 的地理位置信息提供，如 Cloudflare 的 `CF-IPCountry` 请求头，可由边缘函数直接返回），据此决定横幅模式与 Consent Mode 默认值，判定完成前不加载非必要脚本。地区未知、判定失败或超时时，一律按明示同意处理。
+
+- **同意记录**（作为同意证明）：访客每次选择（接受、拒绝、修改、撤回）都通过公开接口（见 24.4）写入 `trk_consent_log`：site_id、consent_id（随机生成的同意 ID，与同意 Cookie 中的 ID 一致；属于假名标识，仍按个人数据管理）、action（ACCEPT_ALL / REJECT_ALL / CUSTOM / WITHDRAW / OPT_OUT_SALE_SHARE / GPC）、source（横幅 / Cookie 设置 / 退出链接 / GPC 自动）、text_version（同意文本版本）、locale（展示的语言）、ui_version（横幅版式版本）、categories（每个类别的选择结果，含拒绝项）、region（访客地区）、gpc（是否收到 GPC 信号）、created_at、expires_at。保留期限由法务确认（默认 3 年，见 32 章 Q13）。
+- 支持 Google Consent Mode v2（`ad_storage`、`analytics_storage`、`ad_user_data`、`ad_personalization`）：`default` 命令必须在任何 Google 标签之前执行。欧洲经济区、英国、瑞士默认全部 `denied`，并采用基本模式（获得同意前不加载 Google 标签，也不发送无 Cookie 请求）；是否改用高级模式、GTM 容器能否在同意前加载，由法务确认。“告知 + 可退出”地区：页面加载时已检测到 GPC 的，直接在 `default` 中把 `ad_storage`、`ad_user_data`、`ad_personalization` 设为 `denied`；访客之后退出时用 `update` 更新为 `denied`。
+- 同意结果保存在第一方 Cookie 中（带同意 ID 与版本号，有效期 6–12 个月）；隐私政策或同意文本版本变化时重新征求；页脚提供“Cookie 设置”入口。
 - 也可以关闭内置横幅，改用第三方 CMP（如 Cookiebot、OneTrust）；此时同意记录与 GPC 由所选 CMP 负责，需确认其满足上述要求。
 
 ### 20.3 标准转化事件
@@ -2321,7 +2334,7 @@ ALTER TABLE frm_form
 | url | `url_route`、`url_redirect`、`url_pattern`、`url_not_found` |
 | media | `mda_media`、`mda_media_localization`、`mda_folder`、`mda_usage` |
 | taxonomy | `tx_vocabulary`、`tx_term`、`tx_term_localization`、`tx_assignment` |
-| form | `frm_form`、`frm_form_localization`、`frm_submission`、`frm_attachment`、`frm_blocklist` |
+| form | `frm_form`、`frm_form_localization`、`frm_form_notice_version`、`frm_submission`、`frm_attachment`、`frm_blocklist` |
 | notification | `ntf_template`、`ntf_message`、`ntf_webhook` |
 | product | `prd_product`、`prd_product_localization`、`prd_attribute_group`、`prd_attribute`、`prd_attribute_option`、`prd_attribute_set`、`prd_attribute_set_item`、`prd_category_attribute_set`、`prd_attribute_value`、`prd_model`、`prd_product_media`、`prd_product_document` |
 | article | `art_article`、`art_article_localization`、`art_case_study`、`art_faq`、`art_author` |
@@ -2451,7 +2464,7 @@ CREATE TABLE grh_relation (
 
 - 权限码格式：`{module}:{resource}:{action}`。内容生命周期的权限归内容内核，resource 为内容类型，如 `content:product:publish`；业务模块自己的资源如 `product:attribute:manage`、`inquiry:inquiry:export`、`tracking:script:edit`。
 - 角色按站点分配；内置角色对应 1.2 中的角色表，也支持自定义角色。
-- **数据范围**：询盘支持 ALL / SITE / GROUP / OWN；翻译人员可以限定语言。
+- **数据范围**：询盘支持 ALL / GROUP / OWN（ALL 指当前站点内全部；角色按站点分配，跨站点由站点过滤保证）；翻译人员可以限定语言。
 - **执行位置**：应用服务层的方法注解（`@RequiresPermission`）+ 查询层的数据范围过滤。前端隐藏按钮只是体验优化，不是安全措施。
 - Public API 只返回已发布数据，不能通过遍历 ID 访问未发布的内容。
 
@@ -2479,9 +2492,12 @@ CREATE TABLE grh_relation (
 | 表单提交 | IP | 5 次 / 10 分钟 |
 | 表单提交 | 邮箱 | 10 次 / 天 |
 | 附件上传 | IP | 10 次 / 10 分钟 |
+| 同意记录写入 | IP | 30 次 / 10 分钟 |
 | 站内搜索 | IP | 60 次 / 分钟 |
 | Delivery（经 Nuxt） | 内部令牌 | 不限（由 CDN 与 WAF 保护） |
 | 后台 API | 用户 | 600 次 / 分钟 |
+
+同意记录接口只接受固定结构的请求体（字段见 20.2）；超出限流时静默丢弃，不影响前台横幅的行为。
 
 ### 26.5 审计
 
@@ -2505,17 +2521,19 @@ CREATE TABLE grh_relation (
 合规基线见 ADR-016（GDPR、UK GDPR、ePrivacy；CCPA/CPRA 等美国州隐私法）；数据驻留欧盟见 ADR-015。
 
 - **个人信息清单**：询盘联系人、IP、附件、后台用户、同意记录；数据最小化；保留期任务（询盘见 17.11；原始 IP 保留 30 天后置空，应用日志中 IP 截断，见 27.4）。
-- **同意记录**：Cookie 同意的证明保存在 `trk_consent_log`（匿名同意 ID、时间、同意文本版本、选择的类别、访客地区），保留期限由法务确认（默认 3 年）；同意管理与 GPC 见 20.2。
-- **数据主体请求**：支持访问、更正、删除、可携带、反对；GDPR 1 个月内答复，CCPA 45 天内答复；`sys_dsr_request` 记录请求、身份核验、处理与答复时间；后台工具见 17.11。
+- **同意记录**：Cookie 同意的证明保存在 `trk_consent_log`：同意 ID（假名标识）、时间、动作、同意文本版本、展示的语言、选择的类别、访客地区等（字段见 20.2）；保留期限由法务确认（默认 3 年）；同意管理与 GPC 见 20.2。
+- **数据主体请求**：支持访问、更正、删除、可携带、反对、限制处理，以及 CCPA 的退出“出售 / 共享”；GDPR / UK GDPR 1 个月内答复（必要时可延长两个月），CCPA 45 个日历日内答复（必要时可再延长 45 天），具体时限以法务确认为准（见 17.11）；`sys_dsr_request` 记录请求、身份核验、处理与答复时间；受理渠道、身份核验与后台工具见 17.11。
 - **上线前合规清单**：
 
 | 项 | 内容 |
 |---|---|
 | 处理活动记录（ROPA） | 处理目的、数据类别、合法性基础、保留期、接收方 |
-| 子处理方清单 | CDN、邮件服务商、Google、Sentry、云厂商等；记录数据区域与跨境传输依据 |
-| DPA | 与清单中的子处理方签署数据处理协议 |
+| 处理者清单 | 云厂商、CDN / WAF、人机验证（Cloudflare Turnstile）、邮件服务商、Sentry、GA4 等以处理者身份提供服务的统计工具、Webhook 接收方（如企业微信、飞书、Slack）等；记录数据区域与跨境传输依据 |
+| DPA | 与清单中的处理者签署数据处理协议（GDPR 第 28 条） |
+| 广告与社交平台 | Google Ads、Meta Pixel、LinkedIn Insight Tag 等通常为独立控制者或共同控制者，适用其控制者条款或共同控制协议；角色划分由法务确认 |
 | 法律页面 | 每个站点的隐私政策、Cookie 政策、使用条款、Imprint（见 10.1、16.3） |
-| 法务待确认 | GDPR 第 27 条欧盟代表与英国代表；中国大陆销售人员访问欧盟个人数据的合规安排；CCPA 是否适用；同意记录保留期限（见 32 章 Q13）。系统设计中不下结论 |
+| 数据泄露响应 | 响应流程、联系人、泄露记录表（见 27.5） |
+| 法务待确认 | GDPR 第 27 条欧盟代表与英国代表；询盘与下载留资的合法性基础；中国大陆销售人员访问欧盟个人数据及其他跨境传输（全球 CDN、美国服务商、Webhook 接收方）的合规安排；CCPA 是否适用；加拿大的要求（PIPEDA、魁北克第 25 号法律、CASL）；同意记录保留期限（见 32 章 Q13）。系统设计中不下结论 |
 
 ---
 
@@ -2523,7 +2541,7 @@ CREATE TABLE grh_relation (
 
 ### 27.1 部署拓扑
 
-自用，一次部署 = 一家企业，只有一套生产环境；另有 staging 与本地开发环境（见 27.2）。单机 Docker Compose 只用于本地开发与演示。
+自用，一次部署 = 一家企业，只有一套生产环境；另有 dev（集成）、staging（验收）与本地开发环境（见 27.2）。生产环境以 Docker Compose 部署在欧盟单区域的多台主机上（多实例），V2 可迁移到 Kubernetes（见 2.4）；单机 Docker Compose 只用于本地开发与演示。
 
 生产拓扑：
 
@@ -2536,11 +2554,13 @@ CREATE TABLE grh_relation (
 | Redis | 托管服务 |
 | Meilisearch | 单节点 + 快照（可从数据库重建） |
 | 对象存储 | S3 兼容（如 S3、R2），公开桶与私有桶分离 |
+| 反向代理 | Nginx / Caddy（TLS 终止、路由、真实 IP，见 2.3） |
+| Admin 静态文件 | SPA 静态文件，经 CDN 分发（见 22.6） |
 | 边缘 | 全球 CDN + WAF |
 
-- 区域：源站部署在**欧盟**（默认法兰克福，备选阿姆斯特丹、巴黎）；数据库、对象存储、备份全部在欧盟区域；全球 CDN（如 Cloudflare）覆盖欧美访客，美国访客由 CDN 边缘节点提供 HTML 与图片（见 ADR-015）。若美国流量远大于欧洲，可以评估美东源站，但需要处理欧盟 → 美国的数据传输（依赖通过 EU-US Data Privacy Framework 认证的服务商），见 32 章 Q15。
+- 区域：源站部署在**欧盟**（默认法兰克福，备选阿姆斯特丹、巴黎）；数据库、对象存储、备份全部在欧盟区域；全球 CDN（如 Cloudflare）覆盖欧美访客，美国访客由 CDN 边缘节点提供 HTML 与图片（见 ADR-015）。若美国流量远大于欧洲，可以评估美东源站，但需要处理欧盟 → 美国的数据传输（可依靠服务商的 EU-US Data Privacy Framework 认证或标准合同条款，由法务确认），见 32 章 Q15。
 - 第三方服务：优先选择提供欧盟数据区域的服务，如邮件服务（SES 的欧盟区域、Mailgun EU、Brevo）、Sentry（欧盟数据区域）、欧盟区域的托管数据库。
-- 后台访问：后台用户主要在中国大陆，访问欧盟源站延迟较高；后台静态资源走 CDN，API 响应精简；必要时使用加速线路（风险见 31）。
+- 后台访问：后台用户主要在中国大陆，访问欧盟源站延迟较高；后台静态资源走 CDN，API 响应精简；必要时使用加速线路（其运营方纳入处理者清单评估，见 26.8；风险见 31）。
 - 未来如果需要为其他企业提供系统，采用一企业一实例独立部署（独立数据库与存储），见 ADR-009。
 
 ### 27.2 环境
@@ -2596,13 +2616,13 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 
 | 数据 | 方式 | 保留 |
 |---|---|---|
-| MySQL | 每日全量 + binlog 时间点恢复（RPO ≤ 15 分钟）；优先使用欧盟区域的托管服务 | 30 天；每月快照保留 12 个月 |
+| MySQL | 每日全量 + binlog 时间点恢复（RPO ≤ 15 分钟）；使用欧盟区域的托管服务 | 30 天；每月快照保留 12 个月 |
 | 对象存储 | 开启版本控制；生产环境复制到另一个欧盟区域 | 旧版本保留 30 天 |
 | Redis | 不备份（缓存与会话可以丢失，会话丢失只需重新登录） | — |
 | Meilisearch | 不备份，从数据库重建 | — |
 | 密钥与配置 | 密钥管理服务 | — |
 
-所有备份与副本都存放在欧盟区域（见 ADR-015）。每季度在 staging 上做一次恢复演练。运维手册（`docs/runbooks/`）覆盖：数据库恢复、重建搜索索引、清除 CDN、轮换密钥、迁移失败的回滚。
+所有备份与副本都存放在欧盟区域（见 ADR-015）。每季度在 staging 上做一次恢复演练。运维手册（`docs/runbooks/`）覆盖：数据库恢复、重建搜索索引、清除 CDN、轮换密钥、迁移失败的回滚、个人数据泄露响应（评估、记录；按 GDPR / UK GDPR 第 33 条在知悉后 72 小时内通知监管机构，高风险时按第 34 条通知数据主体；美国各州的通知要求由法务确认）。
 
 ### 27.6 容量基线（单站，按假设 A4）
 
@@ -2784,8 +2804,8 @@ b2b-platform/
 | Q10 | 邮件服务商？是否已有 GA4 / GTM 账号？ | 18、20 |
 | Q11 | 团队规模与技能（是否有专职前端与设计师）？ | 30 |
 | Q12 | 是否确认“自研”（ADR-000）？**已确认：自研**（ADR-000 为 Accepted） | 全局 |
-| Q13 | 法务确认：是否需要 GDPR 第 27 条欧盟代表与英国代表？中国大陆销售人员访问欧盟个人数据的合规安排？CCPA 是否适用？同意记录保留期限？ | 17、20、26 |
-| Q14 | Imprint 所需的公司法定信息（法定名称、注册号、增值税号、代表人）？ | 16.3 |
+| Q13 | 法务确认：是否需要 GDPR 第 27 条欧盟代表与英国代表？询盘与下载留资的合法性基础？中国大陆销售人员访问欧盟个人数据，以及经全球 CDN、美国服务商、Webhook 接收方的跨境传输的合规安排？CCPA 是否适用？加拿大访客的同意模式与 CASL？同意记录保留期限？ | 17、18、20、26 |
+| Q14 | Imprint 所需的公司法定信息（法定名称与法律形式、登记机关与注册号、增值税号、代表人、监管机关、内容负责人）？ | 16.3 |
 | Q15 | 欧洲与美国的流量占比？是否需要美国源站？ | 27、ADR-015 |
 
 ---
