@@ -65,3 +65,4 @@ ADR-000、ADR-005、ADR-009、ADR-017 为 Accepted，其余为 Proposed（附录
 | ADR-015 | 部署区域与数据驻留 | Proposed（部署由业主负责，本 ADR 为建议） | [0015-hosting-region-and-data-residency.md](0015-hosting-region-and-data-residency.md) |
 | ADR-016 | 隐私合规基线 | Proposed（法务事项由业主负责） | [0016-privacy-compliance-baseline.md](0016-privacy-compliance-baseline.md) |
 | ADR-017 | AI 翻译与翻译记忆 | Accepted | [0017-ai-translation-and-translation-memory.md](0017-ai-translation-and-translation-memory.md) |
+| ADR-018 | 框架先行、契约优先，模块按独立设计文档并行开发 | Accepted | [0018-framework-first-parallel-modules.md](0018-framework-first-parallel-modules.md) |

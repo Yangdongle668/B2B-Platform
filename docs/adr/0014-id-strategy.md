@@ -67,7 +67,7 @@
 
 | 规则 | 检查方式 |
 |---|---|
-| 新表主键为 `id BIGINT NOT NULL`，由应用生成，不使用 `AUTO_INCREMENT` | PR 评审（迁移脚本）；《领域模型与数据库设计》（附录 C） |
+| 新表主键为 `id BIGINT NOT NULL`，由应用生成，不使用 `AUTO_INCREMENT` | PR 评审（迁移脚本）；模块设计文档的数据模型（ADR-018） |
 | API 响应、快照、布局文档、事件载荷中的 ID 一律为字符串 | 契约测试：OpenAPI 快照 + oasdiff（24.3、28）；组件 Schema 校验（`$content` / `$media` / `$term` 为字符串） |
 | 前端不对 ID 做 `Number()`、`parseInt` 等数值转换，不把 ID 当作排序依据 | TypeScript 类型检查（生成类型为 `string`）；PR 评审 |
 | 所有模块使用同一个 ID 生成规则，不各自实现 | PR 评审（platform-core / platform-api 的变更需架构负责人审核，29.4） |
