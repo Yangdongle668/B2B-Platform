@@ -2,15 +2,15 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.2（在 V1.1 基础上修订；V1.1 基于 V1.0《系统架构设计说明书》修订） |
-| 状态 | 草案（Draft）：产品形态、目标市场、自研已确认，其余待评审 |
+| 文档版本 | V1.3（在 V1.2 基础上修订；V1.2 基于 V1.1 修订，V1.1 基于 V1.0《系统架构设计说明书》修订） |
+| 状态 | 草案（Draft）：产品形态、目标市场、自研、语言策略与 AI 翻译已确认，其余待评审 |
 | 更新日期 | 2026-10-06 |
 | 项目代号 | B2B Web Platform |
 | 定位 | 模块化、可扩展、SEO 原生、设计系统驱动的企业网站与询盘获客平台 |
 
 > 阅读提示：
 > - 标注 **【V1】** 的内容属于第一版交付范围；标注 **【V2+】** 的为预留设计，V1 只保证数据结构和接口不阻碍其实现。
-> - 第 0.4 节列出了本文依赖的关键假设，第 0.5 节记录了 V1.2 已确认的决策，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
+> - 第 0.4 节列出了本文依赖的关键假设，第 0.5 节记录了 V1.2、V1.3 已确认的决策，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
 
 ## 目录
 
@@ -93,6 +93,10 @@
 | Locale（语言） | 站点启用的语言，如 `en`、`de`、`es`，采用 BCP 47 代码 |
 | Content（内容） | 所有可被路由、被关联、被 SEO 的对象的语言无关抽象 |
 | Localization（本地化） | 内容在某一语言下的版本，拥有独立的 slug、标题、SEO 与发布状态 |
+| 源语言 | 编辑录入内容与站点资源所用的语言，为简体中文（`zh-CN`），即 `cnt_content.primary_locale`；其他语言的本地化由 AI 翻译从源语言生成 |
+| 翻译单元（Segment） | 最小翻译单位：纯文本字段一个字段一个单元，富文本按块级节点拆分（见 5.6） |
+| 翻译记忆（TM） | 已翻译单元的“原文 → 译文”存储；相同原文命中即复用，不再调用 AI；人工修订优先于机器译文（见 5.6） |
+| 术语表（Glossary） | 站点级的中文术语及其各语言译法，可标记“禁止翻译”（品牌名、型号等），翻译时必须遵守（见 5.8） |
 | Revision（修订） | 某个本地化的一次发布，不可变 |
 | Snapshot（快照） | 发布时冻结的完整渲染数据（JSON），存放在修订中 |
 | Projection（投影） | 发布时从快照中提取、用于列表、筛选、路由的只读数据 |
@@ -114,14 +118,16 @@
 | 编号 | 假设 | 影响章节 |
 |---|---|---|
 | A1 | **已确认**：自用。一家企业，可以有多个品牌站或国家站；不做 SaaS，不为其他企业交付 | 3、5、25 |
-| A2 | **已确认**：目标市场为欧盟、英国与北美；默认英语，单站 2–8 种语言（建议首批 en、de、fr、es、it） | 5、13、14 |
-| A3 | 服务器部署在欧盟（默认法兰克福）+ 全球 CDN；后台用户主要在中国大陆 | 27 |
+| A2 | **已确认**：目标市场为欧盟、英国与北美；内容以简体中文录入（源语言）；前台 V1 先只开放中文，其他语言（建议 en、de、fr、es、it）由 AI 翻译生成后按需开放 | 5、13、14 |
+| A3 | 服务器部署在欧盟（默认法兰克福）+ 全球 CDN，云厂商、CDN 的选择与部署由业主自行负责（见 32 章 Q3）；后台用户主要在中国大陆，后台界面只用简体中文 | 22、27 |
 | A4 | 单站规模：≤ 1 万产品、≤ 5 千篇文章、≤ 10 种语言、询盘 ≤ 1 千条/天 | 1.5、19、25 |
 | A5 | 不展示价格、不在线交易；转化目标是询盘、索样、资料下载 | 8、17 |
 | A6 | 团队 2–6 人，Java + Vue 技术栈，使用 Claude Code 辅助开发 | 29、附录 A |
 | A7 | 多数客户已有旧站，需要迁移内容与 URL | 8.6、13.5 |
 
-### 0.5 V1.2 修订记录
+### 0.5 修订记录
+
+**V1.2（2026-10-06）**
 
 V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿用 V1.1。
 
@@ -130,6 +136,17 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 自用 | 去掉租户层，站点为最高隔离单位；用户全局唯一，角色按站点分配；单套生产环境；未来多企业采用一企业一实例 | 0、1、2.4、2.5、3、4、5、6、12、19、22、25、26、27、28、30、32、附录 A、附录 B |
 | 欧美为主 | 首批语种建议；欧盟部署与数据驻留；GDPR / UK GDPR / ePrivacy / CCPA 合规基线；询盘改为隐私告知 + 可选的营销同意；法律页面；双单位显示；德语 slug 音译；Google 与 Bing | 0、1、2、3、5、8、10、11、12、13、14、16、17、18、20、22、24、25、26、27、30、31、32、附录 B |
 | 自研 | ADR-000 确认（Accepted） | 2.5、32、附录 B |
+
+**V1.3（2026-10-06）**
+
+V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1.2。
+
+| 确认事项 | 主要影响 | 涉及章节 |
+|---|---|---|
+| 后台只用简体中文 | 后台界面只提供简体中文，不做语言切换，不引入 vue-i18n，界面文案集中在常量 / 字典文件中；后台错误信息使用中文；`module.json`、组件与模板定义中的名称、标签只写中文字符串 | 0、1、2.4、3.5、10、15、18、22、24、附录 A |
+| 中文为源语言、前台先开放中文、URL 全部带前缀 | 内容与站点资源只用简体中文录入；前台 V1 先只开放中文，其他语言由 AI 翻译生成后按语言开放；全部语言 URL 带前缀，根路径 302 到默认对外语言；hreflang 与 x-default 调整；中文 slug 用拼音音译、译文 slug 首次发布后固定；中文使用系统字体栈；搜索使用中文分词 | 0、1、2.5、5、6、11、13、14、16、19、21、30、32、附录 B |
+| AI 翻译与翻译记忆（OpenAI 兼容接口） | 新增 translation 模块（L2）：翻译单元、翻译记忆（同一原文只翻译一次）、术语表、风格指南、翻译编辑器（人工修订优先）、批量翻译、用量与成本统计；引擎默认使用 OpenAI 兼容的 Chat Completions 接口；法律页面人工审校后发布；询盘留言一键翻译为中文；ADR-017 | 0、1、2、3、4、5、6、8、9、10、12、13、14、16、17、18、20、21、22、24、25、26、27、28、30、31、32、附录 A、附录 B |
+| 部署与法务事项由业主负责 | Q3（云厂商与 CDN）、Q13、Q14、Q15 由业主自行负责，不在本文范围；第 27 章给出参考拓扑与要求 | 0、16、27、32 |
 
 ---
 
@@ -156,7 +173,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 内容编辑 | 创建、编辑产品、文章、页面 | 编辑、提交审核 |
 | 审核 / 发布者 | 审核并发布内容 | 审核、发布、下线 |
 | SEO 专员 | SEO 覆盖、重定向、SEO 健康、内链 | SEO 相关全部 |
-| 翻译 | 本地化内容的翻译与校对 | 指定语言的编辑 |
+| 翻译审校（可选） | 审校与修订 AI 译文、维护术语表 | 翻译中心、指定语言的译文修订 |
 | 销售 | 处理分配给自己的询盘 | 询盘（数据范围：本人） |
 | 销售主管 | 分配询盘，查看团队询盘与报表 | 询盘（数据范围：团队或全部） |
 | 开发者 / 实施 | 统计代码、自定义脚本、技术设置 | 技术设置（高危权限，强审计） |
@@ -167,7 +184,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 
 | 编号 | 场景 | 验收要点 |
 |---|---|---|
-| S1 | 编辑新建一个产品（英、德、法三语），选择分类、应用、行业，上传图片与 Datasheet，提交审核并发布 | 三种语言页面可访问；SSR 输出完整 HTML；Meta、canonical、hreflang、Product 与 BreadcrumbList JSON-LD 自动生成；sitemap 自动更新；相关产品与文章自动出现 |
+| S1 | 编辑用中文新建一个产品，选择分类、应用、行业，上传图片与 Datasheet，提交审核并发布 | 中文页面可访问；SSR 输出完整 HTML；Meta、canonical、Product 与 BreadcrumbList JSON-LD 自动生成；sitemap 自动更新；相关产品与文章自动出现；若已开放英语，英语版本在 5 分钟内自动生成并发布 |
 | S2 | 编辑修改已发布产品的 slug | 旧 URL 自动 301 到新 URL；不产生重定向链；内链与 sitemap 自动更新 |
 | S3 | 运营不写代码，用页面编辑器搭建 Landing Page（Hero + 优势 + 产品网格 + 案例 + FAQ + 询盘表单），并在三种设备尺寸下预览 | 只能使用设计系统内的组件与变体；草稿不影响线上；可以分享预览链接 |
 | S4 | 海外采购商从 Google 广告进入落地页，浏览两个产品后提交询盘（附图纸） | 询盘记录首次与末次来源、UTM、gclid、落地页、浏览过的产品；通过反垃圾校验；按国家与产品自动分配；销售 1 分钟内收到邮件；客户收到对应语言的自动回复；GA4 按访客的同意状态（Consent Mode v2）收到转化事件 |
@@ -177,13 +194,17 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | S8 | 某产品停产 | 可选择下线为 410，或 301 到替代产品/分类；所有引用处自动移除该产品卡片；sitemap 自动移除 |
 | S9 | SEO 专员查看站点 SEO 健康报告 | 列出孤立页面、重复标题、缺失 alt、hreflang 不完整等问题，并可跳转修复 |
 | S10 | 站点管理员停用“文章”模块 | 后台菜单、API、组件面板中不再出现；系统提示受影响的已发布内容；数据全部保留 |
+| S11 | 站点管理员开放英语 | 系统用 AI 批量翻译全部已发布内容与站点资源（菜单、表单、界面文案、属性名等）；完成后英语页面、hreflang、sitemap 自动生效；翻译记忆中已有的原文不调用 AI；可在翻译中心查看进度与费用 |
+| S12 | 编辑修改已发布产品的一段描述后重新发布 | 只有被修改的段落调用 AI 重新翻译，其余段落直接复用翻译记忆；人工修订过的译文保持不变 |
+| S13 | 销售查看一条德语询盘，一键翻译为中文 | 译文保存在询盘上，再次查看不重复调用 AI |
 
 ### 1.4 V1 范围
 
 **V1 包含（In Scope）**
 
-- **平台**：站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典；数据主体请求工具与保留期任务。
+- **平台**：站点、语言上下文；用户、角色、权限（含数据范围）、2FA；模块管理（启用/停用）；设置、审计、任务、字典；数据主体请求工具与保留期任务；管理后台界面为简体中文。
 - **内容**：内容内核（多语言、修订、发布、定时发布、预览、回滚、回收站、单级审核）；分类体系；产品；文章（新闻、博客、案例、FAQ）；页面；产品属性双单位显示（公制 + 英制）。
+- **AI 翻译**：翻译记忆（同一原文只翻译一次）、术语表、风格指南、翻译编辑器（人工修订）、批量翻译、用量与成本统计；引擎默认使用 OpenAI 兼容接口。
 - **呈现**：Design Token；1 套主题（≥ 20 个组件，每个 2–3 个变体）；模板；页面编辑器（Section 级）；全局区块；导航；站点资料；法律页面（隐私政策、Cookie 政策、条款、Imprint）。
 - **媒体**：上传、文件夹、多语言 alt、图片变换（WebP/AVIF/响应式）、引用追踪、私有文件。
 - **SEO**：URL、slug、重定向；Meta 自动生成与覆盖；canonical、robots、hreflang、Schema.org、Sitemap、IndexNow；内链（导航、面包屑、相关内容、正文引用）；SEO 健康检查。
@@ -200,7 +221,8 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 - 运行时热插拔模块、第三方模块市场；
 - 多企业 SaaS（不在规划中；如未来需要，采用一企业一实例部署）；
 - CRM、报价单、WhatsApp / 企业微信集成、Newsletter、客户门户；
-- AI（翻译、写作、SEO 建议、语义相似度、垃圾识别模型）；
+- AI 写作、SEO 建议、语义相似度、垃圾识别模型（AI 翻译已纳入 V1）；
+- 后台界面多语言；
 - 自建访问统计（V1 依赖 GA4 或欧盟托管的统计工具，如 Matomo、Plausible，只提供询盘来源报表）；
 - 自由布局编辑（像素级拖拽）、多主题市场；
 - 多级审批流、实时协同编辑；
@@ -218,6 +240,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 后端性能 | Delivery API P95（缓存命中 / 未命中） | ≤ 30 ms / ≤ 300 ms |
 | | Admin API P95 | ≤ 500 ms |
 | | 发布后前台可见（含缓存失效） | ≤ 60 s |
+| AI 翻译 | 单条内容发布到目标语言生成 | ≤ 5 分钟（不含人工审校）；翻译记忆命中的原文不调用 AI |
 | 规模 | 单站内容 | 1 万产品 × 10 种语言、5 千篇文章；Content Graph 关系 ≤ 50 万条 |
 | | 并发 | 前台 200 RPS（CDN 未命中），后台 50 个并发用户 |
 | 可用性 | 前台（含 CDN） | 99.9%；后端故障时 CDN 继续提供过期缓存（stale-if-error） |
@@ -278,6 +301,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
                ▼                                ▼                                 ▼
    邮件服务（SMTP / API）           Cloudflare Turnstile                CDN 清除 API、IndexNow
    GA4 / GTM / 广告平台（前台直连）   GeoIP 数据库（本地）                Webhook 接收方（企业微信、飞书等）
+   AI 翻译引擎（OpenAI 兼容接口）
 ```
 
 ### 2.3 运行时视图
@@ -333,12 +357,13 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | API 文档 | springdoc-openapi → openapi-typescript | 前端类型自动生成 |
 | HTML 清洗 / 文件识别 | jsoup Safelist；Apache Tika | |
 | 前台网站 | Nuxt 4 + Vue 3.5 + TypeScript；@nuxt/image（自定义 imgproxy provider） | |
-| 管理后台 | Vue 3 + Vite + TypeScript + Element Plus + Pinia + Vue Router + vue-i18n | |
+| 管理后台 | Vue 3 + Vite + TypeScript + Element Plus + Pinia + Vue Router | 界面只提供简体中文，不引入 vue-i18n；界面文案集中放在常量 / 字典文件中，便于以后扩展 |
 | 富文本 | Tiptap（以 ProseMirror JSON 存储） | 不存原始 HTML |
 | Design Token | DTCG 格式 JSON + Style Dictionary | 生成 CSS 变量与 TS 常量 |
 | 前端工程 | pnpm workspace；ESLint、Stylelint、Vitest、Playwright | |
 | 人机验证 | Cloudflare Turnstile | |
 | 邮件 | SMTP / API（兼容 SES 欧盟区域、Mailgun EU、Brevo 等服务）；开发环境用 Mailpit | 优先选择提供欧盟数据区域的服务商 |
+| AI 翻译 | OpenAI 兼容的 Chat Completions 接口（可配置 base URL、模型、密钥） | 后端用 Spring HTTP 客户端直接调用，不绑定厂商 SDK；可接 OpenAI、DeepSeek、通义千问、Kimi、自部署 vLLM / Ollama 等 |
 | 可观测性 | Micrometer + Prometheus + Grafana；OpenTelemetry；Loki；Sentry（欧盟数据区域） | 自建组件部署在欧盟区域；第三方托管服务选择欧盟数据区域 |
 | 部署 | Docker；V1 生产使用 Docker Compose（欧盟单区域、多实例，见 27.1），V2 可迁移到 Kubernetes | 单机 Docker Compose 只用于本地开发与演示 |
 | CDN | 支持按 Cache-Tag / Surrogate-Key 清除的 CDN（如 Cloudflare、Fastly） | 全球节点覆盖欧美访客（见 ADR-015） |
@@ -357,11 +382,11 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 002 | 模块通信 | 只允许公开 API、领域事件、扩展点三种方式；所有跨模块契约放在 `platform-api` |
 | 003 | 事件可靠性 | 事务提交后投递 + Spring Modulith Event Publication Registry（数据库 Outbox）；V1 不引入 MQ |
 | 004 | 内容模型 | Content + Localization + Revision；发布时生成不可变快照与只读投影 |
-| 005 | 多语言 | 每种语言独立本地化；内容不跨语言回退；默认采用子目录 URL |
+| 005 | 语言策略与 URL | **已确认（Accepted）**。后台界面只用中文；简体中文为源语言；前台先开放中文，其他语言由 AI 翻译生成后按语言开放；全部语言 URL 带前缀，根路径 302 到默认对外语言；内容不跨语言回退 |
 | 006 | 渲染方式 | 系统内容使用“模板 + 插槽”，营销页使用页面编辑器；前台只读快照 |
 | 007 | 编辑器画布 | Admin 中通过 iframe 嵌入 Nuxt 预览路由，用 postMessage 通信；组件 Schema 放在共享包中 |
 | 008 | SEO 数据归属 | SEO 模块拥有 SEO 数据；自动值与覆盖值分离；发布时写入快照 |
-| 009 | 站点与语言 | 单企业、多站点，不设租户层（Site → Locale）；站点级表带 site_id，由拦截器自动追加过滤条件；未来多企业采用一企业一实例 |
+| 009 | 站点与语言 | **已确认（Accepted）**。单企业、多站点，不设租户层（Site → Locale）；站点级表带 site_id，由拦截器自动追加过滤条件；未来多企业采用一企业一实例 |
 | 010 | 认证 | 后台使用 Session + HttpOnly Cookie + CSRF + TOTP；前台没有登录 |
 | 011 | 技术版本 | M0 验证兼容组合后锁定 |
 | 012 | 缓存 | CDN + 后端 Redis 两级，按 Cache Tag 精确失效；Nuxt 层不缓存 HTML |
@@ -369,6 +394,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | 014 | ID | 64 位 TSID（时间有序），在 JSON 中序列化为字符串 |
 | 015 | 部署区域与数据驻留 | 源站与数据（数据库、对象存储、备份）在欧盟（默认法兰克福），全球 CDN 覆盖欧美访客；第三方服务优先选择欧盟数据区域 |
 | 016 | 隐私合规基线 | GDPR / UK GDPR / ePrivacy（英国为 PECR）+ CCPA/CPRA：非必要 Cookie 事先同意并保存同意记录；识别 GPC；询盘的合法性基础（订立合同前的步骤或正当利益）由法务确认，不强制勾选同意，营销同意单独勾选；数据主体请求按法定时限处理 |
+| 017 | AI 翻译与翻译记忆 | **已确认（Accepted）**。默认 OpenAI 兼容接口；段级翻译记忆，同一原文只翻译一次；人工修订优先；法律页面人工审校 |
 
 ---
 
@@ -384,7 +410,8 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ L3 业务模块          product · article · page · inquiry · navigation           │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ L2 基础能力模块      content · url · media · taxonomy · form · notification    │
+│ L2 基础能力模块      content · url · media · taxonomy · form · notification ·  │
+│                      translation                                               │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ L1 platform-api      跨模块契约：服务接口、扩展点接口、事件、共享值对象            │
 ├──────────────────────────────────────────────────────────────────────────────┤
@@ -392,7 +419,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 │                      字典、界面文案、站点资料                                    │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ infrastructure       技术适配器：对象存储、邮件传输、搜索客户端、缓存、CDN 清除     │
-│                      （实现 L0 / L1 中定义的端口接口）                            │
+│                      AI 翻译引擎；（实现 L0 / L1 中定义的端口接口）               │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -408,6 +435,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
 | taxonomy | L2 | 词汇表、分类项、内容分类指派、分类落地页 | `tx_` | 否 | V1 |
 | form | L2 | 表单定义、提交、反垃圾、附件 | `frm_` | 是 | V1 |
 | notification | L2 | 通知模板、发送、重试、Webhook | `ntf_` | 否 | V1 |
+| translation | L2 | AI 翻译：翻译单元提取与回写的编排、翻译记忆、术语表、风格指南、引擎适配、翻译任务（实时与批量）、用量与成本统计、翻译中心（后台）；停用后不再自动翻译，已生成的译文保留 | `trn_` | 是 | V1 |
 | product | L3 | 产品、属性体系、型号表、产品文档、导入导出 | `prd_` | 是 | V1 |
 | article | L3 | 文章（新闻、博客）、案例、FAQ、作者 | `art_` | 是 | V1 |
 | page | L3 | 页面、模板与组件元数据、布局文档、全局区块 | `pg_` | 否 | V1 |
@@ -429,6 +457,7 @@ V1.2 确认了以下三项决策，并据此修订相关章节；其余内容沿
      │  L4  delivery   seo   graph   search   tracking               │
      │  L3  product   article   page   inquiry   navigation          │
      │  L2  content   url   media   taxonomy   form   notification   │
+     │      translation                                              │
      └──────────────────────────────┬──────────────────────────────┘
                                     │ 编译依赖：只允许依赖下面两层
                                     ▼
@@ -462,7 +491,7 @@ backend/modules/product/
     └── resources/
         ├── module.json                      # 模块描述符
         ├── db/migration/product/            # Flyway 迁移脚本
-        └── i18n/messages_*.properties       # 后台错误信息等
+        └── messages.properties              # 后台错误信息等（只有中文）
 ```
 
 一个模块是一个**纵向切片**，横跨四个位置：后端 Maven 模块、Admin 中的 `modules/<id>/`、前台主题中的组件、共享 Schema 包中的组件与模板定义。四者使用同一个模块 ID。
@@ -472,12 +501,12 @@ backend/modules/product/
 ```json
 {
   "id": "inquiry",
-  "name": { "zh-CN": "询盘", "en-US": "Inquiry" },
+  "name": "询盘",
   "version": "1.0.0",
   "layer": "L3",
   "platform": ">=1.0.0 <2.0.0",
   "requires": { "content": "^1.0", "taxonomy": "^1.0", "form": "^1.0", "notification": "^1.0" },
-  "optional": { "product": "^1.0" },
+  "optional": { "product": "^1.0", "translation": "^1.0" },
   "disableable": true,
   "tablePrefix": "inq_",
   "apiPrefix": "inquiry",
@@ -501,6 +530,7 @@ backend/modules/product/
 ```
 
 - `requires` / `optional` 使用语义化版本范围；`optional` 表示存在时增强功能，不存在时降级。例如 product 启用时，询盘明细可以精确到型号（通过 `ContentVariantProvider` 扩展点获取型号信息，而不是依赖 product 模块的代码）；product 停用时，明细只记录内容。
+- `name` 只写中文字符串（后台界面只用简体中文，见 2.4），不使用按语言区分的对象。
 - 权限、菜单、设置 Schema、组件清单采用声明式注册，启动时由平台幂等同步（见 3.6）。
 - `events` 用于文档生成与依赖分析，CI 会检查它与代码中实际发布、订阅的事件一致。
 
@@ -597,6 +627,34 @@ V1 扩展点清单：
 | `ContentVariantProvider` | 提供内容下可选择的子项（如产品型号），用于询价篮与询盘明细 | product | inquiry |
 | `NotificationTemplateProvider` | 注册默认通知模板 | inquiry、content | notification |
 | `PersonalDataProvider` | 数据主体请求：按邮箱查找、导出、更正、匿名化本模块保存的个人数据 | inquiry、form、notification | core（数据主体请求工具） |
+| `TranslatableContentProvider` | 从源语言草稿提取翻译单元；把译文写回目标语言草稿（非文本数据从源语言复制） | product、article、page、taxonomy、seo | translation |
+| `TranslatableResourceProvider` | 提取与回写站点资源中的可翻译文本 | navigation、form、media、product（属性与选项）、taxonomy（分类名）、notification（客户邮件模板）、core（站点资料、界面文案）、tracking（Cookie 横幅文案） | translation |
+
+翻译相关扩展点示意（翻译流程见 5.6、5.7）：
+
+```java
+public interface TranslatableContentProvider {
+    boolean supports(String contentType);
+    List<TranslationUnit> extract(TranslationContext ctx);                // 从源语言草稿提取翻译单元
+    void apply(TranslationContext ctx, Map<String, String> translations); // key → 译文；写回目标语言草稿，非文本数据从源语言复制
+}
+
+public interface TranslatableResourceProvider {
+    boolean supports(String resourceType);                                // 如菜单、表单、媒体、属性、邮件模板
+    List<TranslationUnit> extract(TranslationContext ctx);                // 从站点资源提取可翻译文本
+    void apply(TranslationContext ctx, Map<String, String> translations); // 写回目标语言的资源文本
+}
+
+public record TranslationUnit(
+        String  key,        // 字段路径，如 "title"、"seo.title"、"body[3]"
+        String  text,       // 原文；富文本行内标记已转为编号占位标签
+        String  format,     // TEXT / RICH_INLINE
+        Integer maxLength,  // 可选的长度上限，如 SEO 标题 60 个字符
+        String  context     // 上下文说明，如“产品名称”“按钮文字”
+) {}
+```
+
+`TranslationContext` 携带站点、内容或资源 ID、源语言与目标语言。
 
 ### 3.8 模块停用时的行为
 
@@ -657,12 +715,15 @@ public record ContentPublishedEvent(
 | 事件 | 发布者 | 主要订阅者 |
 |---|---|---|
 | `ContentCreatedEvent` | content | graph |
-| `ContentPublishedEvent` | content | seo（sitemap、IndexNow、链接索引、健康检查）、graph（增量计算）、search（索引）、media（引用）、delivery（缓存失效） |
+| `ContentPublishedEvent` | content | seo（sitemap、IndexNow、链接索引、健康检查）、graph（增量计算）、search（索引）、media（引用）、delivery（缓存失效）、translation（源语言发布时创建翻译任务，见 5.7） |
 | `ContentUnpublishedEvent` | content | seo、graph、search、media、delivery |
 | `ContentTrashedEvent` / `ContentRestoredEvent` | content | graph、search、delivery |
 | `ContentPurgedEvent` | content | 所有持有该内容数据的模块（清理各自的表）、graph、media |
 | `LocalizationCreatedEvent` / `LocalizationDeletedEvent` | content | seo（hreflang）、delivery |
-| `TranslationOutdatedEvent` | content | notification（通知翻译人员） |
+| `TranslationOutdatedEvent` | content | notification（MANUAL 模式的本地化：通知翻译审校人员） |
+| `TranslatableResourceChangedEvent`（资源类型 + ID） | 各模块：navigation、form、media、product、taxonomy、notification、core、tracking | translation（翻译站点资源，见 5.7） |
+| `TranslationCompletedEvent` | translation | content（自动发布）、delivery |
+| `TranslationFailedEvent` | translation | notification |
 | `ReviewRequestedEvent` / `ReviewCompletedEvent` | content | notification |
 | `ContentPathChangedEvent` | url | seo（IndexNow 推送新旧 URL）、delivery |
 | `RedirectChangedEvent` | url | delivery |
@@ -695,11 +756,12 @@ content.publish(localizationId, expectedVersion)        ──── 同一个�
    ├─ seo：更新 sitemap 缓存、推送 IndexNow、重建链接索引、执行健康检查
    ├─ graph：增量重算关系
    ├─ search：更新索引
-   └─ media：更新引用记录
+   ├─ media：更新引用记录
+   └─ translation：源语言发布时，为启用自动翻译的目标语言创建翻译任务（见 5.7）
 ```
 
 - **强一致**：内容状态、快照、投影、路由与重定向在同一个事务中完成，保证“发布成功即可被路由”。
-- **最终一致**：缓存、sitemap、图谱、搜索、引用在 60 秒内完成（见 1.5）。
+- **最终一致**：缓存、sitemap、图谱、搜索、引用在 60 秒内完成（见 1.5）；目标语言的译文在 5 分钟内生成（不含人工审校，见 1.5、5.7），AI 引擎故障不影响源语言的发布。
 
 ---
 
@@ -711,9 +773,9 @@ content.publish(localizationId, expectedVersion)        ──── 同一个�
 
 ```text
 User（用户：全局唯一，不属于某个站点）
-Site（站点：主域名、主题、默认语言、URL 策略、时区）
+Site（站点：主域名、主题、默认对外语言、URL 策略、时区）
  ├── SiteDomain（主域名 / 别名域名 / V2：语言独立域名）
- ├── SiteLocale（站点语言：URL 前缀、hreflang 值、是否公开、排序）
+ ├── SiteLocale（站点语言：URL 前缀、hreflang 值、是否对外公开、是否自动翻译、排序）
  ├── SiteModule（站点启用的模块）
  ├── SiteProfile（站点资料：公司信息、Logo、联系方式，见 16.3）
  └── UserSiteRole（用户在该站点的角色）
@@ -721,12 +783,17 @@ Site（站点：主域名、主题、默认语言、URL 策略、时区）
 
 | 表 | 关键字段 |
 |---|---|
-| `sys_site` | code、name、theme_key、default_locale、url_strategy、trailing_slash、timezone、status |
+| `sys_site` | code、name、theme_key、default_locale（默认对外语言）、url_strategy、trailing_slash、timezone、status |
 | `sys_site_domain` | site_id、domain、type（PRIMARY / ALIAS / LOCALE）、locale |
-| `sys_site_locale` | site_id、locale、url_prefix、hreflang、public、sort |
+| `sys_site_locale` | site_id、locale、url_prefix、hreflang、public（对外公开）、auto_translate（自动翻译）、sort |
 | `sys_site_module` | site_id、module_id、enabled、config（JSON） |
 | `sys_user_site_role` | user_id、site_id、role_id |
 
+- **站点语言**：源语言固定为简体中文 `zh-CN`（见 5.4）。
+  - `public`（对外公开）：该语言是否在前台可访问、是否出现在语言切换器、hreflang 与 sitemap 中；未对外公开的语言只能在后台与预览中查看。V1 默认只有 `zh-CN` 对外公开。
+  - `auto_translate`（自动翻译）：源语言内容发布、站点资源变化时，是否自动翻译到该语言（见 5.7）；对源语言本身不适用。
+  - `default_locale`（默认对外语言）：根路径跳转与 `x-default` 的目标（见 5.4），必须是对外公开的语言。
+  - `url_strategy`：V1 固定为子目录（全部语言带前缀，见 5.4）；V2 可选语言独立域名。
 - 用户全局唯一；角色按站点分配（`sys_user_site_role`）。
 - **系统管理员**管理站点、模块与系统设置，拥有所有站点的权限。
 
@@ -759,21 +826,187 @@ CI 中有专门的站点隔离测试：准备两个站点的数据，以及只�
 
 ### 5.4 语言与 URL 策略
 
-- **语种**：默认语言 `en`。建议首批语言：**en、de、fr、es、it**；按需扩展 nl、pl、pt。具体清单待确认（见 32 章 Q2）。
-- **默认采用子目录策略**：默认语言不加前缀（`/products/x`），其他语言加前缀（`/de/produkte/x`）；可以配置为“全部语言都加前缀”。V2 支持每种语言使用独立域名（`example.de`）。
-- 语言代码使用 BCP 47（`en`、`de`、`pt-BR`、`zh-Hans`）；hreflang 值可以单独配置，**默认只用语言代码**（`en`、`de`、`fr`…）：英语只做一个版本，同时服务美国与英国；以后需要区分 `en-US` / `en-GB` 时再增加区域变体。`x-default` 指向 `en` 版本。
-- 根路径**不按 Accept-Language 自动跳转**（对爬虫不友好），只显示语言建议条。
-- **内容不跨语言回退**：某内容没有 `de` 本地化时，`de` 下就不存在该页面，列表与推荐中也不出现。
-- 界面文案（按钮、表单标签等）有回退链：站点覆盖 → 主题默认 → 英文。
+- **源语言**（编辑录入语言）：简体中文，语言代码 `zh-CN`。所有内容、站点资源只需用中文录入；`cnt_content.primary_locale` 即源语言。管理后台界面只提供简体中文，与站点的内容语言无关（见 22.5）。
+- **对外语言**：前台 V1 先只开放中文（`zh-CN` 对外公开）。其他语言（建议首批 **en、de、fr、es、it**；按需扩展 nl、pl、pt）由 AI 翻译生成（见 5.5–5.10）；站点管理员在站点语言设置中把某语言设为“对外公开”即可上线，不需要改代码（见 32 章 Q2）。目标市场仍是欧盟、英国与北美（见 0.4 A2）。
+- **开放新语言**：在站点语言设置中添加该语言并启用自动翻译 → translation 创建批量翻译任务，翻译全部已发布内容与站点资源（菜单、表单、界面文案、属性名等，见 5.7）→ 设为“对外公开”。建议在批量任务完成后再对外公开；对外公开后，该语言已发布的页面、hreflang、sitemap 与语言切换器自动生效（见 1.3 S11）。
+- **URL 全部语言都带前缀**（子目录策略）：`/zh/…`、`/en/…`、`/de/…`；前缀取自站点语言的 `url_prefix`，内容类型的 URL 规则本身不含语言前缀（见 6.2）。V2 支持每种语言使用独立域名（`example.de`）。
+- **根路径**：`/` 以 **302** 跳转到站点“默认对外语言”（`sys_site.default_locale`）的首页；固定跳转，**不按 Accept-Language**（对爬虫不友好），可以按浏览器语言显示语言建议条，但不自动跳转。使用 302 而不是 301，是因为默认对外语言以后可以调整。这样以后开放英语，或把默认对外语言从中文改为英语时，所有内容 URL 都不变。
+- **语言代码与 hreflang**：语言代码使用 BCP 47（`zh-CN`、`en`、`de`、`pt-BR`）；hreflang 值可以单独配置，**默认只用语言代码**：中文为 `zh`（可配置为 `zh-Hans`），英语 `en`、德语 `de`、法语 `fr`…；英语只做一个版本，同时服务美国与英国，以后需要区分 `en-US` / `en-GB` 时再增加区域变体。只有已发布且“对外公开”的语言输出 hreflang（见 14.4）。
+- **x-default**：首页指向 `/`（会跳转到默认对外语言，符合 Google 对“自动跳转首页”的建议）；其他页面指向默认对外语言的版本（若已发布）。
+- **内容不跨语言回退**：某内容没有 `de` 本地化（包括译文尚未生成或尚未发布）时，`de` 下就不存在该页面，列表与推荐中也不出现。
+- **界面文案**（按钮、表单标签等）：主题以文案键提供默认中文文案，站点可以覆盖；查找顺序为站点覆盖 → 主题默认。二者都以中文为源，作为站点资源翻译到各语言（见 5.5、21.7）；译文翻译一次并存储，前台渲染时不调用 AI。
+- **slug、字体与搜索**：中文 slug 默认用拼音音译，其他语言的 slug 由译文标题生成、首次发布后固定（见 13.3）；中文使用系统字体栈（见 11.6）；中文索引使用 Meilisearch 内置的中文分词（见 19）。
 - RTL 语言不在 V1 范围；前台样式仍全部使用 CSS 逻辑属性（`margin-inline-start` 等），成本低，保留扩展性；`<html dir>` 由语言配置决定。
 
-### 5.5 翻译工作流
+### 5.5 AI 翻译概述
 
-- 新建本地化时可以从源语言复制草稿，并记录 `source_locale` 与 `source_revision_no`。
-- 源语言发布新修订后，基于旧修订翻译的其他语言被标记为 `OUTDATED`，翻译面板列出变化的字段。
-- 翻译状态：`MISSING` / `IN_PROGRESS` / `UP_TO_DATE` / `OUTDATED`。
-- 翻译角色可以被限定在指定语言（数据范围）。
-- 【V2+】通过 AI 模块的 `TranslationProvider` 扩展点生成机器翻译初稿。
+AI 翻译由 `translation` 模块实现：L2 基础能力模块，表前缀 `trn_`，可停用（停用后不再自动翻译，已生成的译文保留），V1 范围（见 3.2）。职责：翻译单元提取与回写的编排、翻译记忆、术语表、风格指南、引擎适配、翻译任务（实时与批量）、用量与成本统计、翻译中心（后台）。
+
+- **目标**：中文录入一次，其他语言由 AI 生成；**一次翻译、持久存储、相同原文不再翻译**；人工修订优先于机器翻译。
+- **翻译对象**：
+
+| 类别 | 范围 | 提取与回写 |
+|---|---|---|
+| 内容 | 产品、文章、案例、FAQ、页面、分类落地页、全局区块 | `TranslatableContentProvider`（见 3.7），源语言发布时触发 |
+| 站点资源 | 菜单、表单、界面文案、产品属性名与选项、分类名、媒体 alt / 标题、通知邮件模板、站点资料中的文本、Cookie 横幅文案 | `TranslatableResourceProvider`（见 3.7），资源保存时触发 |
+
+- **不翻译**：非文本数据（图片、数值、型号、分类指派、关联关系、布局结构），目标语言直接沿用源语言。
+- **翻译模式**（每个本地化一个，`cnt_localization.translation_mode`，见 6.1）：
+
+| 模式 | 说明 |
+|---|---|
+| `SOURCE` | 源语言本地化本身 |
+| `AUTO`（目标语言默认） | 由源语言 + 翻译记忆生成；布局结构与源语言自动保持同步；人工只能在翻译编辑器中按段修订，修订结果写回翻译记忆 |
+| `MANUAL` | 脱离自动翻译，独立编辑（如为某个市场单独写的页面）；源语言更新后只标记 `OUTDATED`（翻译面板列出变化的字段），不自动覆盖 |
+
+- **翻译状态**（`translation_state`）：
+
+| 状态 | 含义 |
+|---|---|
+| `NONE` | 源语言本身 |
+| `QUEUED` | 排队或翻译中 |
+| `TRANSLATED` | 全部段落已生成并通过校验 |
+| `NEEDS_REVIEW` | 有段落校验未通过，或该内容要求人工审校 |
+| `FAILED` | 引擎错误且重试耗尽 |
+| `OUTDATED` | MANUAL 模式下源语言已更新 |
+
+- **法律页面**（隐私政策、Cookie 政策、条款、Imprint）与 `legal` 模板：机器译文**不自动发布**，必须人工审校后发布。
+
+### 5.6 翻译单元与翻译记忆
+
+**翻译单元（Segment）**是最小翻译单位：
+
+- 纯文本字段：一个字段一个单元（标题、摘要、SEO 标题与描述、属性名、选项名、分类名、菜单名、表单标签、alt、界面文案等）。
+- 富文本：按块级节点拆分（段落、标题、列表项、表格单元格、引用）；行内标记（加粗、链接、`content://` 引用等）转为编号占位标签（如 `<1>…</1>`），翻译后按编号还原（见 9）。
+- 每个单元带：字段路径、格式（`TEXT` / `RICH_INLINE`）、可选的长度上限（如 SEO 标题 60 个字符）、上下文说明（如“产品名称”“按钮文字”）。
+
+富文本段落的处理示意：
+
+```text
+原文段落：  本产品通过 [加粗]CE[/加粗] 认证，详见 [链接 content://7201893453912345]安装手册[/链接]。
+翻译单元：  本产品通过 <1>CE</1> 认证，详见 <2>安装手册</2>。          （格式 RICH_INLINE）
+译文（en）：This product is <1>CE</1> certified. See the <2>installation manual</2>.
+还原：      按编号把 <1>、<2> 还原为加粗与链接；链接目标 content://7201893453912345 不变
+```
+
+**翻译记忆**（Translation Memory，`trn_memory`）：
+
+- 键：`(source_locale, target_locale, source_hash, variant)`；`source_hash` = SHA-256(规范化原文)，规范化：Unicode NFC、去除首尾空白、合并连续空白；`variant` 默认 `default`，有长度上限且默认译文超长时，另存 `max{N}` 变体（如 `max60`）。
+- **命中即复用，不调用 AI**；同一批次中重复的原文只翻译一次。
+- 来源与优先级：`HUMAN`（人工修订）> `REVIEWED`（人工确认的机器译文）> `MACHINE`（机器译文）。人工修订写回翻译记忆，以后相同原文复用人工版本；**机器翻译永远不会覆盖 `HUMAN` / `REVIEWED` 条目**。
+- 每个条目记录引擎、模型、术语表版本、创建时间、使用次数、最后使用时间。
+- 不设过期；可以按条目在翻译中心中查看、修订、作废。
+- 站点资源与内容共用同一个翻译记忆（同站点内），因此“询价”“立即联系”这类常用词全站译法一致。
+
+### 5.7 翻译流程
+
+```text
+中文内容发布（ContentPublishedEvent，locale = 源语言）
+  │ translation 监听（事务提交后，异步）
+  ▼
+1. 对每个“启用自动翻译”的目标语言创建翻译任务 trn_job
+2. 调用该内容类型的 TranslatableContentProvider.extract()，得到翻译单元（字段路径 + 原文 + 格式 + 长度上限 + 上下文）
+3. 逐个查翻译记忆：命中 → 直接使用；未命中 → 去重后进入待翻译队列
+4. 待翻译单元按批次调用 AI 引擎（每批不超过约 50 个单元或配置的 token 上限）
+5. 校验译文（见 5.8）→ 写入翻译记忆
+6. 调用 TranslatableContentProvider.apply()：按字段路径写回目标语言草稿；非文本数据从源语言复制
+7. 按站点配置：自动发布（默认）或进入审核；法律页面一律进入审核
+8. 发布 TranslationCompletedEvent / TranslationFailedEvent
+```
+
+- **任务与状态**：`trn_job` 记录翻译任务（实时 / 批量、目标语言、状态、进度、费用），`trn_job_item` 记录任务中每条内容或站点资源的执行结果（含未通过校验的单元）。创建任务时，目标语言本地化（不存在时由内容内核创建，`translation_mode = AUTO`）的 `translation_state` 置为 `QUEUED`；完成后为 `TRANSLATED`，有单元校验未通过时为 `NEEDS_REVIEW`，引擎错误且重试耗尽时为 `FAILED`；`source_revision_no` 记录所依据的源语言修订号。源语言在任务执行期间再次发布时，以新修订为准，旧任务作废（见 4.1 的顺序规则）。
+- **增量翻译**：源语言再次发布时重复上述流程。未修改的段落原文不变，直接命中翻译记忆（包括人工修订过的译文）；只有被修改的段落调用 AI（见 1.3 S12）。
+- **自动发布**：第 7 步的自动发布由内容内核在收到 `TranslationCompletedEvent` 后执行，与人工发布使用同一套校验与发布流程（见 4.4、6.3），操作人记为 `system`。目标语言的 slug 由译文标题生成，首次发布后固定（见 13.3）。
+- **站点资源**：各模块在资源变化时发布 `TranslatableResourceChangedEvent`（资源类型 + ID），translation 通过 `TranslatableResourceProvider` 提取与回写，流程同上（资源保存即生效，不走内容发布流程）；delivery 收到 `TranslationCompletedEvent` 后按缓存标签失效。
+- **批量翻译**：开放新语言、批量导入产品、术语表变化后重译时，创建批量任务，按内容逐条排队执行，限制并发与速率；进度、费用在翻译中心可见；可暂停、取消、重试失败项。
+- **源语言下线或进回收站**：`AUTO` 模式的目标语言本地化跟随下线；`MANUAL` 模式不受影响（见 6.3）。
+- **实时性**：单条内容通常在 1–5 分钟内完成（取决于引擎）；翻译是异步的，**AI 引擎故障不影响中文内容的发布**。
+- **询盘翻译（按需）**：销售在询盘详情页点击“翻译为中文”，inquiry 调用 translation 在 platform-api 中的公开服务接口（`TranslationApi.translateText`）翻译留言，再由 inquiry 把译文保存在询盘上（见 17.10；translation 是 L2，不直接写询盘表）；再次查看不重复调用（见 1.3 S13）。站点可关闭此功能。询盘译文不写入翻译记忆（属于个人数据，不复用）。
+
+### 5.8 质量保障
+
+- **术语表**（`trn_glossary_term`，站点级）：中文术语 → 各语言译法；可标记“禁止翻译”（品牌名、产品系列名、型号、标准号等）。翻译时把与本批原文相关的术语条目放入提示词。术语表变化后，可一键重译包含该术语的 `MACHINE` 条目（不影响 `HUMAN` / `REVIEWED`）。
+- **风格指南**（`trn_style_guide`，站点 × 目标语言）：语气（专业、简洁）、称呼（如德语使用 Sie）、数字与单位格式、品牌写法等，作为系统提示词的一部分。
+- **占位保护**：型号、数字与单位、URL、邮箱、`content://` 引用、编号占位标签在译文中必须原样保留。
+- **自动校验**（每个译文）：
+
+| 校验项 | 规则 |
+|---|---|
+| 占位标签 | 完整，且编号与原文一致 |
+| 数字 | 与原文一致（按数值比较，小数点与千位分隔符可以按风格指南调整） |
+| 禁止翻译的术语 | 保留原样 |
+| 术语表译法 | 被遵守 |
+| 长度 | 不超过上限 |
+| 残留中文 | 译文中没有残留中文 |
+| 输出格式 | 合法 JSON，且单元数量与 ID 一一对应 |
+
+- **校验失败**：自动重试一次（附带失败原因）；仍失败则该单元标记 `NEEDS_REVIEW`，所在本地化不自动发布，在翻译中心待处理列表中出现。
+- **翻译编辑器**（后台，见 22.3）：源语言与目标语言按段并排显示；可修订（写回翻译记忆，来源 `HUMAN`）、标记已确认（`REVIEWED`）、单段重译；显示每段来源（记忆命中 / 机器 / 人工）。翻译审校角色可以被限定在指定语言（数据范围）。
+- **SEO**：Google 允许使用自动翻译，但要求对用户有帮助；建议对首页、主要产品与分类页安排母语人员抽检；SEO 健康检查新增规则“关键页面的机器译文未经审校”（INFO，见 14.9）。
+
+### 5.9 引擎接入（OpenAI 兼容接口）
+
+- 后端定义端口 `TranslationEngine`（infrastructure 提供适配器，做法与 12.5 的存储适配相同）；translation 只依赖该端口，不接触具体服务商：
+
+```java
+public interface TranslationEngine {
+    /** 翻译一批单元：返回每个单元的译文与本次调用的 token 用量 */
+    TranslationResult translate(TranslationRequest request);
+}
+```
+
+- **默认适配器使用 OpenAI 兼容的 Chat Completions 接口**（`POST {baseUrl}/chat/completions`），可配置项见下表。因此可接入任何兼容该接口的服务（如 OpenAI、DeepSeek、通义千问、Kimi，或自部署的 vLLM、Ollama），切换服务商只改配置。
+- 后端用 Spring 的 HTTP 客户端直接调用，**不绑定任何厂商 SDK**。
+- 引擎配置项：
+
+| 配置项 | 说明 |
+|---|---|
+| base URL | 服务地址，如 OpenAI、其他兼容服务或自部署服务的地址 |
+| API Key | 加密存储（见 26.6） |
+| 模型名 | 由服务商决定 |
+| 温度 | 默认 0.2 |
+| 单次请求上限 | 最大单元数与 token 上限 |
+| 超时 | 单次请求的超时时间 |
+| 速率上限 | 每分钟请求数与 token 数 |
+| 结构化输出 | 是否支持 `response_format`（`json_schema` 严格模式 / `json_object` / 不支持） |
+| 单价 | 输入、输出 token 单价，用于估算费用（见 5.10） |
+
+- **输出格式**：要求模型返回 JSON（`{"items":[{"id":"…","text":"…"}]}`）；服务商支持时使用 `response_format`（`json_schema` 严格模式，或 `json_object`），不支持时依靠提示词约束 + 严格解析 + 校验重试。是否支持由引擎配置项声明。单元 ID 由系统生成，响应中的 ID 必须与请求一一对应（见 26.3）。
+- **提示词结构**：固定的系统提示词（角色、规则、输出格式）+ 风格指南 + 本批相关术语在前，待翻译单元在后——前缀稳定，便于支持自动前缀缓存的服务商降低费用。
+
+请求示例（`POST {baseUrl}/chat/completions`）：
+
+```json
+{
+  "model": "<引擎配置中的模型名>",
+  "temperature": 0.2,
+  "response_format": { "type": "json_schema", "json_schema": { "name": "translations", "strict": true, "schema": { } } },
+  "messages": [
+    { "role": "system", "content": "固定的系统提示词（角色、规则、输出格式）+ 风格指南 + 本批相关术语" },
+    { "role": "user",   "content": "{\"source\":\"zh-CN\",\"target\":\"de\",\"items\":[{\"id\":\"u1\",\"text\":\"…\",\"maxLength\":60,\"context\":\"产品名称\"}]}" }
+  ]
+}
+```
+
+- **重试**：429 与 5xx 按退避重试（尊重 `Retry-After`），最多 3 次；可配置**备用引擎**（另一个 OpenAI 兼容服务），主引擎持续失败时切换。
+- 引擎配置保存在 `trn_engine`（API Key 加密存储，见 26.6），可配置多个，站点选择主引擎与备用引擎。
+- 待翻译文本与译文一律按数据处理，不作为指令执行（提示词注入防护见 26.3）。
+
+### 5.10 用量、成本与运维
+
+- 每次调用记录输入、输出 token（取自响应的 `usage`）与耗时；按引擎配置的单价估算费用；按天汇总到 `trn_usage_daily`。
+- 指标：翻译记忆命中率、引擎错误率与延迟、待处理单元数、每日费用（见 27.4）。
+- **月度预算上限**（站点配置）：达到 80% 告警；达到 100% 暂停批量任务（实时任务可配置是否继续）。
+- **翻译中心**（后台）：
+
+| 功能 | 说明 |
+|---|---|
+| 任务 | 任务列表与进度；暂停、取消、重试失败项 |
+| 待审校 | `NEEDS_REVIEW` / `FAILED` 的本地化与单元；法律页面的待审校译文 |
+| 翻译记忆 | 浏览、修订、作废 |
+| 术语表 / 风格指南 | 维护；术语变化后一键重译相关的 `MACHINE` 条目 |
+| 引擎配置 | 多个 OpenAI 兼容引擎；站点选择主引擎与备用引擎 |
+| 用量与费用 | 按天汇总的 token 用量与费用报表；月度预算 |
 
 ---
 
@@ -789,7 +1022,7 @@ cnt_content（语言无关）
  │     ├── locale、slug、draft_title、draft_state、draft_hash
  │     ├── publish_state、published_revision_id、first_published_at、published_at
  │     ├── scheduled_publish_at、scheduled_unpublish_at、unpublish_strategy
- │     ├── translation_state、source_locale、source_revision_no
+ │     ├── translation_mode、translation_state、source_locale、source_revision_no
  │     ├── 投影字段：pub_title、pub_summary、pub_cover_media_id、pub_path、pub_hash、content_modified_at
  │     └── version（乐观锁）
  │
@@ -810,6 +1043,13 @@ cnt_localization (content_id=1001, locale=en) ──1:1──  prd_product_local
 - 内容内核拥有：身份、类型、语言版本、slug、发布状态、修订、快照、投影。
 - 业务模块拥有：本类型的业务字段（草稿态），保存在自己的表中，以 `content_id` 关联。
 - 业务模块创建内容时，在自己的事务中调用 `ContentApi.create(type, locale)` 获得 `content_id`；保存草稿时调用 `ContentApi.updateDraftMeta()` 同步后台列表需要的标题。
+
+**翻译相关字段**：
+
+- `cnt_content.primary_locale` 即源语言（`zh-CN`，见 5.4）。
+- `translation_mode`：`SOURCE`（源语言本地化）/ `AUTO`（由 AI 翻译生成，目标语言默认）/ `MANUAL`（独立编辑），见 5.5。
+- `translation_state`：`NONE` / `QUEUED` / `TRANSLATED` / `NEEDS_REVIEW` / `FAILED` / `OUTDATED`，含义见 5.5。
+- `source_locale`、`source_revision_no`：生成译文时依据的源语言及其修订号。源语言发布新修订后，`AUTO` 模式据此重新翻译（见 5.7），`MANUAL` 模式据此标记 `OUTDATED`。
 
 ### 6.2 内容类型
 
@@ -840,6 +1080,8 @@ V1 内容类型：
 | `TERM_PAGE` | taxonomy | 是 | `/product-category/{slug}`、`/applications/{slug}`、`/industries/{slug}` | 可路由分类项（产品分类、应用、行业）的落地页 |
 | `GLOBAL_BLOCK` | page | 否 | — | 全局复用区块（见 10.6） |
 
+默认 URL 规则不含语言前缀，语言前缀由站点语言配置添加（如 `/zh/products/{slug}`、`/en/products/{slug}`，见 5.4）。
+
 V1.0 中的 `CATEGORY`、`APPLICATION` 统一为 `TERM_PAGE`；`LANDING_PAGE` 统一为 `PAGE` + landing 模板。
 
 ### 6.3 状态机
@@ -865,12 +1107,18 @@ publish_state： NEVER ──发布──▶ PUBLISHED ──下线──▶ UNP
 | 通过 / 驳回 | IN_REVIEW | APPROVED / EDITING（附意见） | `content:<type>:review` |
 | 发布 | 不需要审核，或已 APPROVED；校验通过 | 生成新修订；PUBLISHED；草稿与线上一致 | `content:<type>:publish` |
 | 定时发布 / 定时下线 | 同发布 | SCHEDULED；每分钟的任务到时执行 | `content:<type>:publish` |
-| 下线 | PUBLISHED | UNPUBLISHED；路由按下线策略返回 410 或 301（见 13.6） | `content:<type>:publish` |
+| 下线 | PUBLISHED | UNPUBLISHED；路由按下线策略返回 410 或 301（见 13.6）；源语言下线时，AUTO 模式的目标语言跟随下线 | `content:<type>:publish` |
 | 回滚 | 存在历史修订 | 把历史快照恢复为草稿，需要再次发布 | `content:<type>:publish` |
 | 移入回收站 | 未发布（已发布的需先下线） | trashed_at 有值 | `content:<type>:delete` |
 | 恢复 / 彻底删除 | 在回收站中 | 恢复 / 物理删除并发布 `ContentPurgedEvent` | `content:<type>:delete` |
 
 “有未发布的修改”通过比较 `draft_hash` 与 `pub_hash` 判断，在后台列表中显示徽标。
+
+**AI 翻译生成的目标语言本地化**（`translation_mode = AUTO`）：
+
+- 草稿由 translation 写回（见 5.7），不需要人工编辑。翻译完成（`TRANSLATED`）后，按站点配置**自动发布**（默认），或进入审核（`IN_REVIEW`）；法律页面（`legal` 模板）一律进入审核，人工审校后发布；有 `NEEDS_REVIEW` 或 `FAILED` 时不自动发布。
+- 自动发布由内容内核在收到 `TranslationCompletedEvent` 后执行，与人工发布使用同一套发布校验与流程（见 4.4），操作人记为 `system`。
+- 源语言本地化下线或内容进回收站时，AUTO 模式的目标语言本地化跟随下线；MANUAL 模式的本地化不受影响。由于移入回收站是内容级操作，仍有已发布的 MANUAL 本地化时，需先将其下线。
 
 **发布校验**（`PublishContributor.validate()`）包括：必填字段、slug 唯一、引用的媒体存在、布局文档符合 Schema、引用的内容已发布（未发布时给出警告）。
 
@@ -931,6 +1179,7 @@ public interface PublishContributor {
 ### 6.7 审核
 
 - 每个站点可以按内容类型配置是否需要审核（`review.required`）。
+- AI 翻译生成的目标语言本地化是否需要审核由站点单独配置（默认自动发布；法律页面一律审核，见 6.3）。
 - V1 只支持单级审核：拥有 `review` 权限的人通过或驳回。
 - 提交审核与审核结果通过通知模块发送给相关人员。
 - 【V2+】多级审批与按条件路由。
@@ -971,6 +1220,7 @@ public interface PublishContributor {
 - 产品必须有一个**主分类**（`is_primary`），用于面包屑与结构化数据。
 - 删除仍有内容指派的分类项时，要求先转移指派；删除可路由分类项时，其落地页下线并 301 到上级分类页。
 - 分类项更名或移动发布 `TermChangedEvent`，按 `t:{termId}` 标签失效缓存。
+- **翻译**：分类名以中文录入，作为站点资源翻译（经翻译记忆，全站译法一致，见 5.5）；分类描述随分类落地页（TERM_PAGE）作为内容翻译。
 - 【V2+】分类项合并工具。
 
 ---
@@ -996,6 +1246,11 @@ public interface PublishContributor {
 属性数据类型：`TEXT`（可翻译）、`NUMBER`、`RANGE`（最小–最大）、`BOOLEAN`、`ENUM`、`MULTI_ENUM`。数值统一以标准单位存储。
 
 **双单位显示**：数值类属性（`NUMBER`、`RANGE`）可以开启“公制 + 英制”双单位显示（`dual_unit`），并指定第二单位（`secondary_unit`），前台显示为 `100 mm (3.94 in)`、`5 kg (11 lb)`。换算在发布时计算并写入快照（见 8.2），前台不做换算。
+
+**翻译**（见 5.5–5.7）：
+
+- 属性分组名、属性名、枚举选项名属于**站点资源**：以中文录入，保存时发布 `TranslatableResourceChangedEvent`，经翻译记忆翻译到各语言，保证同一属性名、选项名全站译法一致。
+- 产品名称、副标题、简介、详情、卖点等本地化字段与 `TEXT` 类型的属性值属于**内容**，随源语言发布由 AI 翻译；型号、数值、单位、分类指派、媒体与型号表结构不翻译，目标语言直接沿用源语言。
 
 ### 8.2 属性的存储与查询
 
@@ -1023,18 +1278,18 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 
 | 项 | 设计 |
 |---|---|
-| 模板 | 按属性集生成 Excel 模板：型号、各语言名称列、分类、属性列、图片文件名、旧站 URL |
+| 模板 | 按属性集生成 Excel 模板：型号、名称（中文）、分类、属性列、图片文件名、旧站 URL |
 | 流程 | 上传 xlsx（可附图片 zip）→ 异步任务解析 → 校验并生成预览报告（新建 N、更新 M、错误逐行列出）→ 用户确认 → 分批执行（每个产品独立事务）→ 结果报告可下载 |
 | 匹配键 | 站点内的 `model_no`，支持重复导入（更新） |
 | 图片 | 来自 zip；或来自 URL（域名白名单 + SSRF 防护，见 26.3） |
-| 发布 | 默认导入为草稿；有发布权限的用户可以选择“导入后直接发布” |
+| 发布 | 默认导入为草稿；有发布权限的用户可以选择“导入后直接发布”；发布后由 translation 创建批量翻译任务，翻译到启用自动翻译的语言（见 5.7） |
 | 导出 | 按筛选条件导出为同一模板，支持“导出 → 修改 → 导入”的批量编辑 |
 | 旧站迁移 | “旧站 URL”列在发布后自动生成 301（见 13.5） |
 
 ### 8.7 后台功能
 
 - 列表：按分类、状态、翻译状态、SEO 分数筛选；批量指派分类、批量发布/下线。
-- 编辑页标签：基本信息 / 属性 / 型号 / 媒体 / 文档 / 分类 / 关联（graph 提供）/ 页面插槽（page 提供）/ SEO（seo 提供）/ 历史修订。
+- 编辑页标签：基本信息 / 属性 / 型号 / 媒体 / 文档 / 分类 / 关联（graph 提供）/ 页面插槽（page 提供）/ SEO（seo 提供）/ 翻译（translation 提供，见 22.3）/ 历史修订。
 
 ---
 
@@ -1051,6 +1306,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
   - 正文从 H2 开始，H1 保留给页面标题；长文自动生成目录。
   - 内部链接存为 `content://{id}`，渲染时解析为当前 URL；目标下线时降级为纯文本，并在 SEO 健康中报警。
   - 外部链接自动添加 `rel="noopener"`，可选 `nofollow` / `sponsored`。
+  - **翻译**：按块级节点（段落、标题、列表项、表格单元格、引用）拆分为翻译单元；行内标记（加粗、链接、`content://` 引用等）转为编号占位标签，翻译后按编号还原（见 5.6）。图片、视频、产品卡片等非文本节点不翻译，目标语言直接沿用源语言；内部链接在目标语言中解析为被引用内容同语言版本的 URL，该语言没有对应版本时同样降级为纯文本。
 - 阅读时长自动计算；前台展示发布日期与更新日期。
 
 ---
@@ -1066,7 +1322,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 
 系统内容使用模板，保证上万个产品页结构一致、可批量升级；营销页使用页面编辑器，保证灵活。两者使用同一套组件与布局文档格式。
 
-**法律页面**（每个站点必备）：隐私政策（Privacy Policy）、Cookie 政策（Cookie Policy）、使用条款（Terms of Use）、Imprint（德语 Impressum；面向德国、奥地利时通常属于法律要求，适用范围与必填字段由法务确认，见 32 章 Q14）、无障碍声明（Accessibility Statement，可选，见 11.5）。实现方式：PAGE + `legal` 模板（以正文为主的简洁版式）；Imprint 的正文由站点资料中的法定信息字段自动生成（见 16.3），不手工维护。
+**法律页面**（每个站点必备）：隐私政策（Privacy Policy）、Cookie 政策（Cookie Policy）、使用条款（Terms of Use）、Imprint（德语 Impressum；面向德国、奥地利时通常属于法律要求，适用范围与必填字段由法务确认，见 32 章 Q14）、无障碍声明（Accessibility Statement，可选，见 11.5）。实现方式：PAGE + `legal` 模板（以正文为主的简洁版式）；Imprint 的正文由站点资料中的法定信息字段自动生成（见 16.3），不手工维护。法律页面的机器译文不自动发布，必须人工审校后发布（见 5.5）。
 
 ### 10.2 模板定义
 
@@ -1077,7 +1333,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
   "key": "product-detail",
   "version": 1,
   "contentTypes": ["PRODUCT"],
-  "label": { "zh-CN": "产品详情（标准）", "en-US": "Product detail" },
+  "label": "产品详情（标准）",
   "regions": [
     { "key": "hero",       "fixed": true, "component": "product-hero" },
     { "key": "specs",      "fixed": true, "component": "product-specification" },
@@ -1090,8 +1346,9 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 }
 ```
 
+- `label` 只写中文字符串（后台界面只用简体中文，见 2.4），不使用按语言区分的对象。
 - 固定区域由模板渲染，读取快照中的业务数据；固定区域的数据源在读取时解析，因此修改模板配置（如推荐配比）**不需要重新发布内容**。
-- 插槽中的组件保存在该本地化的布局文档中（快照的 `layout` 部分），由 page 模块的 `PublishContributor` 负责。
+- 插槽中的组件保存在该本地化的布局文档中（快照的 `layout` 部分），由 page 模块的 `PublishContributor` 负责；目标语言的插槽布局按翻译模式生成（见 10.3）。
 - Delivery 通过 `TemplateProvider` 扩展点读取模板定义。
 
 ### 10.3 布局文档
@@ -1110,12 +1367,12 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
       "visibility": { "desktop": true, "tablet": true, "mobile": true },
       "style": { "background": "surface-brand", "paddingY": "xl", "container": "wide" },
       "props": {
-        "eyebrow": "Industrial Batteries",
-        "title": "Custom Li-ion Packs for Wearables",
+        "eyebrow": "工业电池",
+        "title": "可穿戴设备定制锂电池组",
         "headingLevel": "h1",
         "description": { "type": "doc", "content": [] },
         "image": { "$media": "7201893453918208" },
-        "primaryCta": { "label": "Get a Quote", "link": { "$content": "7201893453912345" } }
+        "primaryCta": { "label": "获取报价", "link": { "$content": "7201893453912345" } }
       }
     },
     {
@@ -1124,7 +1381,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
       "componentVersion": 1,
       "variant": "grid-4",
       "props": {
-        "title": "Featured Products",
+        "title": "推荐产品",
         "items": {
           "$source": {
             "provider": "content-query",
@@ -1154,7 +1411,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 | 引用对象化 | 媒体、内容、分类、数据源一律使用 `$media`、`$content`、`$term`、`$source` 对象，**不保存 URL**。URL 在渲染时解析，永远不会失效，缓存标签也可以据此推导 |
 | 样式只用 Token | `style` 中的值只能是 Token 枚举（如 `paddingY: "xl"`），不允许任意 CSS |
 | 有限嵌套 | 只有布局类组件（`columns`、`tabs`、`accordion-group`）可以通过具名 `children` 嵌套，最大深度 2 |
-| 每种语言一份 | 每个本地化有自己的布局文档；提供“从其他语言复制结构”操作；【V2+】结构同步工具 |
+| 按翻译模式生成 | 源语言（中文）本地化的布局文档由编辑维护（上例即源语言布局）。`AUTO` 模式下，目标语言布局 = 源语言布局 + 译文：结构（Section 及其 `id`、组件、变体、样式、可见性、引用与数据源）与源语言自动保持同步，只有可翻译属性（`x-translatable`，见 10.4）替换为译文，由 page 模块的 `TranslatableContentProvider` 提取与回写（见 3.7、5.7）；`MANUAL` 模式下独立编辑，可以用“从其他语言复制结构”操作作为起点，源语言更新后只标记 `OUTDATED`（见 5.5） |
 | 稳定 ID | Section 的 `id` 不变，用于编辑器选中、锚点与统计 |
 | 隐藏与可见性 | `hidden` 不输出；按设备的 `visibility` 通过 CSS 实现（内容仍在 HTML 中） |
 
@@ -1168,7 +1425,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
   "version": 2,
   "module": "page",
   "category": "marketing",
-  "label": { "zh-CN": "首屏横幅", "en-US": "Hero" },
+  "label": "首屏横幅",
   "variants": ["hero-centered", "hero-split", "hero-video"],
   "propsSchema": {
     "type": "object",
@@ -1176,7 +1433,7 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
     "properties": {
       "eyebrow":      { "type": "string", "maxLength": 60, "x-editor": "text" },
       "title":        { "type": "string", "maxLength": 120, "x-editor": "text", "x-seo": "heading" },
-      "headingLevel": { "enum": ["h1", "h2"], "default": "h2" },
+      "headingLevel": { "enum": ["h1", "h2"], "default": "h2", "x-translatable": false },
       "description":  { "$ref": "#/$defs/richTextInline", "x-editor": "richtext-inline" },
       "image":        { "$ref": "#/$defs/mediaRef", "x-editor": "media", "x-media": { "kinds": ["IMAGE"], "requireAlt": true } },
       "primaryCta":   { "$ref": "#/$defs/cta" }
@@ -1189,9 +1446,11 @@ B2B 产品常以“系列 + 多个型号”的形式出现。一个产品可以�
 }
 ```
 
+- `label` 只写中文字符串（见 10.2）。
 - `x-editor`：后台据此自动生成编辑表单（见 22.4）。
+- `x-translatable`：该属性是否作为翻译单元提取（见 5.6）。字符串与富文本默认 `true`（如上例的 `eyebrow`、`title`、`description`）；型号、代码、URL 等字符串以及枚举设为 `false`（如上例的 `headingLevel`）；媒体、内容、分类与数据源引用属于非文本数据，不翻译。`$defs` 中的复合类型在内部字段上标注（如 `cta` 的按钮文字可翻译，链接不翻译）。page 模块的 `TranslatableContentProvider` 据此从布局文档中提取翻译单元并写回目标语言（见 3.7、10.3）；属性的 `maxLength` 同时作为翻译单元的长度上限。
 - `x-seo` 与 `seo`：供 SEO 健康检查使用（标题层级、H1 数量）；`lcpCandidate` 表示该组件位于首屏时，前台为其图片设置 `fetchpriority="high"` 并预加载。
-- 同一份 JSON 被三方使用：Admin（生成表单、校验）、Nuxt（迁移与渲染）、后端（保存时用 JSON Schema 校验，构建时从共享包复制到 classpath）。
+- 同一份 JSON 被三方使用：Admin（生成表单、校验）、Nuxt（迁移与渲染）、后端（保存时用 JSON Schema 校验、按 `x-translatable` 提取翻译单元，构建时从共享包复制到 classpath）。
 
 V1 组件清单（≥ 20 个，每个 2–3 个变体）：
 
@@ -1277,6 +1536,7 @@ public interface DataSourceProvider {
 - 撤销 / 重做：在 Admin 中保存 JSON Patch 历史（最多 100 步）。
 - 自动保存：每 30 秒保存一次草稿（带乐观锁）；本地同时保存一份，防止意外丢失。
 - 发布前在侧栏展示校验错误与 SEO 健康提示。
+- 多语言：页面编辑器编辑源语言（中文）与 `MANUAL` 模式的布局文档；切换到 `AUTO` 模式的目标语言时只能预览，文字在翻译编辑器中按段修订（见 5.8、22.3），结构在源语言中修改后自动同步（见 10.3）。
 
 ### 10.9 组件版本与迁移
 
@@ -1314,7 +1574,7 @@ Component（组件级）      button.primary.bg → {color.brand.primary}
 frontend/packages/themes/industrial/
 ├── theme.json        # key、名称、支持的组件变体、默认设置、可调整的 Token 白名单
 ├── tokens/           # 覆盖 semantic / component 层 Token
-├── fonts/            # 自托管 woff2 子集
+├── fonts/            # 自托管 woff2 子集（拉丁字体；中文使用系统字体，见 11.6）
 ├── layouts/          # default、landing（无导航）、blank
 ├── header/  footer/  # 多个变体
 ├── templates/        # product-detail、article-detail、case-detail、term-page、legal …
@@ -1333,7 +1593,7 @@ frontend/packages/themes/industrial/
 | 可调整项 | 实现 |
 |---|---|
 | 品牌色（主色、辅色、强调色） | 写入站点设置 → 站点引导数据 → SSR 在 `<head>` 中注入 `:root{--color-brand-primary:…}`；悬停、浅色背景等派生色用 `color-mix(in oklch, …)` 计算 |
-| 标题与正文字体 | 只能从主题内置的字体列表中选择 |
+| 标题与正文字体 | 只能从主题内置的字体列表中选择（拉丁字体；中文始终使用系统字体栈，见 11.6） |
 | 圆角风格 | none / sm / md / lg，映射到 radius Token |
 | 按钮风格、Header / Footer 变体 | 主题提供的选项 |
 | Logo | 媒体引用 |
@@ -1356,7 +1616,8 @@ frontend/packages/themes/industrial/
 
 ### 11.6 字体与静态资源
 
-- 字体自托管（woff2，子集为 Latin + Latin Extended，覆盖德、法、西、意、波兰等语言；不需要西里尔与 CJK），`font-display: swap`，预加载主字重；系统字体回退时使用 `size-adjust` 减少布局偏移。
+- 拉丁文字体自托管（woff2，子集为 Latin + Latin Extended，覆盖德、法、西、意、波兰等语言；不需要西里尔），`font-display: swap`，预加载主字重；系统字体回退时使用 `size-adjust` 减少布局偏移。
+- **中文使用系统字体栈**，不下载中文 Web 字体（中文字体文件体积大）：中文页面的 `font-family` 为主题的拉丁字体 + `"PingFang SC", "Microsoft YaHei", "Noto Sans SC"` 等系统中文字体 + `sans-serif`，拉丁字母与数字使用主题字体，中文字符由系统字体显示；按 `<html lang>` 切换字体栈。
 - 不使用 Google Fonts CDN（欧盟隐私判例风险，以及中国大陆后台预览时的访问问题）。
 
 ---
@@ -1371,6 +1632,8 @@ frontend/packages/themes/industrial/
 | `mda_media_localization` | media_id、locale、alt、title、caption |
 | `mda_folder` | parent_id、name、path |
 | `mda_usage` | media_id、content_id、locale、part、field_path（引用追踪，由 `MediaReferenceCollector` 在保存与发布时维护） |
+
+- alt、标题等文本以中文录入，作为站点资源翻译到各语言（经翻译记忆，见 5.5）；媒体文件本身不翻译，各语言共用。
 
 ### 12.2 上传流程
 
@@ -1429,7 +1692,7 @@ public interface ObjectStorage {
 |---|---|
 | `url_route` | site_id、locale、path、content_id、localization_id；唯一键 (site_id, path)、(localization_id) |
 | `url_redirect` | site_id、source_path、match_type（EXACT / PREFIX / REGEX）、target_kind（LOCALIZATION / PATH / EXTERNAL / GONE）、target_localization_id、target_path、status_code（301 / 302 / 308 / 410）、origin（AUTO / MANUAL / IMPORT）、hits、last_hit_at、note |
-| `url_pattern` | site_id、locale、content_type 或 vocabulary、pattern（如 `/de/produkte/{slug}`） |
+| `url_pattern` | site_id、locale、content_type 或 vocabulary、pattern（不含语言前缀，如德语 `/produkte/{slug}`；语言前缀由站点语言配置添加，完整路径为 `/de/produkte/{slug}`，见 5.4） |
 | `url_not_found` | site_id、path、hits、first_seen_at、last_seen_at、last_referrer（按天聚合） |
 
 ### 13.2 请求解析顺序
@@ -1440,18 +1703,21 @@ public interface ObjectStorage {
    b. 尾斜杠策略（站点配置：统一去掉或统一保留）
    c. 合并重复斜杠
    d. 路径包含大写字母且存在对应的小写路由 → 301 到小写
-2. 精确匹配 url_route        → 200，返回内容
-3. 匹配 url_redirect（EXACT → PREFIX → REGEX，按顺序）→ 301 / 308 / 410
-4. 系统路由（sitemap、robots、搜索页等）由 Nuxt 或 Delivery 处理
-5. 都不匹配 → 404，并计入 url_not_found（先在 Redis 中计数，定期批量写库）
+2. 根路径 /                  → 302 到默认对外语言的首页（固定跳转，不按 Accept-Language，见 5.4）
+3. 精确匹配 url_route        → 200，返回内容（路由所属语言须对外公开，否则按 404 处理）
+4. 匹配 url_redirect（EXACT → PREFIX → REGEX，按顺序）→ 301 / 308 / 410
+5. 系统路由（sitemap、robots、搜索页等）由 Nuxt 或 Delivery 处理
+6. 都不匹配 → 404，并计入 url_not_found（先在 Redis 中计数，定期批量写库）
 ```
 
 ### 13.3 slug 规则
 
 - 首次创建时根据标题生成：ICU 音译（`Any-Latin; Latin-ASCII; Lower`），只保留 `[a-z0-9-]`，最长 80 个字符。
 - 音译规则按语言配置：
+  - 中文（源语言）：默认用拼音音译（ICU `Han-Latin; Latin-ASCII`，不带声调），如 `锂电池组` → `li-dian-chi-zu`；编辑可以手工修改（如多音字音译不准时）；
   - 德语：先替换 `ä→ae、ö→oe、ü→ue、ß→ss`（大写同理），再执行 `Latin-ASCII`，如 `Größe für Häuser` → `groesse-fuer-haeuser`；
   - 法语、西语、意大利语等：去掉重音（ICU `Latin-ASCII`），如 `Câble résistant` → `cable-resistant`。
+- **目标语言**（AI 翻译生成）：slug 由译文标题按该语言的音译规则生成，**首次发布后固定**；之后译文变化（源语言修改后重译、术语表变化后重译、人工修订）不自动修改 slug，避免产生重定向。需要时可以手工修改（见本节最后一条）。
 - 按语言配置，可以保留本地文字的 slug（如日语）：以 Unicode NFC 存储，在 HTML 与 sitemap 中输出百分号编码形式。
 - 保留字：`api`、`admin`、`__preview`、`__editor`、`sitemap.xml`、`robots.txt` 等。
 - 在站点内按完整路径唯一；冲突时建议追加 `-2`。
@@ -1470,7 +1736,7 @@ public interface ObjectStorage {
 ### 13.5 旧站迁移
 
 - 支持 CSV 批量导入重定向（source、target、code），提供校验报告：目标不存在、环路、链、与现有路由冲突。
-- 支持有限的前缀与正则重定向（如 `/old-blog/(.*)` → `/blog/$1`），在精确匹配之后按顺序执行，每站最多 200 条。
+- 支持有限的前缀与正则重定向（如 `/old-blog/(.*)` → `/en/blog/$1`，目标路径包含语言前缀），在精确匹配之后按顺序执行，每站最多 200 条。
 - 上线后提供“未命中的旧 URL”报告（来自 `url_not_found`），SEO 专员可以一键创建重定向。
 
 ### 13.6 下线策略
@@ -1491,6 +1757,7 @@ public interface ObjectStorage {
 - **`seo_template`**（站点 × 语言 × 内容类型）：标题与描述模板，例如标题 `{title} | {siteName}`，描述取摘要并截断到 155 个字符。模板变量由 `SeoVariableProvider` 提供（产品可以提供 `{modelNo}`、`{primaryCategory}`、`{brand}`）。
 - 发布时，SEO 的 `PublishContributor` 计算最终值 = 覆盖值 ?? 自动值，把最终值、自动值以及被覆盖的字段列表一起写入快照的 `seo` 部分。
 - **自动值永远不会覆盖人工值**；后台可以“恢复为自动”。
+- **翻译**：源语言的覆盖值（标题、描述、OG 标题与描述）作为翻译单元随内容翻译到目标语言（seo 模块实现 `TranslatableContentProvider`，见 3.7、5.6）；没有覆盖值的字段在目标语言中同样由该语言的模板自动生成。
 - 后台 SEO 面板：搜索结果预览（按像素宽度估算桌面端与移动端截断）、字数统计、自动值占位提示。
 
 ### 14.2 页面头部输出
@@ -1516,7 +1783,8 @@ public interface ObjectStorage {
 | 带多个筛选或排序参数 | `noindex, follow`，canonical 同样指向自身；筛选链接加 `rel="nofollow"`，避免爬虫陷阱 |
 | 询盘成功页、下载门控页 | `noindex` |
 | 公开的 PDF 附件 | 可以索引；留资文档没有直接 URL |
-| 未翻译的语言 | 页面不存在（404），不输出该语言的 hreflang |
+| 未翻译的语言（译文尚未生成或尚未发布） | 页面不存在（404），不输出该语言的 hreflang |
+| 未对外公开的语言 | 前台 404（只能在后台与预览中查看）；不输出 hreflang，不进入 sitemap 与语言切换器（见 5.1） |
 
 **robots.txt**：每个站点由模板生成，并允许站点管理员追加规则。默认内容：
 
@@ -1533,9 +1801,9 @@ Sitemap: https://www.example.com/sitemap.xml
 
 ### 14.4 hreflang
 
-- 由同一内容所有**已发布、且站点语言公开**的本地化生成，包含自身；因为来自同一集合，**相互引用天然成立**。
-- hreflang 值默认只用语言代码（`en`、`de`、`fr`…），英语只做一个版本，同时服务美国与英国（见 5.4）。
-- `x-default` 指向默认语言 `en` 的版本（若已发布）。
+- 由同一内容所有**已发布、且站点语言“对外公开”**的本地化生成，包含自身；因为来自同一集合，**相互引用天然成立**。已由 AI 翻译生成但所属语言尚未对外公开的本地化不输出 hreflang。
+- hreflang 值默认只用语言代码：中文为 `zh`（可配置为 `zh-Hans`），英语 `en`、德语 `de`、法语 `fr`…；英语只做一个版本，同时服务美国与英国（见 5.4）。
+- `x-default`：首页指向根路径 `/`（302 跳转到默认对外语言，符合 Google 对“自动跳转首页”的建议）；其他页面指向默认对外语言（`sys_site.default_locale`）的版本（若已发布）。
 - canonical 必须指向本语言自身，禁止跨语言 canonical。
 - 同时输出到 HTML 与 sitemap，两者来自同一数据源，保持一致。
 
@@ -1560,7 +1828,7 @@ Sitemap: https://www.example.com/sitemap.xml
 ### 14.6 Sitemap
 
 - `/sitemap.xml` 是 sitemap 索引，指向 `/sitemaps/{type}-{locale}-{n}.xml`，每个文件 ≤ 50,000 条且 ≤ 50 MB。
-- 收录条件：已发布、可路由、robots 为 index、canonical 指向自身。
+- 收录条件：已发布、可路由、所属语言对外公开、robots 为 index、canonical 指向自身。
 - `lastmod` 取 `content_modified_at`（只在内容实际变化时更新，见 6.4）。
 - 包含 `xhtml:link` hreflang 与 `image:image`（封面图、产品图集）。
 - 生成方式：基于投影按需生成，缓存在 Redis，标签 `s{site}:sitemap`，发布事件触发失效；内容量很大的站点由任务预生成到对象存储。
@@ -1571,7 +1839,7 @@ Sitemap: https://www.example.com/sitemap.xml
 搜索引擎以 **Google 为主、Bing 为辅**。
 
 - **Google**：依靠 sitemap 与 Search Console（Google Indexing API 只适用于招聘与直播类页面，不适用于普通页面）。
-- **IndexNow**（主要用于 Bing 等支持 IndexNow 的搜索引擎）：发布、下线、路径变化时，按分钟批量推送；密钥文件由 Nuxt 在 `/{key}.txt` 提供。
+- **IndexNow**（主要用于 Bing 等支持 IndexNow 的搜索引擎）：发布、下线、路径变化时，按分钟批量推送（只推送对外公开语言的 URL）；密钥文件由 Nuxt 在 `/{key}.txt` 提供。
 - **站点验证**：站点设置支持 Google Search Console 与 Bing Webmaster Tools 的验证 meta 标签字段（输出到首页 `<head>`）；也可以使用 DNS 验证（在运维手册中说明）。
 - 【V2+】接入 Search Console API，把收录与表现数据拉回 SEO 面板。
 
@@ -1620,7 +1888,8 @@ V1 规则：
 | 正文字数 | INFO | 文章少于 300 词（产品页不检查） |
 | slug 质量 | INFO | 过长、包含停用词 |
 | 引用已下线内容 | WARNING | 正文或组件引用了已下线的内容 |
-| 翻译过期 | INFO | 本地化基于源语言的旧修订 |
+| 翻译过期 | INFO | 本地化基于源语言的旧修订（如 `MANUAL` 模式的 `OUTDATED`，见 5.5） |
+| 关键页面的机器译文未经审校 | INFO | 首页、主要产品与分类页等关键页面的目标语言译文中，仍有未经人工修订或确认的机器译文段落（来源为 `MACHINE`，见 5.6、5.8） |
 
 - 评分 = 100 − Σ 扣分（ERROR 15、WARNING 5、INFO 1），最低为 0。
 - 发布后异步检查单个页面；每晚做一次全站检查（重复检测需要全站数据）。结果保存在 `seo_audit`。
@@ -1639,7 +1908,7 @@ V1 规则：
 | 表 | 关键字段 |
 |---|---|
 | `grh_relation` | site_id、source_content_id、target_content_id、relation_type、origin（MANUAL / AUTO）、score、rank、pinned、reason（JSON）、computed_at；唯一键 (site_id, source, target, relation_type) |
-| `grh_relation_type` | key、symmetric、inverse_key、allowed_source_types、allowed_target_types、label（多语言）、module |
+| `grh_relation_type` | key、symmetric、inverse_key、allowed_source_types、allowed_target_types、label（中文）、module |
 | `grh_config` | site_id、content_type、weights（JSON）、threshold、top_k |
 
 - 关系建立在**语言无关的内容**上。渲染某种语言时，只显示在该语言已发布的目标；数量不足时按排名继续补足。
@@ -1679,7 +1948,7 @@ V1.0 类型的对应：`BELONGS_TO`、`SUITABLE_FOR` → 分类体系；`PARENT`
 
 - 默认阈值 30；每个源内容按目标类型各保留前 20 条自动关系。
 - **人工关系不参与评分**：始终置顶，按人工排序展示。
-- `reason` 记录得分原因（如 `{"application": ["Wearable"], "tag": ["Low-temp"]}`），后台可以解释“为什么推荐”。
+- `reason` 记录得分原因（如 `{"application": ["可穿戴设备"], "tag": ["低温"]}`），后台可以解释“为什么推荐”。
 - 【V2+】通过 `SimilarityProvider` 扩展点增加关键词相似度（搜索引擎的相似文档能力）与语义相似度（向量检索）因子。
 
 ### 15.4 计算方式
@@ -1715,8 +1984,9 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 | `nav_item_localization` | item_id、locale、label、visible |
 
 - 菜单结构在各语言之间共享，标签与可见性按语言设置。
+- **翻译**：菜单标签以中文录入，作为站点资源由 AI 翻译到各语言（经翻译记忆，全站译法一致，见 5.5）；目标语言的标签与可见性自动生成，可以人工修订（修订写回翻译记忆，见 5.6）。
 - 链接到内容时，若目标在该语言未发布，该菜单项自动隐藏。
-- V1 菜单保存即生效（不走发布流程），变更进入审计日志，并发布 `NavigationChangedEvent`。
+- V1 菜单保存即生效（不走发布流程），变更进入审计日志，并发布 `NavigationChangedEvent` 与 `TranslatableResourceChangedEvent`（触发翻译，见 5.7）。
 
 ### 16.2 面包屑
 
@@ -1740,14 +2010,14 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 | 基本信息 | 公司名称、Logo（浅色 / 深色）、favicon 与应用图标、地址（可多个）、电话、邮箱、WhatsApp、社交账号、营业时间、成立年份 |
 | 法定信息 | 法定名称（含法律形式，如 GmbH / Ltd.）、注册地址（可送达地址）、授权代表人、登记机关（如商业登记法院）与注册号、增值税号（VAT ID）、联系方式（可快速电子联系的邮箱，以及电话等第二联系渠道）、监管机关（经营活动需要许可时）、内容负责人（站点含新闻、博客等编辑内容时） |
 
-- 文本类字段可以按语言覆盖。
-- 法定信息用于自动生成 Imprint 页面（见 10.1）；具体内容待确认（见 32 章 Q14）。
+- 文本类字段以中文录入，作为站点资源翻译到各语言（见 5.5），可以按语言人工修订。
+- 法定信息用于自动生成 Imprint 页面（见 10.1）；具体内容由业主自行确认（见 32 章 Q14）。
 
 使用方：`Organization` 结构化数据、Header / Footer、联系组件、通知邮件模板、Imprint 页面。
 
 ### 16.4 语言切换器
 
-链接到当前内容的其他语言版本；某语言没有本地化时，链接到该语言的首页并加以标注，而不是链接到 404。
+只列出站点中“对外公开”的语言（见 5.1）；只有一种对外公开的语言时（如 V1 默认只开放中文）不显示。链接到当前内容在这些语言中的已发布版本；某语言没有已发布的本地化时（包括译文尚未生成或尚未发布），链接到该语言的首页并加以标注，而不是链接到 404。
 
 ---
 
@@ -1760,7 +2030,7 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 | 表 | 关键字段 |
 |---|---|
 | `frm_form` | site_id、key、purpose（INQUIRY / SAMPLE / DOWNLOAD / CONTACT / CUSTOM；【V2+】NEWSLETTER）、status、fields（JSON）、settings（JSON：反垃圾、附件、成功动作、是否显示营销同意框、常用国家、Turnstile） |
-| `frm_form_localization` | form_id、locale、labels（JSON）、success_message、privacy_notice_text（简短告知，含隐私政策链接）、marketing_consent_text、privacy_notice_version（两段文本任一修改时递增） |
+| `frm_form_localization` | form_id、locale、labels（JSON）、success_message、privacy_notice_text（简短告知，含隐私政策链接）、marketing_consent_text、privacy_notice_version（两段文本任一修改时递增）；每种语言一行，源语言（中文）由编辑录入，其他语言由翻译生成（见下） |
 | `frm_form_notice_version` | form_id、locale、version、privacy_notice_text、marketing_consent_text、created_at；每个版本一条（含当前版本），告知或营销同意文本修改时追加，只追加不修改，用于追溯同意文本 |
 | `frm_submission` | site_id、form_id、locale、payload（JSON）、attachment_ids、attribution（JSON）、privacy_notice_version（展示的告知版本）、marketing_consent、marketing_consent_at（可空）、gpc、opt_out_sale_share、spam_score、spam_verdict（ACCEPT / QUARANTINE / REJECT）、ip、ip_country、user_agent、created_at |
 
@@ -1769,6 +2039,7 @@ List<RelatedItem> related(long contentId, String locale, Map<String, Integer> mi
 - **国家与电话**：国家字段默认按访客 IP 所在国家预选（页面 HTML 有 CDN 缓存，国家随 formToken 一并返回，见 17.2）；电话按所选国家预填区号；国家列表可配置常用国家置顶。
 - **隐私告知与营销同意**：表单只显示简短告知与隐私政策链接，不设强制勾选的同意框；营销同意为单独的、默认不勾选的可选框（表单设置决定是否显示）。依据见 17.11。
 - 成功动作：显示提示语，或跳转到感谢页（`noindex`）。
+- **多语言**：表单标签、选项、提示语、成功提示语、隐私告知与营销同意文本只用中文录入，作为站点资源由 translation 翻译成各目标语言（form 实现 `TranslatableResourceProvider`，见 3.7、5.7），译文写入对应语言的 `frm_form_localization`，可在翻译编辑器中人工修订（见 5.8）；告知或营销同意文本的译文变化同样递增该语言的 `privacy_notice_version`，并追加 `frm_form_notice_version`。
 
 ### 17.2 提交流程
 
@@ -1789,7 +2060,7 @@ form 模块（同步）
   9. 前端向 dataLayer 推送 generate_lead 事件
 异步
  10. inquiry 监听 FormSubmittedEvent：创建线索（从提交记录复制隐私字段到 inq_inquiry）→ 去重 → 分配
- 11. inquiry 调用 NotificationApi：通知负责人；向客户发送对应语言的自动回复（仅 ACCEPT，含预计回复时间，见 17.7）
+ 11. inquiry 调用 NotificationApi：通知负责人（中文）；按询盘的 locale 向客户发送对应语言的自动回复（仅 ACCEPT，含预计回复时间，见 17.7、18）
 ```
 
 ### 17.3 附件
@@ -1817,7 +2088,8 @@ inq_inquiry
 ├── id、site_id、no（如 INQ-20261006-0001）、type（INQUIRY / SAMPLE / DOWNLOAD / CONTACT）
 ├── status、priority、owner_user_id、assigned_at、first_contacted_at、closed_at、close_reason
 ├── 联系人：name、email、phone、whatsapp、company、job_title、country、website
-├── message、quantity_text、locale（客户提交时使用的语言）
+├── message、quantity_text、locale（客户提交时的语言，即提交表单所在页面的语言；自动回复使用该语言）
+├── 留言译文：message_translated（留言的中文译文，可空）、message_translated_at（翻译时间，可空），见 17.10
 ├── submission_id、duplicate_of_id、spam_verdict、is_test
 ├── 归因：landing_url、referrer、utm_source / medium / campaign / term / content、gclid / msclkid / fbclid、
 │        first_touch（JSON）、last_touch（JSON）、viewed_content_ids、ip_country、device
@@ -1849,7 +2121,7 @@ CLOSED ──重新打开──▶ ASSIGNED
 - **分配规则**按优先级依次匹配。条件：国家或地区、询盘类型、产品分类（通过 `TaxonomyApi` 查询询盘明细中内容的分类）、语言、来源（utm_source）。负责人：指定用户，或销售组内轮询（跳过停用的成员）。都不匹配时使用站点的默认负责人。支持手动改派。
 - **去重**：同一邮箱（规范化后）7 天内再次提交时，仍创建新询盘，但通过 `duplicate_of_id` 关联，并分配给同一负责人，在详情页中合并展示时间线。
 - **SLA**：销售在中国时区，客户在欧美，因此 SLA 按工作时间计算：站点配置工作时区（如 `Asia/Shanghai`）、工作日与节假日（含调休补班日）；分配后超过 X 个工作小时（站点配置，默认 8 个工作小时，即 1 个工作日）未进入 CONTACTED，提醒负责人与主管。
-- **预计回复时间**：客户自动回复中告知预计回复时间（如“1 个工作日内”），文案随自动回复模板按语言维护（见 18）。
+- **预计回复时间**：客户自动回复中告知预计回复时间（如“1 个工作日内”），文案写在自动回复模板中，以中文编写，随模板翻译成客户语言（见 18）。
 
 ### 17.8 询价篮
 
@@ -1870,6 +2142,10 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 - 列表：按状态、负责人、类型、国家、来源、日期、产品筛选；批量分配、批量关闭。
 - 详情：联系人、明细、归因、附件、时间线、备注、状态操作；“复制邮箱 / mailto”并记录跟进活动（系统内直接发邮件属于 V2 的 CRM）。
+- **询盘留言一键翻译为中文**（见 1.3 S13、5.7）：详情页提供“翻译为中文”按钮；inquiry 调用 translation 在 platform-api 中的公开服务接口（`TranslationApi.translateText`）翻译留言，由 inquiry 把译文保存到 `inq_inquiry.message_translated`，并记录 `message_translated_at`（translation 是 L2，不直接写询盘表）；再次查看直接显示已保存的译文，不重复调用 AI。
+  - 站点可关闭此功能；关闭时，或 translation 模块停用时，不显示该按钮。
+  - 询盘译文不写入翻译记忆（属于个人数据，不复用）；留言按纯文本处理，不作为指令（提示词注入防护见 26.3；发送给 AI 服务商的数据范围见 26.8）。
+  - 留言译文与留言同属询盘的个人数据，保留期、导出与删除与留言一致（见 17.11）。
 - 导出 xlsx：需要 `inquiry:inquiry:export` 权限，记录审计日志。
 - 报表：按来源 / 媒介 / 活动 / 落地页 / 国家 / 产品统计询盘数；首次响应时间（按工作时间计算，见 17.7）。
 
@@ -1894,13 +2170,16 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 | 表 | 关键字段 |
 |---|---|
-| `ntf_template` | site_id、key（如 `inquiry.assigned.staff`、`inquiry.autoreply.customer`、`inquiry.sla.reminder`、`content.review.requested`、`translation.outdated`、`download.link`）、channel、locale、subject、body |
+| `ntf_template` | site_id、key（如 `inquiry.assigned.staff`、`inquiry.autoreply.customer`、`inquiry.sla.reminder`、`content.review.requested`、`translation.outdated`、`translation.failed`、`download.link`）、channel、locale（员工通知只有 `zh-CN`；客户邮件模板的源语言为 `zh-CN`，其他语言为译文）、subject、body |
 | `ntf_message` | 发件箱：channel、recipient、template_key、locale、payload、status（PENDING / SENT / FAILED）、attempts、next_attempt_at、provider_message_id、error |
 | `ntf_webhook` | site_id、url、events、secret、enabled |
 
 - **调用**：`NotificationApi.send(request)` 在调用方的事务中写入发件箱，由后台任务投递，确保“询盘保存成功就一定会发通知”。
 - **重试**：指数退避，最多 6 次；最终失败时告警（见 27.4）。
-- **模板**：使用会自动转义 HTML 的模板引擎；邮件外层布局带站点品牌；模块通过 `NotificationTemplateProvider` 注册默认模板，站点可以修改。
+- **模板**：使用会自动转义 HTML 的模板引擎；邮件外层布局带站点品牌；模块通过 `NotificationTemplateProvider` 注册默认模板（中文），站点可以修改。
+- **语言**：
+  - 发给员工的通知（分配、SLA 提醒、审核请求、翻译过期与翻译失败等）使用中文（后台用户只用简体中文，见 22.5）；
+  - 发给客户的邮件模板（自动回复、下载链接等）以中文编写，作为站点资源由 translation 翻译成各语言（notification 实现 `TranslatableResourceProvider`，见 3.7、5.7），可在翻译编辑器中人工修订（见 5.8）；发送时按询盘或提交记录的 `locale`（客户提交时的语言）选择对应语言的模板。
 - **邮件**：V1 使用 SMTP 或服务商 API（兼容主流邮件服务）；优先选择提供欧盟数据区域的服务商（如 SES 的欧盟区域、Mailgun EU、Brevo，见 2.4、ADR-015）；发件域名必须配置 SPF、DKIM、DMARC（写入运维手册）；客户自动回复的 Reply-To 设为负责人邮箱。
 - **Webhook**：按站点配置订阅的事件；请求带 HMAC 签名头并支持重试；可通过中间服务对接企业微信、飞书、Slack 等。载荷默认只含事件类型、询盘编号与后台链接，不含联系人信息；需要包含联系人信息时（尤其是接收方在欧盟以外），是否允许由法务确认（见 32 章 Q13）；Webhook 接收方纳入处理者清单（见 26.8）。
 - 【V2+】通过 `NotificationChannel` 扩展点增加 WhatsApp、企业微信、短信等渠道；退信处理。
@@ -1914,6 +2193,7 @@ CLOSED ──重新打开──▶ ASSIGNED
 - **配置**：
   - 搜索字段优先级：title > model_nos > summary > terms > body_text；
   - 型号字段关闭拼写容错；
+  - **中文分词**：中文索引使用 Meilisearch 内置的中文分词，不另装分词插件；索引设置中通过 `localizedAttributes` 显式声明中文（`cmn`），不依赖自动语言识别；
   - 按语言配置同义词；
   - 可筛选字段：type、terms、`attr.*`；可排序字段：published_at、sort。
 - **用途**：
@@ -1938,6 +2218,7 @@ CLOSED ──重新打开──▶ ASSIGNED
 ### 20.2 同意管理
 
 - Cookie 横幅组件（主题提供变体），分类：必要、偏好、分析、营销。
+- **横幅文案**（标题、说明、按钮、类别说明、“Cookie 设置”与退出链接文字）只用中文录入，作为站点资源由 translation 翻译成各语言（tracking 实现 `TranslatableResourceProvider`，见 3.7、5.7），可在翻译编辑器中人工修订；法规规定的固定文字（如“Do Not Sell or Share My Personal Information”“Your Privacy Choices”）通过术语表固定译法（见 5.8）。
 - **按访客地区确定同意模式**：
 
 | 地区 | 模式 | 要求 |
@@ -2008,7 +2289,7 @@ GET https://www.example.com/de/produkte/li-ion-pack-x200
      1. 中间件：安全头、请求 ID
      2. [...path].vue 调用 GET /api/public/v1/delivery/resolve?path=/de/produkte/li-ion-pack-x200
         （请求头：X-Site-Host、X-Internal-Token；Delivery 结果在后端 Redis 中缓存）
-     3. 获取站点引导数据（导航、设置、Token 覆盖、同意与追踪配置；Nuxt 进程内缓存 ≤ 60 秒）
+     3. 获取站点引导数据（导航、设置、Token 覆盖、界面文案、同意与追踪配置；Nuxt 进程内缓存 ≤ 60 秒）
      4. kind = REDIRECT → 服务端 301 / 308；GONE → 410 页面；NOT_FOUND → 404 页面
      5. kind = CONTENT → 选择主题 → 模板 → 渲染布局（组件变体按需异步加载）
      6. 输出 HTML，响应头带 Cache-Control 与 Cache-Tag（来自 Delivery 的 cache.tags）
@@ -2047,7 +2328,9 @@ CSP（基于 nonce）、HSTS、`X-Content-Type-Options: nosniff`、`Referrer-Pol
 
 ### 21.7 多语言
 
-界面文案来自站点引导数据；设置 `<html lang dir>`；日期、数字使用 `Intl` 按语言格式化。
+- **界面文案**来自站点引导数据（已按当前语言翻译，见 5.4、5.7）；前台渲染时不调用 AI。
+- 主题中的固定文案（按钮、提示语、无结果提示等）只能写成文案键（如 `form.submit`），由主题提供默认中文文案，站点可以覆盖；**不得在组件中硬编码中文或英文**。
+- 设置 `<html lang dir>`；日期、数字使用 `Intl` 按语言格式化。
 
 ---
 
@@ -2057,10 +2340,10 @@ CSP（基于 nonce）、HSTS、`X-Content-Type-Options: nosniff`、`Referrer-Pol
 
 ```text
 frontend/apps/admin/src/
-├── core/        # HTTP（openapi-fetch + CSRF + 统一错误处理）、认证、布局、路由、权限指令 v-perm、站点切换、i18n
+├── core/        # HTTP（openapi-fetch + CSRF + 统一错误处理）、认证、布局、路由、权限指令 v-perm、站点切换
 ├── modules/     # 与后端模块一一对应
 │   ├── content/ product/ article/ page/ media/ taxonomy/ seo/ graph/
-│   ├── inquiry/ form/ navigation/ tracking/ system/
+│   ├── inquiry/ form/ navigation/ tracking/ translation/ system/
 │   └── product/
 │       ├── index.ts      # defineAdminModule({ id: 'product', routes, contentTabs, widgets })
 │       ├── views/  components/  api/  stores/
@@ -2079,7 +2362,8 @@ frontend/apps/admin/src/
 
 所有内容类型共用一个编辑外壳：
 
-- 顶栏：状态徽标、语言切换、翻译状态、保存、预览、提交审核、发布 / 定时发布、历史修订。
+- 顶栏：状态徽标、语言切换（每种语言显示翻译模式与翻译状态：`QUEUED` / `TRANSLATED` / `NEEDS_REVIEW` / `FAILED` / `OUTDATED`，见 5.5）、保存、预览、提交审核、发布 / 定时发布、历史修订。
+- `AUTO` 模式的目标语言本地化中，文本只能在“翻译”标签中按段修订（见 5.5）。
 - 标签页由各模块注册（与后端扩展点对应）：
 
 ```ts
@@ -2092,7 +2376,9 @@ registerContentTab({
 })
 ```
 
-例如：SEO 标签由 seo 模块提供，关联标签由 graph 模块提供，页面插槽标签由 page 模块提供。
+例如：SEO 标签由 seo 模块提供，关联标签由 graph 模块提供，页面插槽标签由 page 模块提供，“翻译”标签由 translation 模块提供。
+
+**“翻译”标签**（即翻译编辑器，见 5.8）：按段并排显示源语言与目标语言，并显示每段来源（记忆命中 / 机器 / 人工）与校验结果；可修订（写回翻译记忆，来源 `HUMAN`）、确认（`REVIEWED`）、单段重译；`MANUAL` 模式的本地化列出源语言变化的字段。
 
 ### 22.4 Schema 驱动的表单
 
@@ -2100,7 +2386,7 @@ registerContentTab({
 
 ### 22.5 体验细节
 
-自动保存草稿、离开前提示未保存的修改、常用快捷键、批量操作、列表保存筛选条件、后台界面支持中文与英文。
+自动保存草稿、离开前提示未保存的修改、常用快捷键、批量操作、列表保存筛选条件、后台界面只提供简体中文（不做语言切换，界面文案集中在常量 / 字典文件中，见 2.4）。
 
 ### 22.6 网络访问
 
@@ -2168,6 +2454,7 @@ ContentPublishedEvent(contentId = 42)
 | `GET /api/admin/v1/product/products?category=…&status=…` | 产品列表 |
 | `POST /api/admin/v1/content/localizations/{id}/publish` | 发布 |
 | `POST /api/admin/v1/content/localizations/{id}/revisions/{no}/restore` | 回滚为草稿 |
+| `POST /api/admin/v1/translation/jobs` | 创建批量翻译任务 |
 | `GET /api/public/v1/delivery/resolve?path=…` | 前台路由解析与渲染数据 |
 | `POST /api/public/v1/form/forms/{key}/submissions` | 提交表单 |
 
@@ -2181,7 +2468,7 @@ ContentPublishedEvent(contentId = 42)
 | 错误响应 | RFC 9457 `application/problem+json`（见下） |
 | ID | 64 位 TSID，JSON 中为字符串（避免 JavaScript 精度丢失） |
 | 时间 | ISO-8601 UTC，带 `Z` |
-| 语言 | 内容语言用显式参数 `locale`；`Accept-Language` 只决定后台错误信息的语言 |
+| 语言 | 内容语言用显式参数 `locale`；后台错误信息只使用中文（见下） |
 | 并发 | 请求体带 `version`，或使用 `ETag` / `If-Match`；冲突返回 409 / 412 |
 | 幂等 | 公开表单提交与后台导入支持 `Idempotency-Key`（保存 24 小时） |
 | 分页 | 后台使用 page / size（size ≤ 100）；导出与同步使用游标 |
@@ -2192,16 +2479,16 @@ ContentPublishedEvent(contentId = 42)
 ```json
 {
   "type": "https://docs.example.com/errors/content-slug-conflict",
-  "title": "Slug already in use",
+  "title": "slug 已被占用",
   "status": 409,
   "code": "CONTENT_SLUG_CONFLICT",
-  "detail": "Path /products/x200 is already used by content 7201893453912345",
+  "detail": "路径 /zh/products/x200 已被内容 7201893453912345 使用",
   "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
-  "errors": [ { "field": "slug", "code": "CONFLICT", "message": "…" } ]
+  "errors": [ { "field": "slug", "code": "CONFLICT", "message": "该 slug 已被其他内容使用" } ]
 }
 ```
 
-错误码命名为 `{MODULE}_{REASON}`。
+错误码命名为 `{MODULE}_{REASON}`。后台错误信息（`title`、`detail`、`errors[].message`）使用中文（后台界面只用简体中文，见 22.5）。前台公开接口的错误由前端按 `code`（及 `errors[].code`）映射为文案键显示（见 21.7），不直接展示 `detail`。
 
 ### 24.3 OpenAPI 与类型生成
 
@@ -2253,7 +2540,7 @@ ContentPublishedEvent(contentId = 42)
   "seo": {
     "title": "…",
     "meta": [ { "name": "description", "content": "…" }, { "name": "robots", "content": "index,follow" } ],
-    "alternates": [ { "hreflang": "en", "href": "…" }, { "hreflang": "x-default", "href": "…" } ],
+    "alternates": [ { "hreflang": "zh", "href": "…/zh/products/…" }, { "hreflang": "en", "href": "…/en/products/…" }, { "hreflang": "de", "href": "…/de/produkte/…" }, { "hreflang": "x-default", "href": "…（默认对外语言版本）" } ],
     "jsonLd": { "@context": "https://schema.org", "@graph": [] }
   },
   "cache": { "tags": ["s1", "s1:c:7201893453912345", "s1:t:7201893453900001", "s1:nav", "s1:settings"], "maxAge": 86400 }
@@ -2329,13 +2616,14 @@ ALTER TABLE frm_form
 
 | 模块 | 主要表 |
 |---|---|
-| core | `sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_i18n_message`、`sys_dict`、`sys_audit_log`、`sys_dsr_request`、`sys_job`、`sys_lock`、`event_publication` |
+| core | `sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_ui_text`（前台界面文案的站点覆盖与译文）、`sys_dict`、`sys_audit_log`、`sys_dsr_request`、`sys_job`、`sys_lock`、`event_publication` |
 | content | `cnt_content`、`cnt_localization`、`cnt_revision`、`cnt_published_term`、`cnt_review`、`cnt_preview_token` |
 | url | `url_route`、`url_redirect`、`url_pattern`、`url_not_found` |
 | media | `mda_media`、`mda_media_localization`、`mda_folder`、`mda_usage` |
 | taxonomy | `tx_vocabulary`、`tx_term`、`tx_term_localization`、`tx_assignment` |
 | form | `frm_form`、`frm_form_localization`、`frm_form_notice_version`、`frm_submission`、`frm_attachment`、`frm_blocklist` |
 | notification | `ntf_template`、`ntf_message`、`ntf_webhook` |
+| translation | `trn_engine`、`trn_memory`、`trn_glossary_term`、`trn_style_guide`、`trn_job`、`trn_job_item`、`trn_usage_daily` |
 | product | `prd_product`、`prd_product_localization`、`prd_attribute_group`、`prd_attribute`、`prd_attribute_option`、`prd_attribute_set`、`prd_attribute_set_item`、`prd_category_attribute_set`、`prd_attribute_value`、`prd_model`、`prd_product_media`、`prd_product_document` |
 | article | `art_article`、`art_article_localization`、`art_case_study`、`art_faq`、`art_author` |
 | page | `pg_page`、`pg_layout`（各内容类型的草稿布局文档）、`pg_component_usage` |
@@ -2366,7 +2654,8 @@ CREATE TABLE cnt_localization (
   scheduled_publish_at    DATETIME(3)   NULL,
   scheduled_unpublish_at  DATETIME(3)   NULL,
   unpublish_strategy      JSON          NULL COMMENT 'GONE / REDIRECT_CONTENT / REDIRECT_PARENT',
-  translation_state       VARCHAR(20)   NOT NULL,
+  translation_mode        VARCHAR(10)   NOT NULL COMMENT 'SOURCE / AUTO / MANUAL',
+  translation_state       VARCHAR(20)   NOT NULL COMMENT 'NONE / QUEUED / TRANSLATED / NEEDS_REVIEW / FAILED / OUTDATED',
   source_locale           VARCHAR(16)   NULL,
   source_revision_no      INT           NULL,
   pub_title               VARCHAR(300)  NULL,
@@ -2464,7 +2753,7 @@ CREATE TABLE grh_relation (
 
 - 权限码格式：`{module}:{resource}:{action}`。内容生命周期的权限归内容内核，resource 为内容类型，如 `content:product:publish`；业务模块自己的资源如 `product:attribute:manage`、`inquiry:inquiry:export`、`tracking:script:edit`。
 - 角色按站点分配；内置角色对应 1.2 中的角色表，也支持自定义角色。
-- **数据范围**：询盘支持 ALL / GROUP / OWN（ALL 指当前站点内全部；角色按站点分配，跨站点由站点过滤保证）；翻译人员可以限定语言。
+- **数据范围**：询盘支持 ALL / GROUP / OWN（ALL 指当前站点内全部；角色按站点分配，跨站点由站点过滤保证）；翻译审校人员可以限定语言（见 5.8）。
 - **执行位置**：应用服务层的方法注解（`@RequiresPermission`）+ 查询层的数据范围过滤。前端隐藏按钮只是体验优化，不是安全措施。
 - Public API 只返回已发布数据，不能通过遍历 ID 访问未发布的内容。
 
@@ -2477,6 +2766,7 @@ CREATE TABLE grh_relation (
 | CSRF | 后台 CSRF Token + SameSite Cookie；公开表单无会话，使用 formToken + Turnstile |
 | SQL 注入 | MyBatis 只允许 `#{}`；`${}` 由 CI 检查禁止（排序字段使用白名单映射） |
 | SSRF | 服务端不访问用户提供的 URL；导入图片 URL 时使用域名白名单，DNS 解析后校验不是内网地址，并限制大小与超时 |
+| 提示词注入 | 待翻译文本与询盘留言可能包含指令；译文一律按纯文本处理（转义输出、不执行、不作为后续提示词的指令）；单元 ID 由系统生成并校验，响应中的 ID 必须与请求一一对应（见 5.9、17.10） |
 | 文件上传 | 扩展名白名单 + Tika 魔数校验 + 大小限制 + 私有桶 + 病毒扫描 + 随机化存储键 + `Content-Disposition` |
 | 点击劫持 | `frame-ancestors`：前台为 `'self'`（编辑器路由允许后台域名）；后台为 `'none'` |
 | 传输 | 全站 HTTPS + HSTS；TLS 1.2 及以上 |
@@ -2510,6 +2800,7 @@ CREATE TABLE grh_relation (
 - 密钥通过环境变量或密钥管理服务注入，永远不进入代码仓库（CI 中运行 gitleaks）。
 - 生产环境的应用数据库账号没有 DDL 权限；迁移任务使用单独的账号。
 - 设置中的敏感值（SMTP 密码、第三方 API Key）在数据库中用 AES-GCM 加密，密钥来自环境变量。
+- AI 翻译引擎的 API Key（保存在 `trn_engine`，见 5.9）同样用 AES-GCM 加密存储。
 
 ### 26.7 内部调用
 
@@ -2523,21 +2814,24 @@ CREATE TABLE grh_relation (
 - **个人信息清单**：询盘联系人、IP、附件、后台用户、同意记录；数据最小化；保留期任务（询盘见 17.11；原始 IP 保留 30 天后置空，应用日志中 IP 截断，见 27.4）。
 - **同意记录**：Cookie 同意的证明保存在 `trk_consent_log`：同意 ID（假名标识）、时间、动作、同意文本版本、展示的语言、选择的类别、访客地区等（字段见 20.2）；保留期限由法务确认（默认 3 年）；同意管理与 GPC 见 20.2。
 - **数据主体请求**：支持访问、更正、删除、可携带、反对、限制处理，以及 CCPA 的退出“出售 / 共享”；GDPR / UK GDPR 1 个月内答复（必要时可延长两个月），CCPA 45 个日历日内答复（必要时可再延长 45 天），具体时限以法务确认为准（见 17.11）；`sys_dsr_request` 记录请求、身份核验、处理与答复时间；受理渠道、身份核验与后台工具见 17.11。
+- **AI 翻译**：自动翻译发送给 AI 引擎的只有公开的内容与站点资源；询盘翻译为按需功能（由销售在询盘详情页手动触发，会把询盘留言发送给 AI 引擎，见 5.7、17.10），站点可关闭；询盘译文不写入翻译记忆；AI 服务商纳入处理者清单（见下表）。
 - **上线前合规清单**：
 
 | 项 | 内容 |
 |---|---|
 | 处理活动记录（ROPA） | 处理目的、数据类别、合法性基础、保留期、接收方 |
-| 处理者清单 | 云厂商、CDN / WAF、人机验证（Cloudflare Turnstile）、邮件服务商、Sentry、GA4 等以处理者身份提供服务的统计工具、Webhook 接收方（如企业微信、飞书、Slack）等；记录数据区域与跨境传输依据 |
+| 处理者清单 | 云厂商、CDN / WAF、人机验证（Cloudflare Turnstile）、邮件服务商、Sentry、GA4 等以处理者身份提供服务的统计工具、Webhook 接收方（如企业微信、飞书、Slack）、AI 翻译引擎服务商（询盘翻译会发送询盘留言）等；记录数据区域与跨境传输依据 |
 | DPA | 与清单中的处理者签署数据处理协议（GDPR 第 28 条） |
 | 广告与社交平台 | Google Ads、Meta Pixel、LinkedIn Insight Tag 等通常为独立控制者或共同控制者，适用其控制者条款或共同控制协议；角色划分由法务确认 |
 | 法律页面 | 每个站点的隐私政策、Cookie 政策、使用条款、Imprint（见 10.1、16.3） |
 | 数据泄露响应 | 响应流程、联系人、泄露记录表（见 27.5） |
-| 法务待确认 | GDPR 第 27 条欧盟代表与英国代表；询盘与下载留资的合法性基础；中国大陆销售人员访问欧盟个人数据及其他跨境传输（全球 CDN、美国服务商、Webhook 接收方）的合规安排；CCPA 是否适用；加拿大的要求（PIPEDA、魁北克第 25 号法律、CASL）；同意记录保留期限（见 32 章 Q13）。系统设计中不下结论 |
+| 法务待确认 | GDPR 第 27 条欧盟代表与英国代表；询盘与下载留资的合法性基础；中国大陆销售人员访问欧盟个人数据及其他跨境传输（全球 CDN、美国服务商、Webhook 接收方）的合规安排；CCPA 是否适用；加拿大的要求（PIPEDA、魁北克第 25 号法律、CASL）；同意记录保留期限。以上事项由业主自行确认（见 32 章 Q13），系统设计中不下结论 |
 
 ---
 
 ## 27. 部署与运维
+
+部署由业主自行负责（云厂商与 CDN 的选择见 32 章 Q3）；本章给出参考拓扑与要求。
 
 ### 27.1 部署拓扑
 
@@ -2558,7 +2852,7 @@ CREATE TABLE grh_relation (
 | Admin 静态文件 | SPA 静态文件，经 CDN 分发（见 22.6） |
 | 边缘 | 全球 CDN + WAF |
 
-- 区域：源站部署在**欧盟**（默认法兰克福，备选阿姆斯特丹、巴黎）；数据库、对象存储、备份全部在欧盟区域；全球 CDN（如 Cloudflare）覆盖欧美访客，美国访客由 CDN 边缘节点提供 HTML 与图片（见 ADR-015）。若美国流量远大于欧洲，可以评估美东源站，但需要处理欧盟 → 美国的数据传输（可依靠服务商的 EU-US Data Privacy Framework 认证或标准合同条款，由法务确认），见 32 章 Q15。
+- 区域：源站部署在**欧盟**（默认法兰克福，备选阿姆斯特丹、巴黎）；数据库、对象存储、备份全部在欧盟区域；全球 CDN（如 Cloudflare）覆盖欧美访客，美国访客由 CDN 边缘节点提供 HTML 与图片（见 ADR-015）。若美国流量远大于欧洲，可以评估美东源站，但需要处理欧盟 → 美国的数据传输（可依靠服务商的 EU-US Data Privacy Framework 认证或标准合同条款，由法务确认）；是否需要美国源站由业主自行决定（见 32 章 Q15）。
 - 第三方服务：优先选择提供欧盟数据区域的服务，如邮件服务（SES 的欧盟区域、Mailgun EU、Brevo）、Sentry（欧盟数据区域）、欧盟区域的托管数据库。
 - 后台访问：后台用户主要在中国大陆，访问欧盟源站延迟较高；后台静态资源走 CDN，API 响应精简；必要时使用加速线路（其运营方纳入处理者清单评估，见 26.8；风险见 31）。
 - 未来如果需要为其他企业提供系统，采用一企业一实例独立部署（独立数据库与存储），见 ADR-009。
@@ -2592,7 +2886,7 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 | 方面 | 设计 |
 |---|---|
 | 日志 | JSON 结构化；字段包含 traceId、spanId、siteId、userId、module；PII 脱敏；IP 截断（IPv4 最后一段置零，IPv6 保留前 48 位）；汇总到 Loki 或 ELK（部署在欧盟区域）；保留 30 天 |
-| 指标 | Micrometer → Prometheus：HTTP 请求量、错误率、延迟；JVM；连接池；缓存命中率；未完成事件；任务队列；通知失败；表单提交量与垃圾率；Delivery 延迟；Nuxt 渲染耗时 |
+| 指标 | Micrometer → Prometheus：HTTP 请求量、错误率、延迟；JVM；连接池；缓存命中率；未完成事件；任务队列；通知失败；表单提交量与垃圾率；Delivery 延迟；Nuxt 渲染耗时；AI 翻译：翻译记忆命中率、引擎错误率与延迟、待处理单元数、每日费用（见 5.10） |
 | 链路追踪 | OpenTelemetry：Nuxt（Node）→ 后端，传递 `traceparent` |
 | 错误 | Sentry（欧盟数据区域）：后端、Nuxt 服务端与客户端、Admin |
 | 健康检查 | 后端 `/actuator/health/liveness`、`/readiness`（readiness 包含 DB、Redis；不包含 Meilisearch，其故障只算降级）；Nuxt `/__health` |
@@ -2609,6 +2903,8 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 | 证书到期 | < 14 天 | P2 |
 | 备份失败 | 任意一次 | P1 |
 | 磁盘 / 连接池 | 使用率 > 85% | P2 |
+| 翻译失败积压 | `FAILED`（引擎错误且重试耗尽）的翻译任务项数量超过阈值（可配置） | P2（不影响中文内容发布） |
+| 翻译费用 | 达到月度预算 80%（达到 100% 时暂停批量任务，见 5.10） | P2 |
 
 **合成监控**：每 15 分钟检查首页、一个产品页与 sitemap；每天提交一条测试询盘（标记为 `is_test`，不计入报表，通知发到运维邮箱），验证整条获客链路。
 
@@ -2644,10 +2940,11 @@ main：构建镜像 → 部署 dev → E2E 冒烟测试
 | 单元 | JUnit 5 + AssertJ；Vitest | 领域逻辑、评分算法、URL 规范化、组件迁移函数 | 领域层覆盖率 ≥ 80% |
 | 架构 | Spring Modulith `verify()`、ArchUnit；前端 dependency-cruiser | 依赖方向、跨模块访问、包结构 | 必须通过 |
 | 模块集成 | `@ApplicationModuleTest` + Testcontainers（MySQL、Redis、Meilisearch） | 单个模块 + 事件场景（Scenario API） | 必须通过 |
+| AI 翻译 | `@ApplicationModuleTest` + 假引擎（`TranslationEngine` 的测试实现，不调用真实服务商） | 用假引擎测试翻译流程（提取 → 查翻译记忆 → 调用引擎 → 校验 → 回写）；翻译记忆复用（同一原文不重复调用引擎）；占位标签与数字校验；`HUMAN` 条目不被机器译文覆盖 | 必须通过 |
 | 契约 | OpenAPI 快照 + oasdiff；组件 Schema 校验 | API 与 Schema 不被无意破坏 | 必须通过 |
 | 站点隔离 | 专用测试套件 | 准备两个站点的数据，以及只在其中一个站点拥有角色的用户，遍历后台接口，验证不能越权读写另一个站点的数据 | 必须通过 |
 | 组件视觉 | Playwright 截图 `/__gallery` | 组件 × 变体 × 断点 × 主题 | 差异需人工确认 |
-| E2E | Playwright | 场景 S1–S10 | staging 必须通过 |
+| E2E | Playwright | 场景 S1–S13 | staging 必须通过 |
 | SEO | 自研爬取检查脚本（`tools/seo-check`） | 全站状态码、canonical、hreflang 互链、JSON-LD 校验、不执行 JS 时的内容、重定向链 | staging 必须通过 |
 | 性能 | Lighthouse CI；k6 | 页面性能预算；Delivery API 200 RPS | 超出预算则阻断 |
 | 安全 | OWASP ZAP baseline、依赖扫描、gitleaks | staging | 高危则阻断 |
@@ -2670,10 +2967,10 @@ b2b-platform/
 │   │   ├── platform-core/
 │   │   └── platform-api/
 │   ├── modules/
-│   │   ├── content/  url/  media/  taxonomy/  form/  notification/        # L2
-│   │   ├── product/  article/  page/  inquiry/  navigation/              # L3
-│   │   └── delivery/  seo/  graph/  search/  tracking/                   # L4
-│   ├── infrastructure/              # 存储、邮件、搜索客户端、缓存、CDN 清除等适配器
+│   │   ├── content/  url/  media/  taxonomy/  form/  notification/  translation/    # L2
+│   │   ├── product/  article/  page/  inquiry/  navigation/                         # L3
+│   │   └── delivery/  seo/  graph/  search/  tracking/                              # L4
+│   ├── infrastructure/              # 存储、邮件、搜索客户端、缓存、CDN 清除、AI 翻译引擎等适配器
 │   └── application/                 # Spring Boot 启动与装配
 ├── frontend/                        # pnpm workspace
 │   ├── apps/
@@ -2699,7 +2996,7 @@ b2b-platform/
 
 1. 在 `platform-api` 中定义需要的契约（服务接口、事件、DTO），并通过架构评审。
 2. 按模板创建后端模块（3.4）与 `module.json`（3.5）。
-3. 新增内容类型时，实现必需的扩展点：`ContentTypeProvider`、`PublishContributor`、`SchemaOrgProvider`、`SearchDocumentProvider`、`BreadcrumbProvider`、`MediaReferenceCollector`、`SeoVariableProvider`。
+3. 新增内容类型时，实现必需的扩展点：`ContentTypeProvider`、`PublishContributor`、`SchemaOrgProvider`、`SearchDocumentProvider`、`BreadcrumbProvider`、`MediaReferenceCollector`、`SeoVariableProvider`、`TranslatableContentProvider`；模块中有站点资源的可翻译文本时，实现 `TranslatableResourceProvider`（见 3.7、5.5）。
 4. 在 Admin 中创建 `modules/<id>/` 并用 `defineAdminModule` 注册。
 5. 前台组件：在 `component-schemas` 中添加定义，在主题中实现变体，补充组件画廊示例。
 6. 在 `docs/modules/<id>.md` 中写明职责、数据模型、事件、扩展点、API、配置。
@@ -2738,7 +3035,8 @@ b2b-platform/
 - 代码、测试、文档在同一个 PR 中；
 - 全部 CI 门禁通过；
 - 新的后台功能有对应的权限点与审计；
-- 新的前台组件有 Schema、变体截图、无障碍检查、多语言文案；
+- 新的前台组件有 Schema、变体截图、无障碍检查；固定文案使用文案键，不硬编码（见 21.7）；
+- 新增的可翻译字段已在 `TranslatableContentProvider` / `TranslatableResourceProvider` 中登记；
 - 新的内容类型实现了 29.2 第 3 步中的全部扩展点；
 - 数据迁移遵循 expand / contract。
 
@@ -2757,13 +3055,15 @@ b2b-platform/
 | 里程碑 | 目标 | 主要交付 | 验收 |
 |---|---|---|---|
 | **M0 工程底座** | 可持续开发的骨架 | Monorepo；Maven 多模块与 platform-api 骨架；模块管理器（描述符、依赖校验、迁移、启用开关）；扩展点注册表；事件（Modulith）；站点上下文；OpenAPI → TS；Nuxt 与 Admin 骨架；Docker Compose；CI 全部门禁；版本兼容验证（ADR-011） | 示例模块违反边界时 CI 失败；按模板新建一个模块并接入 ≤ 1 小时 |
-| **M1 最小闭环** | 打通“内容 → SEO → 询盘” | 用户、角色、2FA、审计；内容内核（本地化、修订、发布、预览）；URL（路由、自动 301）；媒体（上传、图片变换）；分类体系；产品（基础字段与属性）；SEO（Meta 自动生成与覆盖、canonical、hreflang、Product / Breadcrumb / Organization JSON-LD）；Delivery；Nuxt SSR + 基础主题（产品模板）；表单 + 询盘 + Turnstile + 邮件通知 + 归因 | S1、S2、S4（不含 GA4） |
+| **M1 中文单语闭环** | 以中文站点打通“内容 → SEO → 询盘” | 用户、角色、2FA、审计；内容内核（本地化、修订、发布、预览）；多语言数据模型就绪（源语言、翻译模式与翻译状态字段；URL 全部带语言前缀，根路径 302 到默认对外语言）；URL（路由、自动 301）；媒体（上传、图片变换）；分类体系；产品（基础字段与属性）；SEO（Meta 自动生成与覆盖、canonical、Product / Breadcrumb / Organization JSON-LD）；Delivery；Nuxt SSR + 基础主题（产品模板）；表单 + 询盘 + Turnstile + 邮件通知 + 归因 | S1（不含英语部分）、S2、S4（不含 GA4） |
 | **M2 页面与设计系统** | 运营可以自主搭建页面 | Design Token；主题（≥ 20 个组件）；模板与插槽；页面编辑器（iframe 画布）；全局区块；导航；站点资料；文章、案例、FAQ；审核；定时发布；回滚；Cache Tag + CDN 清除 | S3、S10 |
-| **M3 SEO 与获客完善** | SEO 引擎完整，转化可追踪 | Sitemap（含图片与 hreflang）；robots；IndexNow；链接索引；Content Graph（人工 + 规则评分）；相关内容；SEO 健康；重定向导入；404 日志；追踪与同意（含 GPC、同意记录、法律页面）；询盘分配规则、去重、SLA、报表；下载留资；询价篮 | S5、S7、S8、S9；Lighthouse 预算达标 |
-| **M4 规模化运营** | 支撑大量内容与上线 | 产品 Excel 导入导出；型号表；站内搜索与分面筛选；翻译工作流（过期检测）；完善数据范围；隐私工具（数据主体请求、保留期）；性能与安全加固；上线运维手册 | S6；安全扫描无高危；备份恢复演练通过 |
-| **M5（V2）** | 扩展能力 | AI（翻译、SEO 建议、语义相似、垃圾识别）；CRM；报价；WhatsApp；Newsletter；Analytics；多主题 | 按各模块的需求文档 |
+| **M3 SEO 与获客完善** | SEO 引擎完整，转化可追踪；AI 翻译上线并开放英语 | Sitemap（含图片）；robots；IndexNow；链接索引；Content Graph（人工 + 规则评分）；相关内容；SEO 健康；重定向导入；404 日志；追踪与同意（含 GPC、同意记录、法律页面）；询盘分配规则、去重、SLA、报表；下载留资；询价篮；AI 翻译（翻译记忆、术语表、风格指南、翻译编辑器、批量翻译、用量统计）；开放英语；多语言 SEO（hreflang、多语言 sitemap） | S5、S7、S8、S9、S11、S12、S13；Lighthouse 预算达标 |
+| **M4 规模化运营** | 支撑大量内容与上线 | 产品 Excel 导入导出；型号表；站内搜索与分面筛选；完善数据范围；隐私工具（数据主体请求、保留期）；性能与安全加固；上线运维手册 | S6；安全扫描无高危；备份恢复演练通过 |
+| **M5（V2）** | 扩展能力 | AI（写作、SEO 建议、语义相似、垃圾识别；AI 翻译已纳入 V1，见 M3）；CRM；报价；WhatsApp；Newsletter；Analytics；多主题 | 按各模块的需求文档 |
 
-关键调整（相对 V1.0）：**多语言、Nuxt 前台、URL 引擎全部提前到 M1；插件系统降级为编译期模块 + 启用开关；先在 M1 用 PRODUCT 一种类型验证“快照 + 投影”模型，M2 再扩展到其他类型**。
+关键调整（相对 V1.0）：**多语言数据模型、Nuxt 前台、URL 引擎全部提前到 M1；插件系统降级为编译期模块 + 启用开关；先在 M1 用 PRODUCT 一种类型验证“快照 + 投影”模型，M2 再扩展到其他类型**。
+
+V1.3 调整：M1 为中文单语闭环（前台只开放中文，多语言数据模型就绪，URL 全部带语言前缀）；AI 翻译、开放英语与多语言 SEO 放在 M3。
 
 每个里程碑结束时做一次演示与复盘，必要时调整后续范围。
 
@@ -2778,23 +3078,28 @@ b2b-platform/
 | 内容内核设计错误导致大面积返工 | 中 | 高 | M1 先用产品类型验证快照与投影，再推广到其他类型；关键设计必须经 ADR 评审 |
 | 模块边界逐步被侵蚀（包括 AI 生成的代码） | 高 | 中 | 29.3 中的自动化守护；CODEOWNERS；`CLAUDE.md` |
 | SEO 倒退（上线或迁移后出现大量 404） | 中 | 高 | 自动 301；404 日志与一键重定向；上线前跑 SEO 爬取检查；迁移映射报告 |
-| 多语言内容维护成本高 | 高 | 中 | 翻译状态与过期检测；【V2】机器翻译初稿 |
+| 多语言内容维护成本高 | 高 | 中 | AI 翻译 + 翻译记忆（同一原文只翻译一次，见 5.5–5.10）；翻译状态与过期检测（`MANUAL` 模式） |
+| AI 译文质量（术语错误、法律页面） | 中 | 高 | 术语表、风格指南、自动校验；法律页面人工审校后发布；关键页面母语人员抽检（见 5.8） |
+| AI 费用失控 | 低 | 中 | 翻译记忆（命中不调用 AI）；月度预算上限与告警；用量报表（见 5.10） |
+| AI 引擎不可用 | 中 | 低 | 异步翻译，不影响中文内容发布；退避重试；备用引擎（见 5.9） |
 | 询盘通知失败导致丢单 | 低 | 高 | 通知发件箱 + 重试 + 告警；每日合成测试询盘 |
 | 垃圾询盘泛滥 | 中 | 中 | 多层反垃圾 + 待审区 + 可调整的规则 |
 | 源站在欧盟，国内访问后台慢 | 中 | 中 | 后台静态资源走 CDN；接口精简；必要时使用加速线路 |
 | Meilisearch 故障 | 低 | 中 | 可以重建；列表降级到 MySQL |
 | 第三方依赖版本不兼容 | 中 | 中 | M0 做版本验证并锁定；Renovate 渐进升级 |
-| 隐私合规风险 | 中 | 高 | 同意管理、同意记录、GPC、保留期、数据主体请求工具；法务评审（Q13）；上线前的合规检查清单（见 26.8） |
+| 隐私合规风险 | 中 | 高 | 同意管理、同意记录、GPC、保留期、数据主体请求工具；法务评审（业主自行负责，见 32 章 Q13）；上线前的合规检查清单（见 26.8） |
 
 ---
 
 ## 32. 待确认问题
 
+已确认或由业主自行负责的问题保留在表中，并写明结论。
+
 | # | 问题 | 影响 |
 |---|---|---|
 | Q1 | 产品形态（对应假设 A1）？**已确认：自用**。一家企业，可以有多个品牌站或国家站；不做 SaaS，不为其他企业交付；站点为最高隔离单位（见 ADR-009） | 3、5、25、27 |
-| Q2 | 首批语种清单（建议 en、de、fr、es、it）？ | 5、11 |
-| Q3 | 云厂商与 CDN 的选择（区域已定为欧盟）？ | 27 |
+| Q2 | 首批语种清单？**已确认**：前台 V1 先开放中文；其他语言由 AI 翻译生成后按需开放（建议 en、de、fr、es、it） | 5、11 |
+| Q3 | 云厂商与 CDN 的选择（区域已定为欧盟）？**业主自行负责**（不在本文范围） | 27 |
 | Q4 | 首批站点的产品规模与属性复杂度？是否需要型号表？ | 8 |
 | Q5 | 是否有旧站需要迁移？旧站使用什么平台（如 WordPress）？ | 8.6、13.5 |
 | Q6 | V1 是否需要在系统内直接给客户发邮件？ | 17 |
@@ -2804,9 +3109,9 @@ b2b-platform/
 | Q10 | 邮件服务商？是否已有 GA4 / GTM 账号？ | 18、20 |
 | Q11 | 团队规模与技能（是否有专职前端与设计师）？ | 30 |
 | Q12 | 是否确认“自研”（ADR-000）？**已确认：自研**（ADR-000 为 Accepted） | 全局 |
-| Q13 | 法务确认：是否需要 GDPR 第 27 条欧盟代表与英国代表？询盘与下载留资的合法性基础？中国大陆销售人员访问欧盟个人数据，以及经全球 CDN、美国服务商、Webhook 接收方的跨境传输的合规安排？CCPA 是否适用？加拿大访客的同意模式与 CASL？同意记录保留期限？ | 17、18、20、26 |
-| Q14 | Imprint 所需的公司法定信息（法定名称与法律形式、登记机关与注册号、增值税号、代表人、监管机关、内容负责人）？ | 16.3 |
-| Q15 | 欧洲与美国的流量占比？是否需要美国源站？ | 27、ADR-015 |
+| Q13 | 法务确认：是否需要 GDPR 第 27 条欧盟代表与英国代表？询盘与下载留资的合法性基础？中国大陆销售人员访问欧盟个人数据，以及经全球 CDN、美国服务商、Webhook 接收方的跨境传输的合规安排？CCPA 是否适用？加拿大访客的同意模式与 CASL？同意记录保留期限？**业主自行负责**（不在本文范围） | 17、18、20、26 |
+| Q14 | Imprint 所需的公司法定信息（法定名称与法律形式、登记机关与注册号、增值税号、代表人、监管机关、内容负责人）？**业主自行负责**（不在本文范围） | 16.3 |
+| Q15 | 欧洲与美国的流量占比？是否需要美国源站？**业主自行负责**（不在本文范围） | 27、ADR-015 |
 
 ---
 
@@ -2825,6 +3130,12 @@ b2b-platform/
 - 前台只读发布态数据（快照与投影），永远不读草稿
 - Design System：前台样式只能使用 Design Token 与主题变体
 - 渲染：系统内容用“模板 + 插槽”，营销页用页面编辑器；组件 Schema 在 frontend/packages/component-schemas
+
+## 语言规则
+- 管理后台只用简体中文：不做语言切换，不引入 vue-i18n，界面文案集中在常量 / 字典文件中；module.json、组件与模板定义中的名称、标签只写中文字符串
+- 内容与站点资源只用简体中文（源语言 zh-CN）录入；其他语言由 translation 模块经 AI 翻译生成
+- 前台所有用户可见文字必须经过文案键或翻译流程；组件中不得硬编码文案（中文或英文）
+- 新增可翻译字段时，必须在 TranslatableContentProvider / TranslatableResourceProvider 中登记；组件属性用 `x-translatable` 标注是否需要翻译（见 10.4）
 
 ## 严格禁止
 1. platform-core 依赖任何业务模块；模块 import 其他模块的包
@@ -2861,7 +3172,7 @@ b2b-platform/
 
 ## 附录 B：ADR 索引
 
-M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态除 ADR-000 为 Accepted 外均为 Proposed，评审通过后改为 Accepted。
+M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件。ADR-000、ADR-005、ADR-009、ADR-017 为 Accepted，其余为 Proposed，评审通过后改为 Accepted。
 
 | 编号 | 文件 | 主题 |
 |---|---|---|
@@ -2870,7 +3181,7 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态除 ADR-000 �
 | ADR-002 | `docs/adr/0002-module-communication.md` | 公开 API、事件、扩展点；契约集中在 platform-api |
 | ADR-003 | `docs/adr/0003-event-reliability.md` | 事务后投递 + Event Publication Registry |
 | ADR-004 | `docs/adr/0004-content-kernel.md` | Content / Localization / Revision；快照与投影 |
-| ADR-005 | `docs/adr/0005-i18n-and-url-strategy.md` | 多语言模型与 URL 策略 |
+| ADR-005 | `docs/adr/0005-i18n-and-url-strategy.md` | 语言策略与 URL |
 | ADR-006 | `docs/adr/0006-template-and-page-builder.md` | 模板 + 插槽与页面搭建两种模式 |
 | ADR-007 | `docs/adr/0007-editor-canvas-iframe.md` | 编辑器画布使用 iframe |
 | ADR-008 | `docs/adr/0008-seo-data-ownership.md` | SEO 数据归属与自动值 / 覆盖值 |
@@ -2882,6 +3193,7 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态除 ADR-000 �
 | ADR-014 | `docs/adr/0014-id-strategy.md` | TSID 与字符串序列化 |
 | ADR-015 | `docs/adr/0015-hosting-region-and-data-residency.md` | 部署区域与数据驻留：源站与数据在欧盟，全球 CDN |
 | ADR-016 | `docs/adr/0016-privacy-compliance-baseline.md` | 隐私合规基线：GDPR / UK GDPR / ePrivacy + CCPA/CPRA |
+| ADR-017 | `docs/adr/0017-ai-translation-and-translation-memory.md` | AI 翻译与翻译记忆 |
 
 ---
 
@@ -2891,7 +3203,7 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件，状态除 ADR-000 �
 
 | 顺序 | 文档 | 依据章节 | 需要在何时完成 |
 |---|---|---|---|
-| 1 | 《领域模型与数据库设计》：完整 ER 图与 DDL | 6–20、25 | M0 结束前（M1 涉及的部分） |
+| 1 | 《领域模型与数据库设计》：完整 ER 图与 DDL | 5–20、25 | M0 结束前（M1 涉及的部分） |
 | 2 | 《Module SPI 与扩展点详细设计》：接口签名、注册与过滤、生命周期 | 3 | M0 |
 | 3 | 《内容发布、快照与投影详细设计》 | 4.4、6 | M1 开始前 |
 | 4 | 《URL 与 SEO 引擎详细设计》 | 13、14 | M1 开始前 |
