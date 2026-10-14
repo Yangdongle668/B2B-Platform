@@ -13,7 +13,7 @@
 
 | 路径 | 内容 | 状态 |
 |---|---|---|
-| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.3 |
+| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.4 |
 | `docs/adr/` | 架构决策记录；索引、状态与流程见 `docs/adr/README.md` | 持续维护 |
 | `docs/framework/platform-framework.md` | 平台框架设计：工程结构、全部跨模块契约（platform-api）、platform-core 与基础设施、数据库通用约定、前端框架、测试替身、CI、模块文档模板、并行开发计划 | 编写中 |
 | `docs/modules/<模块 ID>.md` | 模块设计文档，每个模块一份：职责、依赖与契约、领域模型、表结构与 DDL、接口、界面、测试、验收 | 编写中 |
