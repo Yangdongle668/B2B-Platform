@@ -6,14 +6,20 @@
 
 模块化 B2B 企业网站平台（Modular B2B Website Platform）：一家企业自用的多站点、多语言企业官网与询盘获客平台，模块化、SEO 原生、由设计系统驱动。
 
-**当前状态：设计阶段，代码骨架尚未建立**（里程碑 M0 未开始）。仓库中只有设计文档。没有明确要求时，不要创建代码骨架、构建文件或引入依赖。
+**当前状态：M0设计整改与隔离验证进行中，业务代码骨架尚未建立**。`tools/verification/m0-compatibility/`包含独立验证原型，不是生产工程。没有明确要求时，不要创建代码骨架、构建文件或引入依赖。
 计划目录（系统设计 29.1）：`backend/`（`platform/platform-core`、`platform/platform-api`、`modules/<模块>`、`infrastructure`、`application`）、`frontend/`（`apps/website`、`apps/admin`、`packages/*`）、`docs/`、`deploy/`、`tools/`。
 
 ## 文档索引
 
 | 路径 | 内容 | 状态 |
 |---|---|---|
-| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.4 |
+| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.7 |
+| `docs/design/visual-direction.md` | 前台视觉基线：Tesla 风格参考、Token 建议、页面结构与视觉验收 | 方向已确定，视觉稿待交付 |
+| `docs/reviews/design-issue-resolution-2026-10-20.md` | 11 项设计问题统一方案、契约映射和故障验收 | 方案已补齐，ADR 待评审 |
+| `docs/reviews/formal-design-review-2026-10-20.md` | 正式技术评审、DR-01～09及实库DDL证据 | 允许M0整改验证；暂不冻结契约 |
+| `docs/reviews/m0-remediation-2026-10-20.md` | DR-01～04整改、真实兼容性验证及剩余关卡 | M0执行记录 |
+| `docs/reviews/m0-transaction-protocol-review-2026-10-20.md` | 媒体/翻译/下载39项协议原型及剩余验收 | M0-07部分完成 |
+| `docs/plans/development-plan.md` | M0整改/验证队列、M1业务链及M2～M4开发验收流程 | 执行计划，未开始业务编码 |
 | `docs/adr/` | 架构决策记录；索引、状态与流程见 `docs/adr/README.md` | 持续维护 |
 | `docs/framework/platform-framework.md` | 平台框架设计：工程结构、全部跨模块契约（platform-api）、platform-core 与基础设施、数据库通用约定、前端框架、测试替身、CI、模块文档模板、并行开发计划 | 编写中 |
 | `docs/modules/<模块 ID>.md` | 模块设计文档，每个模块一份：职责、依赖与契约、领域模型、表结构与 DDL、接口、界面、测试、验收 | 编写中 |
@@ -26,12 +32,12 @@
 
 - 模块化单体：编译期模块（Maven 模块）+ 站点级启用开关，不做热插拔；后端 Spring Boot 4 + Spring Modulith + MyBatis-Plus + MySQL 8.4；前台 Nuxt 4（SSR）；后台 Vue 3 + Vite + Element Plus
 - 分层：L0 platform-core → L1 platform-api（只有契约）→ L2 content、url、media、taxonomy、form、notification、translation → L3 product、article、page、inquiry、navigation → L4 delivery、seo、graph、search、tracking；任何模块只能依赖 platform-core 与 platform-api
-- 表前缀：core `sys_`、content `cnt_`、url `url_`、media `mda_`、taxonomy `tx_`、form `frm_`、notification `ntf_`、translation `trn_`、product `prd_`、article `art_`、page `pg_`、inquiry `inq_`、navigation `nav_`、seo `seo_`、graph `grh_`、tracking `trk_`（delivery 无表；search 的索引在 Meilisearch）
+- 表前缀：core `sys_`、content `cnt_`、url `url_`、media `mda_`、taxonomy `tx_`、form `frm_`、notification `ntf_`、translation `trn_`、product `prd_`、article `art_`、page `pg_`、inquiry `inq_`、navigation `nav_`、seo `seo_`、graph `grh_`、tracking `trk_`（delivery 无表；search 原设计无SQL表，V1.6/ADR-021提案增sch_控制表，索引仍在Meilisearch）
 - 站点是最高隔离单位，不设租户层：站点级表带 `site_id`，由 MyBatis-Plus 行级拦截器自动追加过滤（类名 `TenantLineInnerInterceptor` 只是框架命名，列名配置为 `site_id`）；全局表（`sys_user`、`sys_role`、`sys_permission`、`sys_module` 等）列入豁免清单；Redis key、对象存储路径、Meilisearch 索引、Cache Tag 都带站点前缀（系统设计 5.3）
 - 模块通信只有三种：platform-api 中的服务接口、领域事件（事务提交后投递）、扩展点
 - 内容内核：Content + Localization + Revision；发布生成不可变快照与只读投影
 - 前台只读发布态数据（快照与投影），永远不读草稿
-- Design System：前台样式只能使用 Design Token 与主题变体
+- Design System：前台样式只能使用 Design Token 与主题变体；前台沿用 `industrial` 单主题，参考 Tesla 的大幅影像、黑白灰与简洁导航，具体见 `docs/design/visual-direction.md`。后台继续使用 Element Plus 独立主题变量
 - 渲染：系统内容用“模板 + 插槽”，营销页用页面编辑器；组件 Schema 在 `frontend/packages/component-schemas`
 - 语言与 URL：源语言固定为简体中文 `zh-CN`；前台 V1 只对外开放中文，其他语言由 AI 翻译生成后按语言开放；全部语言 URL 带前缀（`/zh/…`、`/en/…`），根路径 `/` 以 302 跳转到默认对外语言；内容不跨语言回退
 - translation 模块（L2，可停用）：源语言发布或站点资源变化后异步执行：经扩展点提取翻译单元 → 查翻译记忆 `trn_memory`（同一原文只翻译一次）→ 调用 AI 引擎 → 校验 → 回写目标语言草稿；人工修订优先（`HUMAN` > `REVIEWED` > `MACHINE`）
@@ -88,7 +94,7 @@
 - 涉及组件 Schema：破坏性变更必须提升版本并附迁移函数
 - 任何跨模块修改都必须在 PR 中说明原因
 
-当前只有文档：提交前确认新增或修改的内容中引用的文件路径、章节编号、ADR 编号都实际存在。
+当前文档与隔离原型：提交前执行原型README对应检查，并确认新增或修改的内容中引用的文件路径、章节编号、ADR 编号都实际存在。
 
 ## 文档维护
 

@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：表单定义、提交、Turnstile、反垃圾、附件；M2：—；M3：下载留资；表单文本作为可翻译资源；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.6 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 17 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 17 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -61,7 +61,8 @@
   "layer": "L2",
   "platform": ">=1.0.0 <2.0.0",
   "requires": {
-    "media": "^1.0"
+    "media": "^1.0",
+    "notification": "^1.0"
   },
   "optional": {},
   "disableable": true,
@@ -647,6 +648,21 @@ CREATE TABLE frm_blocklist (
 
 要点：条目数量小，按站点整体加载到应用缓存中匹配（CIDR、子域名、关键词不适合在 SQL 中匹配），修改后广播失效；命中计数异步批量累加。垃圾词库与一次性邮箱域名库是随版本发布的资源文件，不在本表中。
 
+#### 4.3.7 下载幂等结果补丁
+
+download_grant由服务器填写，客户端不能在fields/payload中提交。保存首个已提交下载结果的URL、expiresAt和门控上下文，供相同幂等键重放；它是访问能力，不得写日志或向无权限后台用户导出。URL不含个人信息，访问仍须media重验门控版本及发布引用。
+
+```sql
+ALTER TABLE frm_submission
+  ADD COLUMN download_grant JSON NULL COMMENT '服务端固定下载结果：url/expiresAt/contentId/locale；幂等重放不续期',
+  ADD CONSTRAINT ck_sub_download_grant CHECK (
+    download_grant IS NULL OR
+    (spam_verdict = 'ACCEPT' AND is_test = 0 AND download_media_id IS NOT NULL)
+  );
+```
+
+补丁随M3留资功能启用前迁移。它不增加新业务表；保留期匿名化/删除按既有提交策略同时清理grant。
+
 ### 4.4 枚举
 
 | 字段 | 取值 | 说明 |
@@ -703,6 +719,8 @@ CREATE TABLE frm_blocklist (
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
 | `db/migration/form/V001__init.sql` | 4.3 中的全部表（6 张：`frm_form`、`frm_form_localization`、`frm_form_notice_version`、`frm_submission`、`frm_attachment`、`frm_blocklist`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
+| `db/migration/form/V002__download_grant.sql` | 4.3.7追加字段；不改V001 | M3；启用依赖功能前 |
+
 
 ## 5. 业务流程
 
@@ -723,7 +741,18 @@ CREATE TABLE frm_blocklist (
 | 幂等重放先于一次性验证码 | 限流之后先按站点/表单/幂等键识别已完成请求，规范化业务内容一致时返回已有结果，不再次消耗 Turnstile token；不同业务请求复用同键 409。最终唯一约束处理并发首次提交。 | 同 payload 同键同时提交两次以及首次成功后网络重试，均只有一个提交和一次业务事件；修改邮箱复用同键 409。 |
 | 告知历史与前端旧页面 | 提交保存实际展示过且存在的 locale/noticeVersion，不把收到请求时最新版冒充历史版本；字段定义已不兼容时返回字段错误并要求刷新。营销选择可选，服务端生成同意时间。 | 展示 v1 后服务端更新为 v2，再提交 v1，按已存在历史记录精确保存 v1 或明确拒绝重新展示，不自动换为 v2；不存在版本拒绝。 |
 | 附件与垃圾判定 | 校验数量≤5、每个≤20MB、同表单/会话和临时有效期；关联与提交同事务。REJECT 仍返回普通成功，不产生下载票据；QUARANTINE 保存供复核但不通知。 | 附加其他会话文件、过期 TEMP、感染文件分别拒绝；回滚不留下 LINKED 孤立附件；垃圾回复不暴露判定分数。 |
-| 门控票据和邮件边界 | DOWNLOAD 仅在非 REJECT、当前文档仍按该表单门控时签发短期链接；签名失败不撤销已保存提交，重试使用既有 submission。下载邮件依赖冲突见 FORM-01，不能直接引用 notification 业务表。 | 同一下载请求重复发送不重复创建线索；取消门控/移除发布引用后不能靠旧表单上下文签发新票据；过期链接不可用。 |
+| 门控票据和邮件边界 | DOWNLOAD仅在ACCEPT且非测试时，核对当前content/locale的PUBLISHED引用与门控后签发；提交、download_grant与发件箱同事务，任一步失败全部回滚。QUARANTINE/REJECT/测试不签发；幂等重放返回首次grant且不续期。 | 同一下载请求重复发送不重复创建线索；取消门控/移除发布引用后不能靠旧表单上下文签发新票据；过期链接不可用。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.6](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- ADR-023提案新增唯一L2方向form→notification，requires声明notification；只允许NotificationApi.send在原提交事务入发件箱，notification不反查form。
+- DOWNLOAD校验、提交、持久download_grant与通知入队同事务；无状态签名提交前不外泄；dedupKey固定download:{submissionId}:{mediaId}，effectiveLocale及票据有效期固定。
+- QUARANTINE/REJECT/测试提交不发下载邮件。回滚无提交/票据/发件箱，重复提交命中已有结果；SMTP依旧事务外投递。
+
+
+M0-07实施检查：M0-07实测下载原子回滚与固定grant重放；唯一键冲突后回滚并新事务读取赢家，不在旧RR快照里重新签发。验证范围与复现方式见[事务协议复审](../reviews/m0-transaction-protocol-review-2026-10-20.md)。
 
 ## 6. 接口
 
@@ -855,6 +884,14 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | form.errors.unavailable | 验证服务暂时不可用 | 公开错误提示 |
 | form.errors.rateLimit | 提交频率过高 | 公开错误提示 |
 
+### 8.6 视觉方向与组件呈现
+
+遵循[前台视觉设计方向与 UI 基线](../design/visual-direction.md)，Token 集中在 design-tokens 包定义，变体由主题实现；后台仍使用 Element Plus。
+
+表单使用可见标签、足够触控尺寸、清楚的主 CTA、字段错误和提交结果。必填、隐私告知与实际展示版本保持可辨认；营销选项独立且默认未勾选。提交中保留输入并防重复操作，失败允许重试；不得为视觉简洁省略业务状态或改变幂等/门控校验。
+
+视觉稿覆盖默认、加载、空、错误、成功及键盘焦点等适用状态；本节为呈现要求，未声称已有设计稿或组件实现。
+
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
@@ -977,7 +1014,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | FORM-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| FORM-01 | 框架 NotificationApi 将 form 列为使用方，但 L2 调用白名单只允许 form→media；下载链接邮件未有一致调用方向 | DOWNLOAD 邮件发送边界 | 是 | 框架负责人 / 模块负责人 | M3 留资邮件开工前 | 框架组明确通过既有事件消费者发送或按 ADR 增补允许方向；本模块不直接调用未获允许的 NotificationApi，不查询 ntf_。 |
+| FORM-01 | 框架 NotificationApi 将 form 列为使用方，但 L2 调用白名单只允许 form→media；下载链接邮件未有一致调用方向 | DOWNLOAD 邮件发送边界 | 方案已补齐，待评审冻结 | 框架负责人 / 模块负责人 | M3 留资邮件开工前 | 统一方案：明确新增form→notification与requires，下载提交/票据/发件箱同事务；ADR-023。详见框架4.10.6及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 
 ## 修订记录
 
@@ -986,3 +1023,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.5 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.6 | 2026-10-20 | M0-07实测下载原子回滚与固定grant重放；唯一键冲突后回滚并新事务读取赢家，不在旧RR快照里重新签发 |

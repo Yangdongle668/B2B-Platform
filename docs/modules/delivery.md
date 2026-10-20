@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：`resolve`、站点引导数据、预览；M2：Cache Tag + CDN 清除；M3：多语言（hreflang、未公开语言 404）；翻译完成后的失效；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.4 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -101,7 +101,8 @@
       "RelationChangedEvent",
       "FormChangedEvent",
       "TranslationCompletedEvent",
-      "ContentPurgedEvent"
+      "ContentPurgedEvent",
+      "SiteResourceChangedEvent"
     ]
   }
 }
@@ -182,6 +183,8 @@
 
 监听器按框架 5.8 建立站点/system 上下文；`ContentPurgedEvent` 在模块停用时仍必须清理（deliverWhenModuleDisabled）。其他停用期间跳过并完成的事件，重新启用后通过扫描当前状态补偿，不能假定还会重投。数据库幂等标记与本模块数据在同一事务提交；外部发送、下载、搜索与 CDN 调用不得被数据库长事务包裹，使用已声明的任务/端口和业务幂等键。事件 payload 仅引用框架现有字段，本文不扩展签名。
 
+SiteResourceChangedEvent（框架4.10.2，Proposed）：订阅：article.author、tracking.setting/script清settings，url.pattern清整站。字段meta/resourceType/resourceId/change，原事务登记，重复处理安全。
+
 ### 2.7 使用的端口
 
 | 端口（平台框架小节） | 用途 | 测试替身 |
@@ -213,7 +216,7 @@
 | 4 | 数据源上限、参数、并行度与 500ms 超时遵守 DataSourceLimits | 统一调度；失败区域为空并记录问题 |
 | 5 | 缓存身份必须包含站点、语言、模式、路径及会影响输出的规范化查询参数 | 固定序列化后生成摘要；预览不进缓存 |
 | 6 | 缓存标签由 CacheTag 工厂创建，最多 200 个；超量卡片标签合并为 list:type | 合并时保留主体及资源依赖 |
-| 7 | 数据库/核心贡献方失败返回 503，不伪装成 NOT_FOUND | 统一异常映射；Nuxt 使用 stale-if-error |
+| 7 | 数据库/核心贡献方失败返回 503，不伪装成 NOT_FOUND | 统一异常映射；只用尚未过期缓存，否则503，禁用stale扩展 |
 
 ### 3.3 状态机
 
@@ -241,7 +244,7 @@
 | 站点引导 | `delivery.site` / 语言与主题相关版本标识 | site、navigation、tracking 的公开配置；不混入访客身份、地区或个人同意 |
 | 标签索引 | 由 TaggedCache 管理 | `s{siteId}:tag:{标签值}` → 缓存键集合，TTL 不短于最长条目 |
 
-实际缓存键由端口自动加 `s{siteId}:`，格式 `s{siteId}:{namespace}:{key}`；业务方不能再次加站点前缀。CacheTag 已包含站点前缀，通过工厂生成。Nuxt 引导内存缓存 ≤60 秒；SSR/CDN 响应期限按系统设计 21.3：内容页 s-maxage=86400、404 最长 60 秒、5xx 与预览不缓存。Redis 不可用时回源，但失效失败必须保留重试。
+实际缓存键由端口自动加 `s{siteId}:`，格式 `s{siteId}:{namespace}:{key}`；业务方不能再次加站点前缀。CacheTag 已包含站点前缀，通过工厂生成。Nuxt引导/SSR/CDN共享最早依赖freshUntil，剩余寿命至多55秒，不在命中时重计；404/重定向/robots同规则，无可信期限no-store，5xx/预览/私有授权响应no-store。Redis 不可用时回源，但失效失败必须保留重试。
 
 ### 4.4 枚举
 
@@ -290,6 +293,15 @@
 | 缓存键与标签完整性 | 缓存键包含所有影响输出的规范化查询/语言/主题因素；标签覆盖主体、卡片、分类、媒体、全局区块、表单及导航。内容已发布后的更新也失效列表排序/筛选，不限 firstPublish。 | 修改已有产品排序/主分类后 60s 内所有关联列表变化；A/B 站同路径及不同筛选不混缓存；标签不超过 200。 |
 | 回源与失效竞争 | getOrLoad 回源期间发生内容/依赖失效时，旧计算不得在失效后覆盖新缓存；需验证 TaggedCache/适配器与版本防护的具体协议，见 DELIVERY-02。 | 阻塞旧回源、发布并失效、释放旧回源，缓存和页面在 60s 预算内保持最新结果；Redis/CDN 失败可重试且有指标。 |
 | 公开头部与个体数据 | bootstrap 的共享输出不含地区/同意/联系人；预览、编辑器 no-store/noindex。每源最多 24 项/500ms，每页最多 10 个源，局部可选贡献失败只清空该部分，核心 SEO/路由语义不能伪造。 | 两个不同同意访客命中同份 HTML，不含对方状态；预览请求后 LIVE 缓存仍为发布版本；单源超时不使整页变 404。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.2、4.10.3](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- getOrLoad回源前取得缓存代次，回填用同一原子操作校验；旧代次结果不写缓存。直接put回源结果改用beginLoad/putIfUnchanged。
+- 监听器只有Redis失效与CDN purge均成功才返回；失败依靠Event Publication Registry重投，V1可靠路径不依赖BufferStore去抖。
+- SiteResourceChangedEvent(article.author/tracking.setting/tracking.script)清settings；内容更新始终清list(type)，不只首次发布。
+- 公开缓存按统一绝对过期时刻计龄，各层不重置TTL；故障、积压和失效失败可观察，不能以stale缓存突破预算。
 
 ## 6. 接口
 
@@ -512,7 +524,7 @@ POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布
 |---|---|---|---|---|---|---|
 | DELIVERY-01 | CacheTag.form 与表单标签已在框架定义，系统设计 23.2 仍待同步 | 对应契约或缓存行为 | 否 | 框架负责人 / 本模块负责人 | 相关切片开工前 | 使用框架既有工厂方法，不手工发明新标签；由框架文档同步任务跟进。 |
 | DELIVERY-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| DELIVERY-02 | TaggedCache.invalidate 与 in-flight getOrLoad 回填竞态，以及 BufferStore 临时合并丢失后的失效重试未形成闭环 | M2 的60秒新鲜度保证 | 是 | 框架负责人 / 模块负责人 | M2 缓存失效开工前 | 冻结适配器的回填版本防护与持久重试/事件完成条件；BufferStore 只能用于合并，不能作为唯一可靠失效队列。新增 getOrLoad/端口签名须另走契约流程。 |
+| DELIVERY-02 | TaggedCache.invalidate 与 in-flight getOrLoad 回填竞态，以及 BufferStore 临时合并丢失后的失效重试未形成闭环 | M2 的60秒新鲜度保证 | 方案已补齐，待评审冻结 | 框架负责人 / 模块负责人 | M2 缓存失效开工前 | 统一方案：站点缓存代次保护回填，Redis/CDN均成功才完成持久投递；ADR-020。详见框架4.10.3及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 
 ## 修订记录
 
@@ -521,3 +533,5 @@ POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |

@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：本地化、修订、发布、预览；翻译模式与状态字段就绪；M2：审核、定时发布、回滚、回收站；M3：AUTO 本地化的自动发布与跟随下线，`OUTDATED` 检测；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 4.4、5.5–5.7、6、10.5、13.6、22.3 节；平台框架设计 V1.0 第 4 章 4.4.16、4.5.2–4.5.4、4.5.6、4.5.19、4.6.2 节；ADR-003、ADR-004、ADR-005、ADR-017、ADR-018 |
+| 依据 | 系统设计 V1.7 第 4.4、5.5–5.7、6、10.5、13.6、22.3 节；平台框架设计 V1.4 第 4 章 4.4.16、4.5.2–4.5.4、4.5.6、4.5.19、4.6.2 节；ADR-003、ADR-004、ADR-005、ADR-017、ADR-018 |
 
 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求（见第 14 节）。
 
@@ -177,7 +177,9 @@
     "subscribes": [
       "ContentPathChangedEvent",
       "TermChangedEvent",
-      "TranslationCompletedEvent"
+      "TranslationCompletedEvent",
+      "SiteResourceChangedEvent",
+      "SiteSettingsChangedEvent"
     ]
   }
 }
@@ -210,14 +212,18 @@
 | `IdGenerator`（4.4.11） | `nextId` | TSID（持久化基类填充）；预览令牌 ID | 事务内 | `FakeIdGenerator` |
 | `EventMetaFactory`（4.4.14） | `next`、`next(siteId, ActorRef.SYSTEM)` | 事件元数据；定时与译文发布以 system 身份 | 事务内 | `FakeEventMetaFactory` |
 | `ExtensionRegistry`（4.4.15） | `all`、`forContentType`、`allForSite` | 收集 2.5 的扩展点 | 事务内 | `InMemoryExtensionRegistry` |
+| `ReferenceWriteApi`（4.10，Proposed） | replaceMedia | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
+| `ProjectionChangeApi`（4.10，Proposed） | searchChanged | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
+| `TransactionMutexApi`（4.10，Proposed） | lock、advance | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
+
 
 ### 2.3 提供的服务接口
 
 | 接口（平台框架设计小节） | 方法 | 实现类 | 契约测试 | 说明（幂等、权限、性能目标） |
 |---|---|---|---|---|
-| `ContentApi`（4.4.16）：创建与草稿 | `create`、`createLocalization`、`updateDraftMeta`、`markDraftChanged` | `ContentApiImpl` | `ContentApiContractTest`（继承 `ContentApiContract`） | 加入调用方事务；`version` 为本地化全部草稿数据的共同版本；草稿哈希在同一调用中同步计算（5.2） |
+| `ContentApi`（4.4.16）：创建与草稿 | `lockDraftForWrite`、`create`、`createLocalization`、`updateDraftMeta`、`markDraftChanged` | `ContentApiImpl` | `ContentApiContractTest`（继承 `ContentApiContract`） | 加入调用方事务；`version` 为本地化全部草稿数据的共同版本；草稿哈希在同一调用中同步计算（5.2） |
 | `ContentApi`：生命周期 | `submitForReview`、`approve`、`reject`、`publish`、`schedule`、`cancelSchedule`、`unpublish`、`unpublishAll`、`rollback`、`trash`、`restore`、`purge`、`deleteLocalization`、`validateForPublish`、`analyzeImpact` | `ContentApiImpl` | 同上 | 有当前用户时按类型校验权限，system 跳过；写审计；事件见 2.6；`publish` 不调用 AI；`purge` 幂等（已删除时无操作） |
-| `ContentApi`：翻译 | `ensureTargetLocalization`、`updateTranslationState`、`changeTranslationMode` | `ContentApiImpl` | 同上 | `ensureTargetLocalization` 幂等；`updateTranslationState` 对过期的 `sourceRevisionNo` 返回 false，不改变 `version` |
+| `ContentApi`：翻译 | `setTranslationReviewRequirement`、`ensureTargetLocalization`、`updateTranslationState`、`changeTranslationMode` | `ContentApiImpl` | 同上 | `ensureTargetLocalization` 幂等；`updateTranslationState` 对过期的 `sourceRevisionNo` 返回 false，不改变 `version` |
 | `ContentApi`：读取 | `findContent(s)`、`findLocalization(s)`、`localizations`、`contentTypes`、`contentType`、`findPublishedSnapshot`、`findRevision`、`revisions`、`findPublishedCards`、`publishedVersions`、`queryPublished`、`scanPublished`、`publishedTerms`、`contentIdsByPublishedTerms`、`countPublished` | `ContentApiImpl`（查询由 `ContentQueryService` 实现） | 同上 | 只读发布态；不跨语言回退；批量 ≤ 500 个 ID；Delivery 热路径 `findPublishedSnapshot`、`findPublishedCards`、`publishedVersions` P95 ≤ 20 ms（缓存未命中，4.1.3） |
 | `ContentApi`：预览 | `createPreviewToken`、`resolvePreviewToken`、`assemblePreview` | `ContentApiImpl` | 同上 | 令牌用途按 `ttl` 取 `PREVIEW`（≤ 1 小时）或 `SHARE`（≤ 7 天）；`assemblePreview` 不持久化、不发布事件 |
 
@@ -266,9 +272,11 @@
 |---|---|---|---|---|
 | `ContentPathChangedEvent` | `ContentPathListener#onContentPathChanged`：`reason` 不是 `PUBLISHED`、`RETIRED` 时（V1 为 `PARENT_MOVED`），`pub_path` ← `UrlApi.pathOf(localizationId)`；`PUBLISHED`、`RETIRED` 已在发布、下线事务内同步，忽略 | 按当前状态覆盖 | 不信任载荷，读 `pathOf`；本地化不是 `PUBLISHED` 时跳过 | 异常重投；本地化已删除时记录日志后正常返回 |
 | `TermChangedEvent` | `PublishedTermListener#onTermChanged`：`DELETED` 时删除 `term_id` ∈ {`termId`} ∪ `descendantTermIds` 的投影行；其他变化忽略（快照不变，下次发布时自然更新） | 删除天然幂等 | 不需要（分类项删除不可逆） | 异常重投 |
-| `TranslationCompletedEvent` | `TranslationCompletionListener#onTranslationCompleted`：只处理 `content` 非空的事件。`autoPublish = true` → 新事务中以 system 身份、`PublishTrigger.TRANSLATION` 发布目标本地化；`autoPublish = false` 且 `state = TRANSLATED` → 自动提交审核（`cnt_review.origin = TRANSLATION`）；`NEEDS_REVIEW` → 不处理（翻译中心处理） | 发布：该本地化当前修订的 `source_revision_no` ≥ 事件的 `sourceRevisionNo` 时跳过；审核：已有 PENDING（`uk_review_pending`）时跳过 | 本地化仍为 AUTO、`translationState = TRANSLATED`、事件的 `sourceRevisionNo` 等于源语言当前 `published_revision_no`，否则丢弃；`humanReviewRequired` 或 `cnt_content.translation_review_required = 1` 时改为进入审核（禁止 15） | 发布校验失败 → `updateTranslationState(NEEDS_REVIEW)` 并写失败审计，正常返回；其他异常重投 |
+| `TranslationCompletedEvent` | `TranslationCompletionListener#onTranslationCompleted`：只处理 `content` 非空的事件。`autoPublish = true` → 新事务中以 system 身份、`PublishTrigger.TRANSLATION` 发布目标本地化；`autoPublish = false` 且 `state = TRANSLATED` → 自动提交审核（`cnt_review.origin = TRANSLATION`）；`NEEDS_REVIEW` → 不处理（翻译中心处理） | 发布：该本地化当前修订的 `source_revision_no` ≥ 事件的 `sourceRevisionNo` 时跳过；审核：已有 PENDING（`uk_review_pending`）时跳过 | 持父先子后写锁重新确认当前version等于事件targetVersion，本地化仍为 AUTO、`translationState = TRANSLATED`、事件的 `sourceRevisionNo` 等于源语言当前 `published_revision_no`，否则丢弃；`humanReviewRequired` 或 `cnt_content.translation_review_required = 1` 时改为进入审核（禁止 15） | 发布校验失败 → `updateTranslationState(NEEDS_REVIEW)` 并写失败审计，正常返回；其他异常重投 |
 
 content 不可停用，监听器在所有站点执行。
+
+SiteResourceChangedEvent（框架4.10.2，Proposed）：订阅：url.pattern变化提交当前树重算任务；SiteSettingsChangedEvent的URL_PREFIX_CHANGED同样调度。字段meta/resourceType/resourceId/change，原事务登记，重复处理安全。
 
 ### 2.7 使用的端口
 
@@ -297,7 +305,7 @@ content 不可停用，监听器在所有站点执行。
 
 | 补充 | 理由 |
 |---|---|
-| `cnt_content.translation_review_required` | 法律页面（`legal` 模板）的机器译文不得自动发布（系统设计 5.5、6.3）。模板属于 page 模块，content（L2）不能调用 page（L3），因此由所属模块在模板变化时经 `ContentApi` 设置该标记，内核自动发布译文前检查 |
+| `cnt_content.translation_review_required` | 法律页面（`legal` 模板）的机器译文不得自动发布（系统设计 5.5、6.3）。模板属于 page 模块，content（L2）不能调用 page（L3），因此由所属模块在模板变化的同一事务经ContentApi.setTranslationReviewRequirement按内容ID/内容version设置；只有cnt_content存储，读取模型只投影，内核自动发布译文前检查 |
 | `cnt_content.trashed_by` | 回收站列表显示操作人 |
 | `cnt_localization.content_type` | 冗余 `cnt_content.type`，前台列表、sitemap、`content-query` 数据源只用一个索引即可完成过滤与排序 |
 | `cnt_localization.slug_locked` | 表达“slug 首次发布后固定”（系统设计 13.3）：为 1 后系统不再按标题自动改写 slug，只能手工修改 |
@@ -335,7 +343,7 @@ content 不可停用，监听器在所有站点执行。
 
 ### 3.3 状态机
 
-在系统设计 6.3 的基础上细化。`version` 只在草稿数据变化时递增（`updateDraftMeta`、`markDraftChanged`、`rollback`）；状态转换（审核、发布、定时、下线、模式切换）只校验 `expectedVersion`，并以本地化行锁（`SELECT … FOR UPDATE`）串行化，不递增 `version`。
+在系统设计 6.3 的基础上细化。本地化`version`在草稿数据或内容级审校策略变化时递增（`updateDraftMeta`、`markDraftChanged`、`rollback`）；状态转换（审核、发布、定时、下线、模式切换）只校验 `expectedVersion`，并以本地化行锁（`SELECT … FOR UPDATE`）串行化，不递增 `version`。
 
 ```text
 draft_state（每个本地化）
@@ -421,7 +429,7 @@ erDiagram
 | `translation_review_required` | TINYINT(1) | 否 | `0` | 机器译文是否必须人工审校后发布：1 = 是（法律页面，由所属模块经 ContentApi 设置） |
 | `trashed_at` | DATETIME(3) | 是 | — | 移入回收站时间；为空表示正常 |
 | `trashed_by` | BIGINT | 是 | — | 移入回收站的用户 ID |
-| `version` | INT | 否 | `0` | 乐观锁版本号（移入回收站、恢复） |
+| `version` | INT | 否 | `0` | 内容级乐观锁版本号（回收/恢复及审校策略修改）；不是本地化草稿version |
 | `created_at` | DATETIME(3) | 否 | `CURRENT_TIMESTAMP(3)` | 创建时间（UTC） |
 | `created_by` | BIGINT | 否 | `0` | 创建人用户 ID（0 = 系统） |
 | `updated_at` | DATETIME(3) | 否 | `CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)` | 更新时间（UTC） |
@@ -573,7 +581,7 @@ CREATE TABLE cnt_localization (
 要点：
 - **与系统设计 25.9 的差异**：保留全部字段名；`unpublish_strategy` 由 JSON 改为枚举列 + `unpublish_target_content_id`；`translation_state` 增加默认值 `NONE`；索引名按平台框架设计 7.2（`idx_loc_list` 取代 `idx_cnt_loc_list`），列表索引增加 `content_type`，排序列改为 `first_published_at`（前台“发布日期”与默认排序用首次发布时间，重新发布不改变文章顺序；`published_at` 是最近一次发布时间）。系统设计 25.9 需同步修订。
 - `published_revision_id` 不建外键：它与 `cnt_revision.localization_id` 互相引用，由发布事务保证一致。
-- `draft_hash`：保存草稿后由内核调用各 `PublishContributor.contribute()` 组装草稿快照（与预览同一套代码）后计算，可去抖异步执行；后台据此显示“有未发布的修改”徽标。
+- `draft_hash`：保存草稿后由内核调用各 `PublishContributor.contribute()` 组装草稿快照（与预览同一套代码）后在保存事务内同步计算（V1不去抖）；后台据此显示“有未发布的修改”徽标。
 - 定时：到期时按当前草稿执行发布，与人工发布同一流程；需要审核的类型若草稿已不是 `APPROVED`，则定时失败，清除定时，状态回到 NEVER / UNPUBLISHED（按 `first_published_at` 是否为空），并通知 `scheduled_by`。
 - 下线：`REDIRECT_PARENT` 的目标在下线时经扩展点由所属模块解析（PAGE 为父页面，PRODUCT 为主分类的 TERM_PAGE，TERM_PAGE 为上级分类项的 TERM_PAGE）；解析结果交给 url 写入路由墓碑（见 url 模块设计 4.3.1）。
 - 翻译：translation 经 `ContentApi` 更新 `translation_state`、`source_locale`、`source_revision_no`、`translated_at`（不直接写本表）；目标语言本地化不存在时由内核创建（`translation_mode = AUTO`，`translation_state = QUEUED`）。
@@ -872,7 +880,7 @@ create 的初始化 DRAFT_HASH 允许所属业务行尚不存在（既有 DRAFT_
 ### 5.2 保存草稿与草稿哈希
 
 ```text
-所属模块保存自己的表 → ContentApi.updateDraftMeta(localizationId, expectedVersion, title?, slug?, sharedDataChanged)
+先ContentApi.lockDraftForWrite取得内容父/本地化锁 → 所属模块保存自己的表 → ContentApi.updateDraftMeta(localizationId, expectedVersion, title?, slug?, sharedDataChanged)
   1. expectedVersion 非空时校验（不符 → CONTENT_VERSION_CONFLICT，properties.currentVersion）；回收站中 → CONTENT_TRASHED
   2. title 变化 → draft_title；slug 非空 → validateSlug 后写入并置 slug_locked = 1；
      slug 为空、slug_locked = 0、可路由且标题变化 → 按新标题重新生成 slug（首次发布后 slug_locked = 1，不再改写）
@@ -886,13 +894,13 @@ create 的初始化 DRAFT_HASH 允许所属业务行尚不存在（既有 DRAFT_
 |---|---|---|
 | 4 | 在调用方事务中同步计算，读取到调用方刚写入的草稿；V1 不做去抖（单次组装为毫秒级，≤ 10 种语言） | 贡献方抛出 → `draft_hash` 置空并计指标（2.5），保存照常提交 |
 | `markDraftChanged` | 语言无关数据被非编辑器途径修改（分类指派、导入）：对全部本地化执行 3–6，不做乐观锁检查 | — |
-| 翻译回写 | `expectedVersion = null`；AUTO 本地化处于 IN_REVIEW（译文审核）时同样取消审核，等待下一次 `TranslationCompletedEvent` | — |
+| 翻译回写 | 非空ctx.expectedTargetVersion，由引擎调用前捕获；回写先lockDraftForWrite，非拥有者provider先apply，拥有者最后且仅一次updateDraftMeta；冲突整笔回滚，旧项SUPERSEDED | 禁止null版本或恢复时刷新旧输出的目标版本 |
 
 ### 5.3 发布（系统设计 4.4 的细化）
 
 ```text
 ContentApi.publish(localizationId, expectedVersion, comment) ── 调用方事务（人工）或独立事务（定时、译文发布）──┐
-  1. 锁定本地化行；未进回收站；expectedVersion 匹配；权限 content:{type}:publish（system 跳过）             │
+  1. 路由类型先取得content.route_tree互斥锁，再锁内容父行和本地化行；未进回收站；expectedVersion 匹配；权限 content:{type}:publish（system 跳过）             │
   2. 审核：类型 reviewable 且在 content.reviewRequiredTypes 中时，要求 draft_state = APPROVED 且审核记录的      │
      draft_hash = 当前 draft_hash，或 draft_hash = pub_hash（没有新修改）                                    │
   3. 可路由：routeHints → slug（AUTO 首次发布且 slug 为空时由 draft_title 生成）→ UrlApi.reservePath          │
@@ -1006,7 +1014,7 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 | 译文完成 | 2.6 的 `TranslationCompletedEvent` 处理：自动发布（`publish_trigger = TRANSLATION`、`published_by = 0`、`source_revision_no` 记录依据的源语言修订号）或进入审核 |
 | 源语言下线 / 进回收站 | AUTO 跟随下线（5.5 第 6 步）；进回收站前源语言必须已下线，因此 AUTO 已随之下线 |
 | 模式切换 | `changeTranslationMode`：AUTO → MANUAL 保留草稿；MANUAL → AUTO 清除 `OUTDATED`（置 `NONE`），由 translation 按源语言当前修订重新排队 |
-| 法律页面 | `TranslationCompletedEvent.humanReviewRequired` 或 `translation_review_required = 1` 时一律进入审核（禁止 15）；`translation_review_required` 的写入途径待契约（第 14 节 #1） |
+| 法律页面 | `TranslationCompletedEvent.humanReviewRequired` 或 `translation_review_required = 1` 时一律进入审核（禁止 15）；字段唯一归属cnt_content，按框架4.10.7的父先子后锁与版本传播写入（第14节#1） |
 
 ### 5.11 一致性、失败与恢复约束
 
@@ -1016,6 +1024,18 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 | 普通保存与系统标记分开 | 编辑器保存调用 updateDraftMeta(expectedVersion=页面读取版本)，不能先无条件写库再单独提交版本。markDraftChanged 仅用于既有契约允许的系统/共享数据变化；所有步骤在同一事务。 | 两个编辑器用同一 version 保存不同布局/业务字段，只成功一次；失败方的业务行也回滚，待审记录按内容状态机取消。 |
 | 预览输入与历史修订 | GET 预览不接受 partOverrides；画布 POST 仅允许 EDITOR 用途令牌覆盖 layout，并走 PublishContributor 校验。SHARE 令牌不能写草稿，撤销/到期后立即拒绝。 | 跨站点、过期、已撤销、SHARE 携带覆盖的四类请求均拒绝；响应 no-store，不出现公开缓存条目。 |
 | 修订保留与清理 | 裁剪保留当前 published_revision_id 及有效修订预览令牌引用；purge 按影响报告和路由退役协议执行，停用的业务模块仍接收内容物理删除清理。 | 保留期任务重复运行，当前线上修订与未过期令牌所指修订仍可读；ContentPurgedEvent 在停用模块重复投递不报错。 |
+
+### 5.12 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1、4.10.4、4.10.5、4.10.7](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- 草稿/发布快照中的媒体引用在原事务经 ReferenceWriteApi 登记；删除/下线同步清除对应阶段，异步事件不再写权威 mda_usage。
+- 所有公开事实变更经 ProjectionChangeApi 在原事务登记搜索变更；该服务在 beforeCommit 合并并调用捕获SPI，异常使源事务回滚。
+- content 拥有 content.recalculate_routes 任务；页面树、URL模式和前缀输入变化使用 TransactionMutexApi 的 content.route_tree 事务锁与generation，恢复读取当前routeHints。
+- 审校标记只在cnt_content持久化，ContentInfo/LocalizationInfo投影读取；策略变化使所有本地化旧版本/审批失效；TranslationCompletedEvent携带targetVersion，旧草稿/旧源修订不自动发布，legal始终人工审校。
+
+
+M0-07实施检查：M0-07实测父/子锁竞争与版本失效；同步草稿哈希和发布父先子后锁说明，原型不代替正式ContentApi验收。验证范围与复现方式见[事务协议复审](../reviews/m0-transaction-protocol-review-2026-10-20.md)。
 
 ## 6. 接口
 
@@ -1295,10 +1315,10 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
-| #1 | translation_review_required 的写入途径未在 ContentApi 明确 | 法律页机器译文审校 | 是 | 框架负责人 | M3 开工前 | 在既有 create/update 元数据流程明确输入与 testkit 行为；未解决前法律页一律禁止自动发布 |
+| #1 | translation_review_required 的写入途径未在 ContentApi 明确 | 法律页机器译文审校 | 方案已补齐，待评审冻结 | 框架负责人 | M3 开工前 | 统一方案：可信元数据方法、初始化继承、事件targetVersion和当前政策复检；ADR-024。详见框架4.10.7及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 | #2 | 定时发布失败通知设置人的模板与事件尚无契约 | 失败反馈 | 否 | 框架负责人 | M2 开工前 | 先保留 AuditApi.recordIndependently 与失败指标；通知需通过框架 4.9 补充后实现 |
 | #4 | assemblePreview 的 partOverrides 缺少用途/字段限制 | 编辑器授权边界 | 否（已澄清） | 框架负责人 | M2 开工前 | 已按框架 4.4.16 的 PreviewRequest 与 8.3.13 澄清：仅 EDITOR 可以覆盖 layout；delivery POST 做用途、站点、大小、Schema 校验，SHARE/PREVIEW 不接受覆盖，无需新签名。 |
-| #5 | CONTENT_CARD_MISSING 被 PublishContributor 使用但未列入 ContentErrors | 错误目录一致性 | 否 | 框架负责人 | M1 开工前 | 框架错误目录统一登记既有语义，不在模块自建第二套跨模块错误常量 |
+| #5 | CONTENT_CARD_MISSING统一登记 | 错误目录一致性 | 否（已登记） | 框架负责人 | M1 开工前 | 已在框架4.4.16 ContentErrors登记CARD_MISSING(422)，仍由框架维护唯一错误目录 |
 | #11 | 4.6 事件摘要与 4.2.4 总表不完全一致 | 事件声明和测试 | 否 | 框架负责人 | M1 开工前 | 以框架完整事件定义和本模块 2.6 为准；同步末尾摘要，不增加新事件 |
 | CONTENT-M0 | 骨架、冻结契约与 testkit 尚无实现 | 实际运行测试 | 是 | 框架负责人 | M0 | 文档不等于 DoR 或实现验收通过 |
 
@@ -1309,3 +1329,6 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.5 | 2026-10-20 | M0-07实测父/子锁竞争与版本失效；同步草稿哈希和发布父先子后锁说明，原型不代替正式ContentApi验收 |

@@ -25,7 +25,7 @@
 | 层 | 内容 | 失效方式 |
 |---|---|---|
 | 浏览器 | 带哈希的静态资源（1 年，`immutable`）；HTML 使用 `max-age=0, must-revalidate`，每次向 CDN 确认 | 文件名变化 |
-| CDN | HTML、图片、sitemap | Cache-Tag 清除 + TTL + stale-while-revalidate |
+| CDN | HTML、图片、sitemap | Cache-Tag清除 + 共享绝对到期时刻，不允许stale延长 |
 | Nuxt | 只缓存站点引导数据（进程内，≤ 60 秒） | TTL |
 | Redis | Delivery 结果、站点引导数据、路由、权限、设置、sitemap | 标签索引（tag → 缓存键集合）清除 |
 | 应用内存 | 扩展点注册表、Schema、域名到站点的映射 | Redis Pub/Sub 广播 |
@@ -43,8 +43,8 @@
 
 3. **标签由 delivery 生成**：delivery 为页面主体、所有卡片与引用添加标签；数据源的 `resolve()` 返回结果时一并返回缓存标签（10.5）。标签放在 `resolve` 响应的 `cache.tags` 中（24.4），Nuxt 原样输出为 `Cache-Tag` 响应头（21.2）。单个响应的标签超过 200 个时，把卡片标签合并为 `list:{type}`。
 4. **事件驱动失效**（23.3）：delivery 订阅内容、分类、媒体、导航、站点设置、关系、路由、模块启停以及 `TranslationCompletedEvent` 等事件（4.3），在事务提交后异步执行 `CacheInvalidator`：计算标签 → 通过 Redis 标签索引删除 Delivery 结果 → 调用 CDN 按标签清除接口（2 秒去抖合并，失败重试）。导航或站点设置变化清除 `nav` / `settings`，相当于清除整站 HTML，频率低，可以接受。
-5. **CDN 缓存策略**（21.3）：内容页 `s-maxage=86400, stale-while-revalidate=604800, stale-if-error=604800`；站内搜索与 404 为 `s-maxage=60`；sitemap、robots 为 `s-maxage=3600` + Cache-Tag；预览与编辑器 `no-store`；5xx 不缓存。不使用 SSG。
-6. **防击穿与故障**：CDN 使用 stale-while-revalidate；Delivery 对同一缓存键用 Redis 锁合并并发回源（23.3）。Delivery 不可用时由 `stale-if-error` 提供旧页面；没有缓存时返回 503 + `Retry-After`，绝不返回 404（21.5）。
+5. **CDN 缓存策略**（21.3）：内容页、站内搜索壳、404/410、重定向、sitemap及robots共享freshUntil预算；浏览器必须重验，CDN剩余TTL不超过min(55秒, freshUntil-now)，不能确定可信到期时刻则no-store。带哈希静态资源长期immutable；预览、私有内容与5xx不缓存。不使用 SSG。
+6. **防击穿与故障**：Delivery对同一缓存键合并并发回源，并用站点代次fence阻止旧loader回填（框架4.10.3、ADR-020）。故障不允许突破freshUntil继续使用旧页；没有可用结果返回503 + Retry-After，不能伪造404（21.5）。
 7. **缓存的 HTML 与访客无关**：访客地区、同意状态不写入缓存的 HTML，也不按地区区分缓存，地区由不缓存的轻量请求获取（20.2）；图片在 URL 中显式指定格式，不按 `Vary: Accept` 区分（12.3）。
 
 ## 备选方案
@@ -69,7 +69,7 @@
 ### 负面与代价
 
 - CDN 必须支持按 Cache-Tag / Surrogate-Key 清除，限制了业主的 CDN 选择范围（2.4）。
-- 标签漏加会让页面最长在 `s-maxage`（24 小时）内显示旧数据，问题不易察觉。
+- 标签漏加会使旧结果存活至共享freshUntil到期；必须监控标签覆盖与失效积压，不能依赖长TTL兜底。
 - 标签数量受响应头大小限制，超过 200 个时退化为 `list:{type}`，失效变粗。
 - 导航、站点设置变化会清除整站 HTML，之后一段时间回源增加。
 - 失效是异步的：事务提交到 CDN 清除完成之间有短暂的旧数据窗口。
@@ -93,3 +93,4 @@
 | 日期 | 变更 |
 |---|---|
 | 2026-10-06 | 创建 |
+| 2026-10-20 | DR-04整改：统一freshUntil预算与故障行为，替换长stale；ADR仍待评审 |

@@ -5,17 +5,17 @@
 | 模块 ID | `search` |
 | 名称 | 站内搜索 |
 | 层 | L4 |
-| 表前缀 | 无 |
+| 表前缀 | `sch_`（ADR-021提案） |
 | API 前缀 | `search` |
 | 可停用 | 是 |
 | 模块版本 | 1.0.0（module.json 的 version） |
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：—；M2：—；M3：—；M4：站内搜索与分面筛选（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.4 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 19 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 19 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -68,7 +68,7 @@
   },
   "optional": {},
   "disableable": true,
-  "tablePrefix": null,
+  "tablePrefix": "sch_",
   "apiPrefix": "search",
   "permissions": [
     {
@@ -110,7 +110,7 @@
 }
 ```
 
-描述符为 M0 后的实现要求；无表模块的 tablePrefix 为 null，索引与缓存均可重建。
+描述符按ADR-021提案声明sch_控制表；索引文档可重建，事务日志/指针/构建状态需要持久化和备份。
 
 ### 2.2 使用的服务接口
 
@@ -140,8 +140,10 @@
 |---|---|---|---|---|
 | `DataSourceProvider`（4.5.6） | `SearchDataSourceProvider` | search-query | DEFAULT=1000 | delivery |
 | `PlatformModule`（4.5.22） | `SearchModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
+| `SearchChangeCapture`（4.10.4，Proposed） | `SearchChangeCaptureImpl` | 当前站点搜索变更日志 | 可选唯一实现 | core |
 
 以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。停用时 analyzeDisableImpact 返回本模块内容、组件及外部引用的影响，数据保留。
+
 
 ### 2.5 收集的扩展点
 
@@ -196,7 +198,7 @@
 | # | 不变量 | 保证方式 |
 |---|---|---|
 | 1 | 一个站点一种语言一个索引；不存草稿、不跨语言回退 | SearchIndexNames.content；只读发布快照 |
-| 2 | 文档 id 为 localizationId 字符串；revision_no 不得倒退 | 同一索引/对象串行处理并重读最新快照；写入后等待引擎成功 |
+| 2 | 文档 id 为 localizationId 字符串；revision_no 不得倒退 | 事务捕获+私有代次串行构建，逐任务await；活跃代次不可变 |
 | 3 | noindex、未发布、非公开语言或停用内容不进入查询结果 | 构建返回空则删除；查询与交付再次校验公开状态 |
 | 4 | 搜索文本来自快照，body_text 最长 10000 字符 | provider 输出纯文本，search 再截断 |
 | 5 | filter/sort/facets 只能使用声明字段、正确类型和值 | SearchFilters 转义；禁止原始表达式 |
@@ -205,7 +207,7 @@
 
 ### 3.3 状态机
 
-不设持久化业务状态机。引擎任务状态遵守 SearchTaskState：ENQUEUED → PROCESSING → SUCCEEDED / FAILED / CANCELED；提交 taskId 不等于成功。全量重建由 sys_job 记录进度，取消只在 swap 之前生效，切换失败旧索引继续服务。
+控制状态见4.3.1：BUILDING→READY→ACTIVE→RETIRED；失败或失去fence转FAILED/ABANDONED。引擎任务ENQUEUED→PROCESSING→SUCCEEDED/FAILED/CANCELED，taskId仅代表受理。取消只在数据库指针切换前生效，切换失败旧代次继续服务。
 
 ## 4. 数据模型
 
@@ -213,15 +215,21 @@
 
 ### 4.1 表清单
 
-不适用：本模块没有 SQL 表。内容事实保存在内容内核发布快照/投影中，搜索读模型位于 Meilisearch；重建任务由 core 的 sys_job 管理。
+ADR-021（Proposed）补充 search 自有控制表，内容事实仍在 content，搜索文档仍在 Meilisearch。它们记录可靠捕获与切换状态，需要数据库备份，不能因“索引可重建”而丢弃。完整写入、日志保留与切换流程见框架4.10.4。
+
+| 表 | 用途 | 站点级 | 软删除 |
+|---|---|---|---|
+| sch_index_state | 每语言的变更序号、活跃指针、版本与构建fence | 是 | 否 |
+| sch_change | 与源事务一起提交的有序变更日志 | 是 | 否；按安全水位清理 |
+| sch_build | 每次独立构建代次及最后引擎任务状态 | 是 | 否；按GC与审计策略保留 |
 
 ### 4.2 ER 图
 
-不适用：本模块没有数据库表。
+sch_index_state按(site_id,locale)逻辑关联sch_change与sch_build，不设跨模块外键。构建任务由core.sys_job调度；search只经JobApi访问该任务。
 
 ### 4.3 表结构
 
-索引名使用框架 `SearchIndexNames.content(siteId, locale)`：`s{siteId}_{locale}_content`；临时索引使用 `SearchIndexNames.rebuilding` 生成 `_rebuild` 后缀。
+逻辑名沿用 `SearchIndexNames.content(siteId, locale)`，物理名为 `{逻辑名}_g_{buildId}`。公开查询从sch_index_state读取活跃指针；每次尝试独立代次，已活跃代次不可写。旧的固定 `_rebuild` + swap 不再用于本提案。
 
 | 字段 | 类型 | 来源与约束 |
 |---|---|---|
@@ -236,6 +244,72 @@
 | `published_at`、`sort` | 数字时间戳 / integer | 公开文档排序，时间转换不受主机时区影响 |
 
 搜索优先级：title > model_nos > summary > terms 的名称 > body_text。可筛选字段 type、terms 的 ID、以及 provider 明确声明的 attr 字段；可排序 published_at、sort 及声明 sortable 的属性。中文字段通过 localizedAttributes 声明 `cmn`，使用 Meilisearch 内置分词；按语言配置同义词，model_nos 关闭拼写容错。设置和修改都经 SearchEngineClient.ensureIndex 并 await 确认。嵌套 terms 映射、中文本地化字段配置与 SearchIndexSettings 的具体映射须在端口契约测试中验证，不能把框架未提供的 SDK 配置直接塞进业务模块。
+
+#### 4.3.1 控制表 DDL（ADR-021，Proposed）
+
+```sql
+CREATE TABLE sch_index_state (
+  id              BIGINT       NOT NULL COMMENT 'TSID',
+  site_id         BIGINT       NOT NULL,
+  locale          VARCHAR(16) COLLATE utf8mb4_0900_bin NOT NULL,
+  change_seq      BIGINT       NOT NULL DEFAULT 0 COMMENT '源事务顺序，行锁保护',
+  applied_seq     BIGINT       NOT NULL DEFAULT 0 COMMENT '活跃代次已追平水位',
+  active_index    VARCHAR(200) COLLATE utf8mb4_0900_bin NULL COMMENT '不可变物理索引名',
+  active_version  BIGINT       NOT NULL DEFAULT 0 COMMENT '指针CAS版本',
+  build_fence     BIGINT       NOT NULL DEFAULT 0 COMMENT '构建认领代次',
+  created_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_by      BIGINT       NOT NULL DEFAULT 0,
+  updated_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  updated_by      BIGINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_search_state (site_id, locale),
+  CONSTRAINT ck_search_seq CHECK (change_seq >= applied_seq AND applied_seq >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='搜索活跃指针与事务水位';
+```
+
+```sql
+CREATE TABLE sch_change (
+  id                BIGINT       NOT NULL COMMENT 'TSID',
+  site_id           BIGINT       NOT NULL,
+  locale            VARCHAR(16) COLLATE utf8mb4_0900_bin NOT NULL,
+  sequence_no       BIGINT       NOT NULL COMMENT '同语言提交序号',
+  localization_ids  JSON         NOT NULL COMMENT '完整受影响ID集合；全量刷新时为空数组',
+  full_refresh      TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_by        BIGINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_search_change (site_id, locale, sequence_no),
+  CONSTRAINT ck_search_full CHECK (full_refresh IN (0,1))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='搜索事务变更日志';
+```
+
+```sql
+CREATE TABLE sch_build (
+  id                       BIGINT       NOT NULL COMMENT 'buildId/TSID；每次尝试全新',
+  site_id                  BIGINT       NOT NULL,
+  locale                   VARCHAR(16) COLLATE utf8mb4_0900_bin NOT NULL,
+  job_id                   BIGINT       NOT NULL COMMENT '经JobApi创建，逻辑引用',
+  physical_index           VARCHAR(200) COLLATE utf8mb4_0900_bin NOT NULL,
+  base_index               VARCHAR(200) COLLATE utf8mb4_0900_bin NULL COMMENT '复制基础代次；存活构建引用时禁止GC',
+  expected_active_version  BIGINT       NOT NULL,
+  build_fence              BIGINT       NOT NULL,
+  start_seq                BIGINT       NOT NULL COMMENT '全量H0；复制从基础代次applied_seq起',
+  applied_seq              BIGINT       NOT NULL,
+  status                   VARCHAR(16)  NOT NULL DEFAULT 'BUILDING',
+  last_engine_task_id      BIGINT       NULL COMMENT '仅单执行流顺序发出并逐个await',
+  heartbeat_at             DATETIME(3)  NULL COMMENT '调度提示；不是发布资格依据',
+  created_at               DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_by               BIGINT       NOT NULL DEFAULT 0,
+  updated_at               DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  updated_by               BIGINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_search_physical (site_id, physical_index),
+  KEY idx_search_build (site_id, locale, status),
+  CONSTRAINT ck_search_build_state CHECK (status IN ('BUILDING','READY','ACTIVE','RETIRED','ABANDONED','FAILED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='搜索不可变索引代次';
+```
+
+所有表默认site过滤。控制行只由search写，源模块通过core协调的SearchChangeCapture追加，不能直接访问sch_表。日志至少保留到全部存活构建所需起点之后；无存活构建且活跃水位已覆盖才按批删除，失败构建与恢复策略同框架4.10.4。当前无代码迁移、MySQL执行或吞吐测试结果。
 
 ### 4.4 枚举
 
@@ -253,7 +327,7 @@
 
 | 引用 | 触发 | 处理 |
 |---|---|---|
-| 内容/本地化 ID、修订与路径 | ContentPublished/Unpublished/Trashed/Restored/PurgedEvent、LocalizationDeletedEvent、ContentPathChangedEvent | 发布/恢复重读最新快照 upsert；下线/删除清文档；路径变化刷新 URL |
+| 内容/本地化 ID、修订与路径 | ContentPublished/Unpublished/Trashed/Restored/PurgedEvent、LocalizationDeletedEvent、ContentPathChangedEvent | 事务捕获已覆盖变化；事件仅唤醒下一代构建，公开查询复核当前状态 |
 | 分类与分面 | TermChangedEvent、SiteSettingsChangedEvent | 重建受影响文档或当前语言索引配置；分类筛选只用发布态分类指派 |
 | 模块与语言 | ModuleEnabledEvent、ModuleDisabledEvent、SiteSettingsChangedEvent | 停用或语言不公开时过滤并删除对应文档；重启用后重建，保留内容事实数据 |
 
@@ -261,7 +335,7 @@
 
 ### 4.7 迁移脚本
 
-不适用：本模块没有数据库迁移脚本。
+新增 `db/migration/search/V001__control_state.sql`，内容为4.3.1三张控制表；M4前建立并验证。不得改写其他模块或已合入迁移。
 
 ## 5. 业务流程
 
@@ -269,9 +343,9 @@
 
 | 步骤 | 事务及行为 | 失败处理 |
 |---|---|---|
-| 1 | 发布事件提交后读取最新 ContentApi 发布快照，经 SearchDocumentProvider.build 生成类型字段；补充路径、语言、修订号和公共字段，按索引+localizationId upsert，并 await 确认任务成功。noindex 或 provider 返回空则删除。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 1 | 源事务在beforeCommit捕获sch_change；构建任务读取当前ContentApi发布快照，经SearchDocumentProvider生成文档并写私有代次，逐任务await成功。noindex/未发布/provider为空不纳入新代次。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 | 2 | 搜索校验语言公开与模块启用，按 provider 声明白名单构造 SearchFilters，限制 query、分页、筛选和排序；不允许客户端传任意引擎表达式。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
-| 3 | 重建写入 _rebuild 索引，配置与全量写入全部 await 成功后在受控发布窗口内同步增量并 swap；失败保留旧索引。引擎故障时分类列表降级 ContentApi.queryPublished 的 MySQL 发布投影，分类列表响应标记降级、不伪造分面计数；完整站内搜索页显示友好不可用提示，不声称 MySQL 能替代全文相关性。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | 每个attempt独立代次，扫描并重放事务日志、await成功后，以水位/活跃版本/buildFence三条件CAS切换指针；失败保留旧代次，V1不调用swap。引擎故障时分类列表降级 ContentApi.queryPublished 的 MySQL 发布投影，分类列表响应标记降级、不伪造分面计数；完整站内搜索页显示友好不可用提示，不声称 MySQL 能替代全文相关性。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 
 后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
 
@@ -280,9 +354,18 @@
 | 场景 | 必须满足的行为 | 可验证结果 |
 |---|---|---|
 | 结构化筛选与纯公开输出 | 关键词/筛选/排序必须白名单和类型检查；只从该语言发布快照建索引，私有媒体不输出直链。中文分词显式 cmn，型号禁拼写容错。 | 恶意引擎表达式、未知 attr、错误数值类型均拒绝；中文词与完整型号可检索；正文≤10000字符。 |
-| 异步成功和内容版本 | ensureIndex/upsert/delete/swap 返回 taskId 只代表受理；await 返回仍 PROCESSING 要继续观察，FAILED 才记录失败。查询批量校验当前状态/路径/修订，过滤旧索引命中，不把估算 total 当精确数。 | 延迟处理任务不能被提前标记成功；r2 写入后重放 r1 不能让旧版本出现在公开结果；缺失索引项由修复任务补回。 |
-| 重建切换和增量竞态 | 重建期间持续发布/下线/改路径必须在 swap 前追平，不能把一次全量扫描当作一致性屏障。每站语言一个重建，记录切换任务并可恢复，具体串行化见 SEARCH-01。 | 扫描后、swap前分别发布/下线一项，切换后无丢失/复活；swap受理后进程崩溃恢复先确认状态，不盲目再次 swap。 |
+| 异步成功和内容版本 | ensureIndex/upsert/delete 返回 taskId 只代表受理；await 返回仍 PROCESSING 要继续观察，FAILED 才记录失败。查询批量校验当前状态/路径/修订，过滤旧索引命中，不把估算 total 当精确数。 | 延迟处理任务不能被提前标记成功；r2 写入后重放 r1 不能让旧版本出现在公开结果；缺失索引项由修复任务补回。 |
+| 重建切换和增量竞态 | 源事务记录提交序号，私有代次必须追平日志；change_seq/active_version/build_fence均匹配才切指针。旧worker不得写活跃代次；具体协议见框架4.10.4。 | 扫描后、指针切换前分别发布/下线一项，CAS不越过日志水位；提交前后宕机恢复读取数据库指针，旧worker不能改新活跃代次。 |
 | 故障降级与分面可信度 | 只将分类列表降级为 ContentApi 发布投影无分面列表，不宣称支持原全文排序或属性筛选；不支持的筛选明确提示，完整搜索页显示友好不可用状态。 | 停 Meilisearch 后分类基础列表仍可读，facets 为空或显式不可用，degraded=true；搜索页不返回伪造全文结果，响应不缓存为正常空结果。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.4](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- 控制表/物理索引结构见4.3.1，search实现SearchChangeCapture；源事务的beforeCommit捕获提交顺序，不用异步事件到达顺序当屏障。
+- 每个attempt独立物理代次。初次全扫或复制不可变活跃代次，重放事务日志、await全部任务后，以change_seq/active_version/build_fence三条件CAS切换指针。
+- 活跃代次不再写入；下一批增量构建下一代。旧worker只能写自己的废弃代次，不能覆盖活跃索引。V1不执行swap。
+- 恢复先读数据库指针，未切换仍服务旧代次；GC保护活跃/构建/在途代次，日志水位不能跨过存活构建。O(N)复制成本须压测，查询继续校验当前公开状态。
 
 ## 6. 接口
 
@@ -404,6 +487,14 @@ GET `/api/public/v1/search?q=&type=&filters=&page=&size=`。q 最长 200 字符�
 | search.errors.filters | 筛选字段、类型或条件不合法 | 公开错误提示 |
 | search.errors.rateLimit | 搜索过于频繁 | 公开错误提示 |
 
+### 8.6 视觉方向与组件呈现
+
+遵循[前台视觉设计方向与 UI 基线](../design/visual-direction.md)，Token 集中在 design-tokens 包定义，变体由主题实现；后台仍使用 Element Plus。
+
+M4 搜索界面以输入、当前条件、结果数量和稳定网格为核心，移动筛选面板有应用/清空/关闭及焦点返回。加载、无结果、服务降级和请求失败分别可辨认；M4 前页面可展示发布态基础列表，但不展示不可用的筛选入口。
+
+视觉稿覆盖默认、加载、空、错误、成功及键盘焦点等适用状态；本节为呈现要求，未声称已有设计稿或组件实现。
+
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
@@ -420,7 +511,7 @@ GET `/api/public/v1/search?q=&type=&filters=&page=&size=`。q 最长 200 字符�
 
 | 任务 | 类型 | 触发 | 处理粒度与批量 | 锁与幂等 | 停用行为 |
 |---|---|---|---|---|---|
-| 搜索索引重建 | sys_job | 人工或修复 | 500 快照/批；await 引擎任务成功；可在 swap 前取消 | `search.rebuild_index`；按站点和对象/版本认领，幂等完成 | 跳过并保留待处理数据 |
+| 搜索索引重建 | sys_job | 人工或修复 | 500 快照/批；await 引擎任务成功；可在数据库指针切换前取消 | `search.rebuild_index`；按站点和对象/版本认领，幂等完成 | 跳过并保留待处理数据 |
 | 索引一致性核对 | 定时 | 每晚 | 每语言按游标比对发布数量与内容摘要，发现差异提交重建任务 | `search.reconcile_index`；按站点和对象/版本认领，幂等完成 | 停用站点跳过 |
 
 普通任务为 PER_SITE；全局引擎或跨站点认领仅在 4.5 允许的位置执行。每批完成后更新进度与心跳，检查取消；短事务不得包裹外部调用。单次工作预算 60 秒，到预算即保存游标并续跑，外部端口超时用框架 4.7 的各端口上限。可重试失败指数退避；永久失败写 sys_job 报告或领域任务状态并输出 `b2bweb.search.task.errors` 指标，不记录敏感载荷。
@@ -512,7 +603,7 @@ GET `/api/public/v1/search?q=&type=&filters=&page=&size=`。q 最长 200 字符�
 | A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M4 |
 | A11 | 恶意引擎表达式、未知 attr、错误数值类型均拒绝；中文词与完整型号可检索；正文≤10000字符。 | 模块自身 / 5.2 | 集成：`SearchA11IT`；涉及界面 E2E：`search-A11` | M4 |
 | A12 | 延迟处理任务不能被提前标记成功；r2 写入后重放 r1 不能让旧版本出现在公开结果；缺失索引项由修复任务补回。 | 模块自身 / 5.2 | 集成：`SearchA12IT`；涉及界面 E2E：`search-A12` | M4 |
-| A13 | 扫描后、swap前分别发布/下线一项，切换后无丢失/复活；swap受理后进程崩溃恢复先确认状态，不盲目再次 swap。 | 模块自身 / 5.2 | 集成：`SearchA13IT`；涉及界面 E2E：`search-A13` | M4 |
+| A13 | 扫描后、指针切换前分别发布/下线一项，CAS不越过日志水位；提交前后宕机恢复读取数据库指针，旧worker不能改新活跃代次。 | 模块自身 / 5.2 | 集成：`SearchA13IT`；涉及界面 E2E：`search-A13` | M4 |
 | A14 | 停 Meilisearch 后分类基础列表仍可读，facets 为空或显式不可用，degraded=true；搜索页不返回伪造全文结果，响应不缓存为正常空结果。 | 模块自身 / 5.2 | 集成：`SearchA14IT`；涉及界面 E2E：`search-A14` | M4 |
 
 用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
@@ -522,7 +613,7 @@ GET `/api/public/v1/search?q=&type=&filters=&page=&size=`。q 最长 200 字符�
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | SEARCH-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| SEARCH-01 | SearchEngineClient.upsert 没有 compare-and-set，扫描+swap 未定义增量屏障；多实例重建与旧事件可相互覆盖 | 索引单调更新与无丢失切换 | 是 | 框架负责人 / 模块负责人 | M4 索引同步开工前 | 框架组冻结同索引/对象写入顺序、重建追平与 swap 崩溃恢复协议；不能用“重读最新快照一次”代替并发证明。查询校验当前修订可抑制陈旧命中，不代替补索引。 |
+| SEARCH-01 | SearchEngineClient.upsert 没有 compare-and-set，扫描+swap 未定义增量屏障；多实例重建与旧事件可相互覆盖 | 索引单调更新与无丢失切换 | 方案已补齐，待评审冻结 | 框架负责人 / 模块负责人 | M4 索引同步开工前 | 统一方案：事务变更日志、私有不可变代次和数据库CAS切换；无需重放swap；ADR-021。详见框架4.10.4及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 
 ## 修订记录
 
@@ -531,3 +622,5 @@ GET `/api/public/v1/search?q=&type=&filters=&page=&size=`。q 最长 200 字符�
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |

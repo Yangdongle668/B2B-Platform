@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：Meta 自动生成与覆盖、canonical、Product / Breadcrumb / Organization JSON-LD；M2：—；M3：Sitemap（含图片）、robots、IndexNow、链接索引、健康检查、hreflang；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.4 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 14 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 14 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -140,7 +140,7 @@
 
 | 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
-| `ContentApi`（4.4.16） | findPublishedSnapshot、findPublishedCards、publishedVersions、scanPublished | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `ContentApi`（4.4.16） | lockDraftForWrite、findPublishedSnapshot、findPublishedCards、publishedVersions、scanPublished | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
 | `UrlApi`（4.4.17） | pathsOf、absoluteUrl | 解析当前路径、生成 slug 或规范地址；不读取 url 表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryUrlApi` |
 | `MediaApi`（4.4.18） | findAll、views、imageSources | 媒体视图、图片源与授权下载；不读取媒体表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryMediaApi` |
 | `TaxonomyApi`（4.4.19） | findTerms、termViews、assignmentsOf | 词汇表、分类视图与内容指派；不读取分类表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTaxonomyApi` |
@@ -152,8 +152,12 @@
 | `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
 | `ExtensionRegistry`（4.4.15） | 按该契约声明的方法 | 按启用模块收集 2.5 的扩展点 | 业务事务内；站点切换由任务入口完成 | `InMemoryExtensionRegistry` |
 | `JobApi`（4.4.12） | 按该契约声明的方法 | 耗时任务提交、取消、进度与结果 | 业务事务内；站点切换由任务入口完成 | `InMemoryJobApi` |
+| `ReferenceWriteApi`（4.10，Proposed） | replaceMedia | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
+| `ProjectionChangeApi`（4.10，Proposed） | searchChanged | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
 
 所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
+
+
 
 ### 2.3 提供的服务接口
 
@@ -735,7 +739,7 @@ CREATE TABLE seo_ping_queue (
 |---|---|---|---|
 | 各表 `site_id` | core.`sys_site` | V1 不删除站点 | — |
 | `seo_meta.content_id`、`localization_id` | content.`cnt_content`、`cnt_localization` | 本地化删除：删除该行；内容彻底删除：按 `idx_meta_content` 删除全部语言的行 | `LocalizationDeletedEvent`、`ContentPurgedEvent` |
-| `seo_meta.og_image_media_id`、`seo.site.defaultOgImageMediaId` | media.`mda_media` | seo 实现 `MediaReferenceCollector` 上报引用，media 据此阻止删除；仍收到删除事件时置空并在下次发布时生效 | `MediaDeletedEvent` |
+| `seo_meta.og_image_media_id`、`seo.site.defaultOgImageMediaId` | media.`mda_media` | seo 实现 `MediaReferenceCollector` 上报引用，由源事务经ReferenceWriteApi登记，media据此阻止删除；仍收到删除事件时置空并在下次发布时生效 | `MediaDeletedEvent` |
 | `seo_link.source_content_id`、`source_localization_id` | content | 来源下线：删除其出向链接；本地化删除或内容彻底删除：同上 | `ContentUnpublishedEvent`、`LocalizationDeletedEvent`、`ContentPurgedEvent` |
 | `seo_link.target_content_id` | content | 目标下线：保留（用于规则“引用已下线内容”与影响分析），来源页面下次发布或每晚检查时据实更新；目标彻底删除：按 `idx_link_target` 删除 | `ContentUnpublishedEvent`、`ContentPurgedEvent` |
 | `seo_link`（`NAV` 行） | navigation.`nav_item`（链接到内容或分类项的菜单项） | 菜单变化时重建该站点各语言的 `NAV` 行 | `NavigationChangedEvent` |
@@ -759,6 +763,8 @@ CREATE TABLE seo_ping_queue (
 
 ## 5. 业务流程
 
+已有内容的编辑/翻译/导入保存先按框架4.4.16调用ContentApi.lockDraftForWrite校验目标共同版本并取得父先子后锁，再写本模块业务表，最后updateDraftMeta。新建先create取得内容身份；路由输入事务先取得content.route_tree锁。禁止先持有业务行锁再申请内容父锁。
+
 ### 5.1 核心业务流程
 
 | 步骤 | 事务及行为 | 失败处理 |
@@ -777,6 +783,12 @@ CREATE TABLE seo_ping_queue (
 | canonical 与公开语言集合 | 分页/筛选 canonical 保留规则允许参数并指向当前语言自身；hreflang 来源是当前已发布且公开的同内容版本集合。语言关闭或路径变更即使修订号不变也更新。 | 关闭英语后 HTML、语言切换与 sitemap 不再含英语；page=2 canonical 保留 page=2；未发布语言不输出 alternate。 |
 | Sitemap 与结构化数据 | sitemap 排除 noindex/跨 URL canonical，按 50000 URL 和未压缩 50MB 双阈值切片；lastmod 取 content_modified_at。JSON-LD 序列化要防止文本中的 script 结束标签逃逸。 | 只重新发布未改内容时 lastmod 不变；临界文件按两个阈值正确切片；含 </script> 的业务标题不终止 JSON-LD 脚本。 |
 | 健康检查与推送恢复 | 规则失败单列为扫描执行问题，不伪造健康通过；全量扫描可取消续跑。IndexNow 合并同 URL，站点域名/目标变动后再验证，外部失败不回滚发布。 | 一条规则抛错时报告标明未执行/失败，其他规则有结果；IndexNow 失败重试只更新队列状态，已发布内容仍在线。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1、4.10.4](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+OG图、站点分享图和布局媒体经当前拥有者保存事务同步登记；内容SEO变更仍走共同草稿版本，发布后才进入公开搜索事实。noindex及搜索可见性变化须随发布/配置事务经ProjectionChangeApi登记，不能只删缓存而遗漏索引日志。
 
 ## 6. 接口
 
@@ -1016,7 +1028,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | SEO-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| SEO-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 已澄清：框架 4.5.16 已用草稿事件 + collectDraft 和发布快照扫描覆盖本模块内容媒体引用；无需新增 MediaApi 引用写方法。保存必须经 updateDraftMeta 产生事件，删除竞态见 MEDIA-02。 |
+| SEO-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 已澄清：框架 4.5.16 已用源事务collectDraft/发布快照扫描并同步登记覆盖本模块内容媒体引用；无需新增 MediaApi 引用写方法。保存必须经 updateDraftMeta 产生事件，删除竞态见 MEDIA-02。 |
 
 ## 修订记录
 
@@ -1025,3 +1037,5 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |

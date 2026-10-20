@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：—（数据模型字段由 content 承担）；M2：—；M3：全部：翻译记忆、术语表、风格指南、引擎、翻译编辑器、批量翻译、用量；询盘翻译；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 5 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 5 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -144,7 +144,7 @@
 
 | 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
-| `ContentApi`（4.4.16） | ensureTargetLocalization、updateTranslationState、findPublishedSnapshot、findRevision | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `ContentApi`（4.4.16） | lockDraftForWrite、ensureTargetLocalization、updateTranslationState、findPublishedSnapshot、findRevision | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
 | `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
 | `SiteContextProvider`（4.4.2） | 按该契约声明的方法 | 当前站点；异步与任务由 core 恢复 | 业务事务内；站点切换由任务入口完成 | `FakeSiteContextProvider` |
 | `PermissionChecker`（4.4.7） | 按该契约声明的方法 | 后台权限与数据范围 | 业务事务内；站点切换由任务入口完成 | `FakePermissionChecker` |
@@ -156,6 +156,7 @@
 | `SecretCipher`（4.4.10） | encrypt、decrypt、mask | 凭据加解密及掩码，不记录明文 | 事务内本地调用；明文只在事务外传入远程端口 | `FakeSecretCipher` |
 
 所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
+
 
 ### 2.3 提供的服务接口
 
@@ -973,6 +974,20 @@ CREATE TABLE trn_usage_daily (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '翻译用量日汇总（token 与费用）';
 ```
 
+#### 4.3.9 目标草稿版本补丁
+
+CONTENT任务在调用引擎或消费已有机器结果前捕获目标本地化共同version，并写expected_target_version；只读预估可不捕获，实际apply必须非空。租约恢复保留原值，旧输出不得绑定到重读后的新version；版本冲突转SUPERSEDED，重新翻译须新任务/显式新尝试并重新取值。RESOURCE/TEXT/MEMORY保持为空。
+
+```sql
+ALTER TABLE trn_job_item
+  ADD COLUMN expected_target_version INT NULL COMMENT 'CONTENT：外部计算前捕获的目标草稿版本；恢复不刷新',
+  ADD CONSTRAINT ck_trn_expected_target_version CHECK (
+    expected_target_version IS NULL OR (item_kind = 'CONTENT' AND expected_target_version >= 0)
+  );
+```
+
+非空要求在CONTENT执行入口校验，因为排队/只读估算时目标版本尚可未捕获。schema补丁是V002追加草案，原CREATE块保留；testkit必须模拟旧版本与空值回写被拒绝。
+
 ### 4.4 枚举
 
 | 字段 | 取值 | 说明 |
@@ -1062,6 +1077,8 @@ CREATE TABLE trn_usage_daily (
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
 | `db/migration/translation/V001__init.sql` | 4.3 中的全部表（8 张：`trn_engine`、`trn_memory`、`trn_glossary_term`、`trn_glossary_translation`、`trn_style_guide`、`trn_job`、`trn_job_item`、`trn_usage_daily`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
+| `db/migration/translation/V002__expected_target_version.sql` | 4.3.9追加字段；不改V001 | M3；启用依赖功能前 |
+
 
 ## 5. 业务流程
 
@@ -1083,6 +1100,15 @@ CREATE TABLE trn_usage_daily (
 | 认领、外部调用与过期回写 | 以 job/item 的 workerId 与租约认领，事务外请求引擎；回写短事务再核对当前项、源修订/资源指纹、AUTO 模式和目标人工来源。租约丢失或 SUPERSEDED 不再写回。 | r1 工作器暂停，发布 r2 并完成，再释放 r1；目标仍是 r2，r1 不增加发布次数，不降低 HUMAN/REVIEWED。 |
 | 部分回写与预算 | 只回写通过校验或人工解决的单元；缺失 key 保留现值，否则留空并 NEEDS_REVIEW。80% 预算告警、100% 暂停批量任务；费用比较按引擎价格币种，不混加不同币种。 | 一批 3 段中 1 段丢占位，只有合法段回写且不自动发布；重复完成同 item 不重复计数或费用，达到预算后不认领新批量项。 |
 | 取消、失败与个人文本 | 取消/暂停不保证中断已发往供应商的调用；只阻止后续认领/回写，已发生调用仍计费。询盘 TEXT 不写记忆，不把原文、译文、供应商响应写入错误或日志。 | 运行中取消后返回结果不覆盖目标；同询盘再次查看复用 inquiry 译文，查记忆/任务错误/日志无留言文本。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1、4.10.7](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+内容任务在外部计算前持久化expected_target_version，内容apply前经lockDraftForWrite校验；非拥有者先apply，拥有者最后且只调用一次updateDraftMeta(非空expectedVersion)以覆盖完整哈希，并同步登记媒体；资源译文写回同样走资源拥有者完整保存逻辑。完成事件带本次回写后的targetVersion（资源事件为空），content拒绝旧version/旧源修订自动发布。法律页持久标记与当前provider政策任一要求人工审校就进入待审；审校通知使用translation:memory:review。
+
+
+M0-07实施检查：M0-07实测版本冲突、任务恢复、租约丢失及贡献方回滚；捕获入口锁任务项并保留已有expected_target_version。验证范围与复现方式见[事务协议复审](../reviews/m0-transaction-protocol-review-2026-10-20.md)。
 
 ## 6. 接口
 
@@ -1353,3 +1379,6 @@ memory:review、job:manage、glossary:manage 的 localeScoped=true：批量多�
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.5 | 2026-10-20 | M0-07实测版本冲突、任务恢复、租约丢失及贡献方回滚；捕获入口锁任务项并保留已有expected_target_version |

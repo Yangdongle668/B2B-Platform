@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：—；M2：文章、案例、FAQ、作者；M3：—；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 9 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 9 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -153,7 +153,8 @@
   ],
   "events": {
     "publishes": [
-      "TranslatableResourceChangedEvent"
+      "TranslatableResourceChangedEvent",
+      "SiteResourceChangedEvent"
     ],
     "subscribes": [
       "ContentPurgedEvent",
@@ -173,7 +174,7 @@
 
 | 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
-| `ContentApi`（4.4.16） | create、updateDraftMeta、findPublishedSnapshot、findPublishedCards | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `ContentApi`（4.4.16） | lockDraftForWrite、create、updateDraftMeta、findPublishedSnapshot、findPublishedCards | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
 | `MediaApi`（4.4.18） | findAll、views、imageSources | 媒体视图、图片源与授权下载；不读取媒体表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryMediaApi` |
 | `TaxonomyApi`（4.4.19） | findTerms、termViews、assignmentsOf | 词汇表、分类视图与内容指派；不读取分类表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTaxonomyApi` |
 | `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
@@ -181,8 +182,11 @@
 | `PermissionChecker`（4.4.7） | 按该契约声明的方法 | 后台权限与数据范围 | 业务事务内；站点切换由任务入口完成 | `FakePermissionChecker` |
 | `AuditApi`（4.4.9） | 按该契约声明的方法 | 同事务写审计，密钥与个人数据脱敏 | 业务事务内；站点切换由任务入口完成 | `InMemoryAuditApi` |
 | `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
+| `ReferenceWriteApi`（4.10，Proposed） | replaceMedia | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
 
 所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
+
+
 
 ### 2.3 提供的服务接口
 
@@ -201,7 +205,7 @@
 | `SearchDocumentProvider`（4.5.14） | `ArticleSearchDocumentProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | search |
 | `MediaReferenceCollector`（4.5.16） | `ArticleMediaReferenceCollector` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | media |
 | `TranslatableContentProvider`（4.5.20） | `ArticleTranslatableContentProvider` | ARTICLE / CASE_STUDY / FAQ 的正文和标题等中文字段 | DEFAULT=1000 | translation |
-| `TranslatableResourceProvider`（4.5.21） | `ArticleTranslatableResourceProvider` | article.author（框架登记缺口见 ARTICLE-01） | DEFAULT=1000 | translation |
+| `TranslatableResourceProvider`（4.5.21） | `ArticleTranslatableResourceProvider` | article.author（框架4.10.2登记） | DEFAULT=1000 | translation |
 | `PlatformModule`（4.5.22） | `ArticleModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
 
 以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。停用时 analyzeDisableImpact 返回本模块内容、组件及外部引用的影响，数据保留。
@@ -230,6 +234,8 @@
 | `ModuleDisabledEvent` | 当前站点隐藏该模块的公开能力，保留自身数据；处理事件.moduleId 而非假定是接收方自身 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
 
 监听器按框架 5.8 建立站点/system 上下文；`ContentPurgedEvent` 在模块停用时仍必须清理（deliverWhenModuleDisabled）。其他停用期间跳过并完成的事件，重新启用后通过扫描当前状态补偿，不能假定还会重投。数据库幂等标记与本模块数据在同一事务提交；外部发送、下载、搜索与 CDN 调用不得被数据库长事务包裹，使用已声明的任务/端口和业务幂等键。事件 payload 仅引用框架现有字段，本文不扩展签名。
+
+SiteResourceChangedEvent（框架4.10.2，Proposed）：发布：作者资源全部生效变化；media引用已同步登记，delivery可靠失效settings。字段meta/resourceType/resourceId/change，原事务登记，重复处理安全。
 
 ### 2.7 使用的端口
 
@@ -358,7 +364,7 @@ CREATE TABLE art_author (
 ```
 
 要点：
-- 作者是站点资源，保存即生效：头像属于 article.author 站点资源，保存/删除触发的收集与清理通道须按 ARTICLE-01 冻结；不能调用框架没有声明的 MediaApi 引用写方法。
+- 作者是站点资源，保存即生效：头像属于 article.author 站点资源，保存/删除同事务经ReferenceWriteApi登记引用，并发布独立资源事件（ARTICLE-01）；不能调用框架没有声明的 MediaApi 引用写方法。
 - 发布时 article 的 `PublishContributor` 把作者（姓名、本语言的职务与简介、头像、社交链接）写入快照，供页面与 Schema.org `Article.author`（Person）使用（系统设计 14.5）。作者资料变化后，已发布文章在下次发布时更新；需要立即生效时，可在后台对引用该作者的已发布文章批量重新发布（异步任务，经 `idx_article_author` 找到文章）。
 
 #### 4.3.2 `art_author_localization`：作者本地化
@@ -710,7 +716,7 @@ CREATE TABLE art_faq_localization (
 | `art_article_localization`、`art_case_study_localization`、`art_faq_localization`（主表 ID, `locale`） | content.`cnt_localization` | 本地化删除：删除该语言的行 | `LocalizationDeletedEvent` |
 | `art_article.primary_category_term_id` | taxonomy.`tx_term` | 分类项删除：置空（已发布快照不变） | `TermChangedEvent`（DELETED） |
 | `art_article.cover_media_id`、`art_case_study.cover_media_id`、`customer_logo_media_id`、富文本中的媒体节点 | media.`mda_media` | 有引用记录（`mda_usage`）的媒体不能删除；保存草稿时经 ContentApi.updateDraftMeta 产生 ContentDraftChangedEvent，由 media 调用 Collector 收集 DRAFT 引用；收到删除事件时防御性置空 | `MediaDeletedEvent` |
-| `art_author.avatar_media_id` | media.`mda_media` | 作者保存的头像引用需要独立资源收集通道（ARTICLE-01）；不得调用框架未声明的 MediaApi 引用写方法（`owner_type = 'article.author'`）；作者删除的引用清理与保存通道一起冻结；收到删除事件时置空 | `MediaDeletedEvent` |
+| `art_author.avatar_media_id` | media.`mda_media` | 作者保存的头像引用同事务由ReferenceWriteApi登记（ARTICLE-01）；不得调用框架未声明的 MediaApi 引用写方法（`owner_type = 'article.author'`）；作者删除同事务清除资源引用；收到删除事件时置空 | `MediaDeletedEvent` |
 | 富文本中的 `content://{id}` | content.`cnt_content` | 读取时解析为同语言 URL；目标下线、彻底删除或没有该语言版本时降级为纯文本，并在 SEO 健康中报警（系统设计 9 章） | — |
 | `*_localization.locale` | core.`sys_site_locale` | V1 不删除站点语言，无需清理 | `SiteSettingsChangedEvent` |
 | 内容类型 `ARTICLE`、`CASE_STUDY`、`FAQ` | core.`sys_site_module` | 模块停用：数据全部保留，文章与案例路由返回 404，FAQ 组件不渲染（系统设计 3.8） | `ModuleDisabledEvent` |
@@ -720,7 +726,7 @@ CREATE TABLE art_faq_localization (
 
 | 被引用对象 | 引用方 | 本模块对象变化时的处理 | 事件 |
 |---|---|---|---|
-| `art_author.id` | media.`mda_usage.owner_id`（`owner_type = 'article.author'`） | 作者删除按待冻结的作者资源变更/收集通道清理（ARTICLE-01） | — |
+| `art_author.id` | media.`mda_usage.owner_id`（`owner_type = 'article.author'`） | 作者删除同事务经ReferenceWriteApi清除资源引用（ARTICLE-01，框架4.10.1） | — |
 | 文章、案例、FAQ 的 `content_id` | graph `grh_relation`（`USES`、`CASE_OF` 等）、seo、page 布局文档的 `$content` | 均以 `content_id` 引用内容内核，按 content 的事件清理（第 5 章） | `ContentPurgedEvent` |
 
 本模块发布的事件：`TranslatableResourceChangedEvent`（资源类型 `article.author`）。订阅：`ContentPurgedEvent`、`LocalizationDeletedEvent`、`TermChangedEvent`、`MediaDeletedEvent`。本模块实现的扩展点：`ContentTypeProvider`（ARTICLE、CASE_STUDY、FAQ）、`PublishContributor`、`TranslatableContentProvider`、`TranslatableResourceProvider`（作者）、`MediaReferenceCollector`、`SchemaOrgProvider`（Article / BlogPosting、案例 Article；页面展示的 FAQPage 由 page 负责）；提供数据源 `faq-by-context`。
@@ -734,6 +740,8 @@ CREATE TABLE art_faq_localization (
 | `db/migration/article/V001__init.sql` | 4.3 中的全部表（8 张：`art_author`、`art_author_localization`、`art_article`、`art_article_localization`、`art_case_study`、`art_case_study_localization`、`art_faq`、`art_faq_localization`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
 
 ## 5. 业务流程
+
+已有内容的编辑/翻译/导入保存先按框架4.4.16调用ContentApi.lockDraftForWrite校验目标共同版本并取得父先子后锁，再写本模块业务表，最后updateDraftMeta。新建先create取得内容身份；路由输入事务先取得content.route_tree锁。禁止先持有业务行锁再申请内容父锁。
 
 ### 5.1 核心业务流程
 
@@ -753,6 +761,14 @@ CREATE TABLE art_faq_localization (
 | FAQ 与内容卡片 | FAQ 不可路由，但仍由所属 PublishContributor 提供必需的 card 与问答快照；faq-by-context 只返回已发布当前语言 FAQ。 | 发布 FAQ 不产生 url_route；没有 card.title 的 FAQ 被内容发布校验拒绝，草稿答案不出现在组件或 JSON-LD。 |
 | 作者快照与资源依赖 | 作者改名/软删除不修改旧发布修订；新发布禁止选择已删除作者。作者职务/简介翻译和头像引用的资源变更通道以 ARTICLE-01/ARTICLE-MEDIA 跟踪，未冻结前不自造事件。 | 发布文章后改作者简介，旧修订哈希不变；作者软删除后旧修订仍可读，新内容选择该作者失败。 |
 | 匿名案例与语义标记 | 匿名案例不输出客户 Logo/真实客户名；案例与文章按所属内容类型选择 Article/BlogPosting。FAQPage 只含页面实际展示的已发布问答。 | 匿名案例 HTML/JSON-LD 均无 Logo/真实客户名；同页面移除 FAQ 后 JSON-LD 同步移除，不保留隐藏问答。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1、4.10.2](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- article.author正式登记为独立翻译资源，中文职务/简介变化才发TranslatableResourceChangedEvent；头像/状态等每次资源变化另发SiteResourceChangedEvent。
+- 作者保存/删除在同一事务经ReferenceWriteApi登记/清除avatar引用；新发布文章的作者头像仍纳入发布快照引用，不因作者资源删除而释放文章的引用。
+- 事件由delivery按settings标签可靠失效；已发布作者信息是文章快照，只有重新发布文章才改变，不将资源事件解释为批量改历史修订。
 
 ## 6. 接口
 
@@ -906,6 +922,14 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | article.loading | 正在加载 | 交互等待 |
 | article.retry | 重试 | 可恢复错误 |
 
+### 8.6 视觉方向与组件呈现
+
+遵循[前台视觉设计方向与 UI 基线](../design/visual-direction.md)，Token 集中在 design-tokens 包定义，变体由主题实现；后台仍使用 Element Plus。
+
+文章采用舒适的阅读列、明确的标题/日期/作者，案例使用大图及有依据的成果；相关内容卡片与产品网格保持一致。FAQ 仍通过既有组件组合，不新增独立路由；真实内容和长译文优先于强制单行、整屏或固定高度。
+
+视觉稿覆盖默认、加载、空、错误、成功及键盘焦点等适用状态；本节为呈现要求，未声称已有设计稿或组件实现。
+
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
@@ -1010,9 +1034,9 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
-| ARTICLE-01 | 作者的 TranslatableResourceProvider 与资源事件已在 4.6 要求，但框架 4.2.3/4.2.4 未登记 article | 对应契约或缓存行为 | 是 | 框架负责人 / 本模块负责人 | M2 作者头像通道；M3 作者翻译 | 框架组按4.9登记 article.author 的头像变更/删除收集通道与资源类型；M2先确保头像引用安全，M3再验翻译往返；本文不新增跨模块签名。 |
+| ARTICLE-01 | 作者的 TranslatableResourceProvider 与资源事件已在 4.6 要求，但框架 4.2.3/4.2.4 未登记 article | 对应契约或缓存行为 | 方案已补齐，待评审冻结 | 框架负责人 / 本模块负责人 | M2 作者头像通道；M3 作者翻译 | 统一方案：article.author登记；媒体同步引用与独立资源事件分别处理；ADR-019、025。详见框架4.10.1–4.10.2及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 | ARTICLE-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| ARTICLE-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 文章/案例/FAQ 的草稿引用已有 collectDraft 通道；作者头像是独立 article.author 资源，变化/删除通道未在框架登记，剩余范围合并 ARTICLE-01；不能调用不存在的 MediaApi 引用写方法。 |
+| ARTICLE-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 文章/案例/FAQ 的草稿引用已有 collectDraft 通道；作者头像article.author按框架4.10.1～2在源事务登记并发布资源变化事件，原缺口合并ARTICLE-01处理；不能调用不存在的 MediaApi 引用写方法。 |
 
 ## 修订记录
 
@@ -1021,3 +1045,6 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.5 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |

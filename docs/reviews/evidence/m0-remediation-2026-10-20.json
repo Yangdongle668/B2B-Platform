@@ -1,0 +1,1584 @@
+{
+  "review_id": "M0-2026-10-20-01",
+  "date": "2026-10-20",
+  "scope": "DR-01–04 design remediation and minimal compatibility subset; no contract freeze or business-runtime approval",
+  "git_reference": "0b72bfb39cc0fc89ecf44e9914ea83d0821a316b",
+  "mysql_backend": {
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976"
+    },
+    "schema": {
+      "mysql": "8.4.11",
+      "foreign_key_checks": 1,
+      "create_blocks": 119,
+      "alter_blocks": 3,
+      "tables": 119,
+      "columns": [
+        "cnt_content.translation_review_required",
+        "frm_submission.download_grant",
+        "mda_media.download_gate_version",
+        "mda_media.gated_form_key",
+        "mda_media.purge_job_id",
+        "prd_product_document.gated_form_key",
+        "trn_job_item.expected_target_version"
+      ],
+      "statements": [
+        {
+          "path": "docs/modules/article.md",
+          "block": 1,
+          "table": "art_author",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 5,
+          "table": "art_case_study",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 7,
+          "table": "art_faq",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 1,
+          "table": "cnt_content",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 6,
+          "table": "frm_blocklist",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 1,
+          "table": "frm_form",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 3,
+          "table": "grh_config",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 4,
+          "table": "grh_content_mode",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 5,
+          "table": "grh_dirty",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 1,
+          "table": "grh_relation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 6,
+          "table": "grh_relation_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 2,
+          "table": "grh_relation_type",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 4,
+          "table": "inq_inquiry",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 8,
+          "table": "inq_no_sequence",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 1,
+          "table": "inq_sales_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 9,
+          "table": "inq_work_calendar",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 1,
+          "table": "mda_folder",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 1,
+          "table": "nav_menu",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 1,
+          "table": "ntf_template",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 2,
+          "table": "ntf_webhook",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 4,
+          "table": "pg_component_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 2,
+          "table": "pg_global_block",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 3,
+          "table": "pg_layout",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 1,
+          "table": "pg_page",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 3,
+          "table": "prd_attribute_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 9,
+          "table": "prd_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 1,
+          "table": "prd_product",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 3,
+          "table": "sch_build",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 2,
+          "table": "sch_change",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 1,
+          "table": "sch_index_state",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 4,
+          "table": "seo_audit",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 3,
+          "table": "seo_link",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 1,
+          "table": "seo_meta",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 7,
+          "table": "seo_ping_queue",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 6,
+          "table": "seo_robots_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 2,
+          "table": "seo_template",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 19,
+          "table": "sys_audit_log",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 20,
+          "table": "sys_job",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 21,
+          "table": "sys_lock",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 1,
+          "table": "sys_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 11,
+          "table": "sys_role",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 16,
+          "table": "sys_setting",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 2,
+          "table": "sys_site",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 23,
+          "table": "sys_transaction_mutex",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 9,
+          "table": "sys_user",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 5,
+          "table": "trk_consent_log",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 3,
+          "table": "trk_consent_text",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 2,
+          "table": "trk_script",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 1,
+          "table": "trk_setting",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 1,
+          "table": "trn_engine",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 3,
+          "table": "trn_glossary_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 6,
+          "table": "trn_job",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 5,
+          "table": "trn_style_guide",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 1,
+          "table": "tx_vocabulary",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 4,
+          "table": "url_not_found",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 3,
+          "table": "url_pattern",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 2,
+          "table": "url_redirect",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 1,
+          "table": "url_route",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 3,
+          "table": "art_article",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 2,
+          "table": "art_author_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 6,
+          "table": "art_case_study_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 8,
+          "table": "art_faq_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 2,
+          "table": "cnt_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 2,
+          "table": "frm_form_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 3,
+          "table": "frm_form_notice_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 6,
+          "table": "inq_activity",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 3,
+          "table": "inq_assignment_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 7,
+          "table": "inq_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 10,
+          "table": "inq_calendar_day",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 5,
+          "table": "inq_inquiry_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 2,
+          "table": "inq_sales_group_member",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 2,
+          "table": "mda_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 2,
+          "table": "nav_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 3,
+          "table": "ntf_message",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 5,
+          "table": "prd_attribute",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 4,
+          "table": "prd_attribute_group_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 11,
+          "table": "prd_category_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 12,
+          "table": "prd_model",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 15,
+          "table": "prd_product_document",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 2,
+          "table": "prd_product_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 14,
+          "table": "prd_product_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 5,
+          "table": "seo_audit_issue",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 17,
+          "table": "sys_dict_type",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 22,
+          "table": "sys_dsr_request",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 15,
+          "table": "sys_menu",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 12,
+          "table": "sys_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 3,
+          "table": "sys_site_domain",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 4,
+          "table": "sys_site_locale",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 5,
+          "table": "sys_site_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 6,
+          "table": "sys_site_profile",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 8,
+          "table": "sys_ui_text",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 10,
+          "table": "sys_user_mfa",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 14,
+          "table": "sys_user_site_role",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 4,
+          "table": "trk_consent_text_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 4,
+          "table": "trn_glossary_translation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 2,
+          "table": "trn_memory",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 8,
+          "table": "trn_usage_daily",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 2,
+          "table": "tx_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 4,
+          "table": "art_article_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 6,
+          "table": "cnt_preview_token",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 4,
+          "table": "cnt_published_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 5,
+          "table": "cnt_review",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 3,
+          "table": "cnt_revision",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 4,
+          "table": "frm_submission",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 3,
+          "table": "mda_media_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 4,
+          "table": "mda_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 3,
+          "table": "nav_item_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 6,
+          "table": "prd_attribute_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 7,
+          "table": "prd_attribute_option",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 10,
+          "table": "prd_attribute_set_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 13,
+          "table": "prd_attribute_value",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 18,
+          "table": "sys_dict_item",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 13,
+          "table": "sys_role_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 7,
+          "table": "sys_site_profile_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 7,
+          "table": "trn_job_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 4,
+          "table": "tx_assignment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 3,
+          "table": "tx_term_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 5,
+          "table": "frm_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 8,
+          "table": "prd_attribute_option_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 7,
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 5,
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 9,
+          "success": true
+        }
+      ]
+    },
+    "backend": {
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "java": "25.0.4.1",
+      "dependencies": [
+        "spring-boot-4.0.8.jar",
+        "flyway-core-11.14.1.jar",
+        "mybatis-plus-core-3.5.17.jar",
+        "spring-modulith-core-2.0.8.jar"
+      ],
+      "registry_table": "EVENT_PUBLICATION",
+      "cases": [
+        "flywayAndSiteFilteredReads",
+        "siteFilteredWritesRejectAnotherSite",
+        "committedEventIsDeliveredAfterCommit",
+        "rollbackPersistsNeitherDocumentNorPublication",
+        "failedListenerIsPersistedAndCanBeResubmitted",
+        "modulithBoundariesVerify",
+        "java25VirtualThreadsAreAvailable"
+      ]
+    }
+  },
+  "frontend": {
+    "typecheck": true,
+    "production_build": true,
+    "ssr": true,
+    "custom_image_provider": true,
+    "chromium": "154.0.8037.57",
+    "viewports": [
+      {
+        "width": 1440,
+        "deferred_until_visible": true,
+        "click_count": 2,
+        "browser_errors": []
+      },
+      {
+        "width": 768,
+        "deferred_until_visible": true,
+        "click_count": 2,
+        "browser_errors": []
+      },
+      {
+        "width": 390,
+        "deferred_until_visible": true,
+        "click_count": 2,
+        "browser_errors": []
+      }
+    ],
+    "node": "v24.19.0"
+  },
+  "create_preservation": {
+    "create_blocks": 119,
+    "preserved": true,
+    "blocks": [
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_module",
+        "sha256": "95f3ab09aa3a2227b9dd6902ef345dcabb13b857d1b2702470acbf43d73a7a49"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site",
+        "sha256": "5e9eaeaacab4b0f0cd314fcc6dbadb42171ab7cb977c2e5f38a7d82aafb617f9"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site_domain",
+        "sha256": "4fae2aa9ad18a157fe7ea3b24dde89f2dd6b104e0e2c8d764b1e1cfa4d43d52e"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site_locale",
+        "sha256": "25ab968825ce1a5a8852ec53cc5175902f977fcb2688677db17ecee14e4f287d"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site_module",
+        "sha256": "3db807215164cf58be51867330af6ed5a59e98e31c92a3b09cabb997f49758ee"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site_profile",
+        "sha256": "d0a68d072d1bd72b66d4c4cb8f0e887068bb72234020c69d11f95fd93d6c1e6f"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_site_profile_localization",
+        "sha256": "508eaa61f5ed26c0c186a764fdf4c8895d52a26c41fe4cd257378f21918cba0e"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_ui_text",
+        "sha256": "8c6c4d089e752582bd428848a007f03fa7ec3e291bdd55f997068d03b75551bf"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_user",
+        "sha256": "bcfea216d79913e0eee2b16f12f4de6c8d02ffc6580d1299c1d132af6985eb97"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_user_mfa",
+        "sha256": "e729a6ac7bd10e2dcc4270b706d58126fcb61a7e782cd1a959cb3bcbcaa13635"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_role",
+        "sha256": "398681e6d6f1f5777ef4d3004cf196f9fdfbfc29ef62362457ac1046e49d9a41"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_permission",
+        "sha256": "d0136407e4c865741d002e79d157b6dc54c113466025cab6d73f286cf579bb83"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_role_permission",
+        "sha256": "2cb2c5ff35800b9045a9939f36445cdac267a00d2af73e9d064bafc0a8f73525"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_user_site_role",
+        "sha256": "b013742322458185f31a09f6de4840f4ca802eb216cc1b668cda51890486eba8"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_menu",
+        "sha256": "67b544b372b3d84fb77ce4509fb73a89e274a067af53c8a8c691d81fcd5559f6"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_setting",
+        "sha256": "0525360b862d74f8ee6921af0d8079facad051857a202c6e6db7e4be292c907a"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_dict_type",
+        "sha256": "71e23cfce62cccb13e8c25d452a70d2783c90d224d9e30d43007e0b137d98fbb"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_dict_item",
+        "sha256": "0603423837679a7b1a53e57e15e17b3e69d5bf99675b22be35d7255f86bb563a"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_audit_log",
+        "sha256": "7110f7e89f3b4bc9b956c0f2c00ec54029b985ed86b6e461b1fe0055b645d5fc"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_job",
+        "sha256": "8abc40879679654d53459ffb2f5c4ba765b109cee9d0b49ef87dc9ba1bc66a10"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_lock",
+        "sha256": "cb32e45cacd1c360f70987fe0004050655ca16bbc52112fb27783efff90bfec2"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_dsr_request",
+        "sha256": "a58c78f123174f45a8d7177735274e19f1eb149b6015e997862131952a4a7450"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "table": "sys_transaction_mutex",
+        "sha256": "2005a1f490cf3d616a0c2916ebc899bd96ed64316088e13e17bceea3272a16da"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_author",
+        "sha256": "8717b885452e4ee56bc18f2ab21abede53926de1d7d4b09a9b50c3cc1674902f"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_author_localization",
+        "sha256": "f60cf5f398b55c13783d513dc11dbbdc4ff0018d76dc36d8d896a3e914801136"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_article",
+        "sha256": "c07e70168b212a12fa4dacc223226b0ed367c1705c9d98fc8a3ddc2f44542f18"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_article_localization",
+        "sha256": "7cbfd3c6b63539330b147adf0ff865e6b272f113ec0cd85218854cbaf9357e86"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_case_study",
+        "sha256": "b0659b873deb7ad8727ed27a337ffddaf8e4d44a973ab451440fa52092f993df"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_case_study_localization",
+        "sha256": "a2e18bc4c896b2a721f288e10ac28b8e1d60aa5ae8af604870f40c1799ba9804"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_faq",
+        "sha256": "f280066b8da544b912835d3313b474b67479395ee14f5ee20597e48afa7b2f41"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "table": "art_faq_localization",
+        "sha256": "5e9070009b611b221afdcce66359e6c1bf9f9223c3b73339038acf8e5aab719f"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_content",
+        "sha256": "120fe60f04e476cab66ed3c44a82d6c97b252337d5aa82a9b59df4b08d17c060"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_localization",
+        "sha256": "73408d10b9f6ea0ab86acd40a0fac61d3d0e57abbc9188f4eab1ccf396336f8f"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_revision",
+        "sha256": "8c28eae2df04058163780a2a346bf516db160ee397261077ec19d7b8cc272532"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_published_term",
+        "sha256": "182ccc7dc5d586e7f5582100a0cca6cb5d57ae015f0de9c18c9d6b3e2d498a89"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_review",
+        "sha256": "80cffe01e1cce04f5f1bc87f0cc70e1feb944eb2921a236e744e72347c209422"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "table": "cnt_preview_token",
+        "sha256": "389973ca1e241f9f6b78f9412c3b9b17672e3c5e80b4fb11038c9a7caa975a60"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_form",
+        "sha256": "8cda24bde72e5fd89ff31d83970eb14160113aa606d706743cfeb7ab93904821"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_form_localization",
+        "sha256": "232c2f333d8d7d2466e9630771ac55b2b724cde75d782e866c14b8e3958eeb98"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_form_notice_version",
+        "sha256": "05de6ffc9341664b92a98225ad787556dc1fe9317eef1a4dab50246f9c24b341"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_submission",
+        "sha256": "004b7ae757111a386deb6532886c0af55ea5a088e940d280080818ef2460f0af"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_attachment",
+        "sha256": "097348df5aef242c05218b68d0b33054c40bba385e8fa9e64774623bcda6a026"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "table": "frm_blocklist",
+        "sha256": "a8be31e146a9d3d5c308b6090085c32f25364de560ed2662ff5bdba1c9abdb72"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_relation",
+        "sha256": "26e92717a92e9324999b4d91eada7ebc8361ddd417e472533ea80aafc2490d77"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_relation_type",
+        "sha256": "153fef157d97f23041855eee14f0fa85edd25a8b66428c485545d08542f85f48"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_config",
+        "sha256": "3b63daf19c21916528c72348f3c168836a4f1c51736db97226309749b14643c2"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_content_mode",
+        "sha256": "ccce8ca475c1ab837a4842f70b788a825ffc76fc945df84fdb350ba39a0a92ce"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_dirty",
+        "sha256": "33284b2e9ec0e499936dc80b45d7256fd2f9b7ae2728097669620716c2e1364c"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "table": "grh_relation_set",
+        "sha256": "c4b9db9c4bc1987ea0feb3f71a660bae92c590147ac0369fbda7811d42d373b4"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_sales_group",
+        "sha256": "fe85ae4f2af765dc2b120ade932c920c6da5e42883c2017180e5c75defa75e8c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_sales_group_member",
+        "sha256": "90112cc475e15d659d952c719ed3730705b60900dabb691606337d5079156b7c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_assignment_rule",
+        "sha256": "a59eb7e90e2885d65983e4d38d1575dec0d6a4039a4931a676783cce5db02df8"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_inquiry",
+        "sha256": "f7f711a61533f95745c54f23af1f4b76be1aa80ee3c4f2a7d9c9a102bb398606"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_inquiry_item",
+        "sha256": "d14b3dc6238511318968488b854e7d8b3bcc80abb2cb66db5f2e201a4cff845d"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_activity",
+        "sha256": "72c46dc9d8c12c37d408a6eec4b8ffd8856a328bd1c6677a483a665760babb60"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_attachment",
+        "sha256": "ca5e1e4ee0aa6385fd3e2b4afa6876cd42785d60a8fbbeb8d602d489068c4671"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_no_sequence",
+        "sha256": "799453dfb11b285978329faa68e185f844c7d9291bcccf68940d00a9cec753c2"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_work_calendar",
+        "sha256": "a9c163f95830698e0c3c1f474e691f7d764a8523c4c1df53169aae8cb2b0ef5c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "table": "inq_calendar_day",
+        "sha256": "257f0d3890ae665913a7f05f9f724887e115b6421e44f3168cb99c4633265f1a"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "table": "mda_folder",
+        "sha256": "5e7d6f6795f42e7ddec1907293e2bef2f3cde8061f0dde5d7c9e71e9cb94627a"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "table": "mda_media",
+        "sha256": "9e1948b2c628dc8ca5aae310790e24c02773fe117e1195a3204a04045cfb0e3c"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "table": "mda_media_localization",
+        "sha256": "3ed066678db069682557668106dcc51928a339e353ea6631e252d35f8375bcdf"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "table": "mda_usage",
+        "sha256": "3c32a52b0e3505f5ec5423963839060fced1d26e2c58c2bbd6e3c9a1903b0e67"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "table": "nav_menu",
+        "sha256": "0e08e22315b89d0a000854f2f966ff6941de015b6bea3a12ea3db2d5d8668d9b"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "table": "nav_item",
+        "sha256": "7f4447863d0ac8fddfd2bf7e31c15f2540f2aad74f7c75a934584e7c264aa1d6"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "table": "nav_item_localization",
+        "sha256": "550ac3b0ab991e81b80157afbee2f1f336ea2a986204da789a558530784aa9b3"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "table": "ntf_template",
+        "sha256": "d3f73faf0593d66cb6f29885f9404e10eaa343f77e4666ab75d7cc54db663ddc"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "table": "ntf_webhook",
+        "sha256": "631b72fda2893b1513cba8d96c532e5b332064404c2cda0d9ffc722d1d89c557"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "table": "ntf_message",
+        "sha256": "e42329ad385d5150a55236eadcede39b78caa8599d1d36c5d449e629799c2375"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "table": "pg_page",
+        "sha256": "db693ff7d8db16d450148f154bb7609db470e960228f90e56ccc19146b2b3d53"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "table": "pg_global_block",
+        "sha256": "26d75d331ea1189ffc704067172e27dac25eec1a1fb6579b968dc4772d2d5227"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "table": "pg_layout",
+        "sha256": "7b7ff014be8b578cc3d2a78840e7740bb967ee57b56571eb7aa12bb03e7996c2"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "table": "pg_component_usage",
+        "sha256": "cf752a37243e1e0123b5a9a20cddb6cd48c3442e4bb52bcdeac0609cc4e03d63"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_product",
+        "sha256": "4738d3f76ea01fb39695fa685e9e62fe44805b50fadd2afcf20bb934aa2ce674"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_product_localization",
+        "sha256": "cac5c12b0ca5647404c41f7417436a5fba9d38f87049fc99cc0f177652466a0c"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_group",
+        "sha256": "2109fa9c484b03ad0c16d07aecbc326ee15dfc8dbadf0bd155ccb17c63e64caa"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_group_localization",
+        "sha256": "72a0fa3dedcdb5ebed950bcad078cae0cbd008343cb5fd5926fdd5d9ebf98c8e"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute",
+        "sha256": "f98e0127fb4a02229e4abcc05a41f5c1b53b0cac9caefd3c02e528eace6b5b0f"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_localization",
+        "sha256": "2cb54801ef74689e8b1c2af8c54787d48e081cd8cc351a817aa8a95d0ce469c5"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_option",
+        "sha256": "fc1da720a4abca8863000e0a0eaf6c91b2e9376564fedb695097d841868f8e62"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_option_localization",
+        "sha256": "d1f4e8a882adae1e5072f8754af0d1ed074239b8db90f8d6d18a1a7fdc795519"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_set",
+        "sha256": "386d0fcf1a1999908455c6f6421db73a810005b77b74ce015dde1fbe91f191ec"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_set_item",
+        "sha256": "64abeba854e9906b6d6020688b7a403750be79cbe44491c438b0ce59a2c561d8"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_category_attribute_set",
+        "sha256": "68e4285905aa56a8faf39b35ed0686d4abbb362a0edbe3d5715456371624dc85"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_model",
+        "sha256": "d12406fa99fcdff3563711e5fe02f6eee9aa58067a5d2abcad368fe4dc0dff76"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_attribute_value",
+        "sha256": "d72dff7f087d0313cca6f50c09133c5098c0f73becd2251567666665814d5f52"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_product_media",
+        "sha256": "f3a5f58eb2d19298a868ee55d512bd8b09055494bc36678754e6c41cb7b6025c"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "table": "prd_product_document",
+        "sha256": "2999cb2ecc59985731b2c956d6fd76c34b6337ca2e15d043b1c2229eaf86152d"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "table": "sch_index_state",
+        "sha256": "4786ce2413e237707b612f20453715ab3600f8770e92b9d9bb45dcf56aa34108"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "table": "sch_change",
+        "sha256": "253e60ff96267020f306fe5658b908e1e6d1357961f1d9b79a0f067d891dfe84"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "table": "sch_build",
+        "sha256": "abd8b53773ab03d7cd77353189e2bba612f8f0d430513ebd867d5d009847aebb"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_meta",
+        "sha256": "af9f67755c18043942a36bc30680b0d2ff74fc1f73fa4abb869b9946f3ba0d46"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_template",
+        "sha256": "7956914de3352a723b64c9eced0b516fec3620ae7549d595b09b2374b8e3741f"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_link",
+        "sha256": "09ae5b10ec9a5e3db7e58f05281d84e6a9a5379c4cbdf396d4f45f9cbe6af28e"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_audit",
+        "sha256": "28351696f69030d58af78b6e646c665f3c10f336fa4f16a2439fb66d7e272f2a"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_audit_issue",
+        "sha256": "9bf27692d9d29d4f065ab2855a8c3fde1bffc299a384a1c06f5a2fe18602d75c"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_robots_rule",
+        "sha256": "7aa9206179c33322313634ec1a12b8242d5c2fc965cf1ecd5a5e104e8cd95f93"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "table": "seo_ping_queue",
+        "sha256": "7414ee41b591b2e3ac5bbfba38ee386e09e9a8f252fa4e5fe10ac72024b5c449"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "table": "tx_vocabulary",
+        "sha256": "c5a089c5eeaf32e5020ba6b8099fdf727e076f80e8433563cda701d1a62ecbda"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "table": "tx_term",
+        "sha256": "f18185df35223120b8cc4dabeb9f460cfb0a9503bf9e4790bb3b228edd3002de"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "table": "tx_term_localization",
+        "sha256": "200ac0f4798acfb109d459c124850182a730507acd4e2e51a260e5cebb703eb6"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "table": "tx_assignment",
+        "sha256": "cd54487bf2189f70b89e0c947eaf8d953c968b043a12102a38a7dcde4cce02ee"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "table": "trk_setting",
+        "sha256": "fd4fd8e4ca894fd99168da78dccce0ef200e3a9ae9f1e4042067a7e9480cfc50"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "table": "trk_script",
+        "sha256": "6e8ff266aa18680069977a625a1fe6c79e141e350ebab1290e1d48bd6847c0d2"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "table": "trk_consent_text",
+        "sha256": "2924b179e9e125a4fe58196b8c79f25f96f6f0065b28de58ea053ebbc11ca680"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "table": "trk_consent_text_version",
+        "sha256": "df1e322fc7c7a7e6f95704308dfff14a6955a36680d19a31a82b2fdca0157251"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "table": "trk_consent_log",
+        "sha256": "9c458edc1ee0666245127f4adf2b5f5503c9ad38dcaca2f044c64b1a04a02052"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_engine",
+        "sha256": "20fefbb89263fb6d74ded8e275f7b2d48bf9935dfd86ba98365cdf1dc85d7481"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_memory",
+        "sha256": "318e25a66b145a827785c90170013b9431e5f1ae41ba44b61532948c194b50af"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_glossary_term",
+        "sha256": "73d4d8ceca58366bd733d58c9a3d1099ffaddd55ecfe3d1662ccf38d94cc3961"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_glossary_translation",
+        "sha256": "6ef025b9b30d9017c14db80e6ef1ca0b7f54612503dc6026759328b5efc8d5b4"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_style_guide",
+        "sha256": "0b1df99179e160c14b61c1f1332280386be0261206662a3b79c2ef2e95818b11"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_job",
+        "sha256": "95f45b269dcf738d7867d18304c1ee848a126379ebef5a48f821007fe76e31c8"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_job_item",
+        "sha256": "4ed77fccf151e4cdf56bdca38abcbf5b60a1cbba05624f7667368009984c8f82"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "table": "trn_usage_daily",
+        "sha256": "1eefee4540e208ebb7033853f738972fd08f7b18824220d2217b4f6075fa95d9"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "table": "url_route",
+        "sha256": "a4243c8df0ff600f82ea4b9a063f4b819ddf0c5c205cd3266439679784566a5f"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "table": "url_redirect",
+        "sha256": "e2d8f1cd0fac68ed6fb71a1fe285d93be4ba9cf26799abca66d43a796b9df68d"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "table": "url_pattern",
+        "sha256": "917521ec72c92b9ea0a88179432792587389b06fb647c821a58c65d1e1bd4c95"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "table": "url_not_found",
+        "sha256": "1c9621d51f0285c9e1dd5865a5686e10197f4ebf2af217523f2ef933ff506c5f"
+      }
+    ]
+  },
+  "module_extended_checks": {
+    "modules": 17,
+    "current_module_sql_blocks": 99,
+    "permissions": 96,
+    "components": 36,
+    "admin_endpoints_before": 178,
+    "admin_endpoints_after": 234,
+    "added_admin_endpoints": 56,
+    "acceptance_cases": 238,
+    "static_errors": []
+  },
+  "known_failed_attempts": [
+    "Initial registry queries used lowercase name; corrected to actual EVENT_PUBLICATION and reran seven tests successfully.",
+    "Initial image provider export did not match Nuxt Image 2 setup factory; corrected and reran typecheck/build/browser successfully.",
+    "Reusable runner adjusted for read-only source mounts and HTTP 500 reporting before successful final execution."
+  ],
+  "remaining": [
+    "DR-01–04 real service/testkit and concurrency/failure acceptance",
+    "DR-05 search capacity/source-lock proof",
+    "DR-06 complete ADR-011 capabilities and M0 core/testkit/CI/governance",
+    "Tesla visual assets and high-fidelity page approval"
+  ],
+  "pre_remediation_markdown_sha256": {
+    "CLAUDE.md": "b6623978c6063fd5e670e23ee3171f80b2df09ba365b21baa729331e615bf128",
+    "docs/adr/0000-build-vs-buy.md": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+    "docs/adr/0001-compile-time-modules.md": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+    "docs/adr/0002-module-communication.md": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+    "docs/adr/0003-event-reliability.md": "fdf2d8b6145f9008382fb0d2e3b6c76b345c6fa8580faafa035651e50350c23e",
+    "docs/adr/0004-content-kernel.md": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+    "docs/adr/0005-i18n-and-url-strategy.md": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+    "docs/adr/0006-template-and-page-builder.md": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+    "docs/adr/0007-editor-canvas-iframe.md": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+    "docs/adr/0008-seo-data-ownership.md": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+    "docs/adr/0009-site-and-locale.md": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+    "docs/adr/0010-admin-authentication.md": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+    "docs/adr/0011-technology-versions.md": "064c924939c24a318aadacd530f7c6c2f1d4804c6674c246c4b6bfa29bd48f13",
+    "docs/adr/0012-cache-tags.md": "15f66ba34be25dbf2127706787a46eabf9baca77e2f22a50730421f260a7ccb6",
+    "docs/adr/0013-search-read-model.md": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+    "docs/adr/0014-id-strategy.md": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+    "docs/adr/0015-hosting-region-and-data-residency.md": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+    "docs/adr/0016-privacy-compliance-baseline.md": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+    "docs/adr/0017-ai-translation-and-translation-memory.md": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+    "docs/adr/0018-framework-first-parallel-modules.md": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+    "docs/adr/0019-transactional-media-references.md": "99e60a920fa0dfca4c50485aede86aa0c3c27726927cfa0032beedcfe7254eac",
+    "docs/adr/0020-cache-invalidation-fences.md": "8941e81761371fcef05dc8c5eb8a9a034483cd0dbffe9a3cf02276f785b0cbc1",
+    "docs/adr/0021-immutable-search-generations.md": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+    "docs/adr/0022-current-route-recalculation.md": "921092c94eaf36382b06263439b6f80ee8c4b3251d9f93853c7c4db4799b3442",
+    "docs/adr/0023-form-notification-direction.md": "0962e56bd13cbde7b013432f9f7bb865e4102c005f0a1da5eb4d3fe12daac4f7",
+    "docs/adr/0024-translation-review-guard.md": "ab27c28cd94a775c357687598d531f098aa76420e82e6859bdb9398f8724f33f",
+    "docs/adr/0025-site-resource-lifecycle.md": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+    "docs/adr/README.md": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+    "docs/adr/template.md": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+    "docs/architecture/system-design.md": "91c418b72de8f1be2e20bc3ac61808f14aef16a8bfbb2f345373d11da2f33543",
+    "docs/design/visual-direction.md": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+    "docs/framework/platform-framework.md": "5cd7e5ac742f4310c140a2bc00973ac0a5b44191190a9d739280aa5ed1cd6bb7",
+    "docs/modules/README.md": "9c477fff2123d2c6336d3261349697361f4d4f0f920566052f31cf918c55a43f",
+    "docs/modules/article.md": "6642adfc205dd50fa0b7b4335f45ad26340d97556b74b986ec60203ae94273f8",
+    "docs/modules/content.md": "d3b6199c2022e6c33d5684d8ff99c72600ba38217871861b6d9d6980ce2d065f",
+    "docs/modules/delivery.md": "3b30d7f95cb9ab923ae9e06490f743b1fd976a3a24549e142f16689bdfb718b9",
+    "docs/modules/form.md": "3357c8985f4021a2bbcb7419880672b0780a48c7d10a961991ff84d3db4e5281",
+    "docs/modules/graph.md": "490c97997edfb772d8c7d0d072cfbb9dc1c4a69afda1883356b223c707c1a76b",
+    "docs/modules/inquiry.md": "6d7106fd47e807853d83f1181bc65938a2ad70dfeaea40addc1c007c5b3a1c2c",
+    "docs/modules/media.md": "f16ad926251cc5a44ed20a4c04e13ef52ebecf8eed942cc576195598b5f1af4a",
+    "docs/modules/navigation.md": "4e5bcb55523b7ff386cea354992be7c724af78268af4442c9e3037d4e441e35d",
+    "docs/modules/notification.md": "170550fbccb37f1facb264f42a36cb56f6a5027f12f3b1446e85ae684fd287b8",
+    "docs/modules/page.md": "1f119c2345c05eb19bacf4a1b3bd4f0a487b7b1a1403d5b2827bd57fce4bbd64",
+    "docs/modules/product.md": "05466034710aa3d6273550ab8da53279afaf2f29b8918a52f1b93cffdba679a6",
+    "docs/modules/search.md": "09a2f1ef5707179005fb89971407b7347010e2050e2f83a4f8a68d3e0eed002c",
+    "docs/modules/seo.md": "4f42fb6b334da0d26c39179d3a2035beecbe8f8ce30508a26a54038c014aae07",
+    "docs/modules/taxonomy.md": "40452c7b926cca0d407b6025b9883ffbb6f3e6fe447e15e213955558592c4c6e",
+    "docs/modules/tracking.md": "46bc2985c8cc26f5c3e0efd4310da3663650b5ab221fc9b399f3d3c0aec15b9f",
+    "docs/modules/translation.md": "fe7c37b4c4b370612119b13d685212b540f516a637e67e4bf5ae987f5da14aa5",
+    "docs/modules/url.md": "c04b30f0af513e84c478333a34ad143a36b2cd9c40a1e6f96c0234527e780e71",
+    "docs/plans/development-plan.md": "c411445bfd4d11dc873417d76c18d617cc5ee8f48402f4972b72c798bad40e56",
+    "docs/reviews/design-issue-resolution-2026-10-20.md": "6c9ce5f6fbdef4857bb5788052116ea3675a30669b32c242d017385a740a4488",
+    "docs/reviews/formal-design-review-2026-10-20.md": "5718f57f1776e140b314998e51f165bf51ee2baba1e959ddc2249cd3a9fd66f8",
+    "docs/reviews/module-design-review-2026-10-20.md": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e"
+  },
+  "prototype_files_sha256": {
+    "tools/verification/m0-compatibility/.gitignore": "6d187191e244f1883a2c6750fa4d40a3c734619fad8a20f4a21f4ab9b6542756",
+    "tools/verification/m0-compatibility/README.md": "982abb017de498af5f0e7ce75ee9efd7a184516b98e1892031fc2d16e9bccf49",
+    "tools/verification/m0-compatibility/backend/pom.xml": "5e2466d3c0bcf4d3e8dea1ae0f8209586aef601d53f5098b915fb806b54db3bc",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/ProbeApplication.java": "57c660e1974358bfc939b0908afe00c887faf7c7c74a5608c68cc2c2065416c2",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/DocumentCreated.java": "a55b5a78df9d67b52e29d9a6200e65c57b3e5cb64c8357a7a8022e9022574e05",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeMapper.java": "c515fae656c9e718607ecb0748f1ca1b700557d672dfbd8612a965ad435ea47b",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeRow.java": "c9ded128a3ec4b2f7a9b77be8ad9dae1a768beb01229433919b5e033a57e0656",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeWriter.java": "4d7fafa3bcb9084d355675c83911ff550539a69d665d443e91b47f6f67d9fb2d",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/infra/ProbePersistence.java": "bdaab56c26970cdcf51b835dcf403aeb65abd9ebbf35d0b60196675348b9e244",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/receipts/ProbeListener.java": "a618065972eb886fe6bd70ee140d7c45e0cd33670a46916c68d80f85b8e71417",
+    "tools/verification/m0-compatibility/backend/src/main/resources/application.properties": "f687192436a3d90eac09d9042efb6e6e80516f66a3bff2c22d2be823e5514e9f",
+    "tools/verification/m0-compatibility/backend/src/main/resources/db/migration/V001__probe.sql": "d42e70c8035994c17c0e2e7d9034054025f9bd38e1e8d0a078b330b494432605",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/CompatibilityTest.java": "ebb77195dadeb9d38e1b8d85b7b3df5d1c5628b3ab9bbd44586f65c398807511",
+    "tools/verification/m0-compatibility/frontend/app/app.vue": "0c20f0162f2151785aa06f3c73bc0efa84e76337bbaf7aa82e6252590cf21ba9",
+    "tools/verification/m0-compatibility/frontend/app/components/ProbeCounter.vue": "09c9df8443ae6d3ad967ee14d6559eba06c19b6976a0f71755a41f73057b5d56",
+    "tools/verification/m0-compatibility/frontend/app/providers/probe.ts": "5b21e6ccdf1cf52af7a5ba5cf17d83e474e41f426b84a5c9e0bdba06119c6953",
+    "tools/verification/m0-compatibility/frontend/app/texts/zh-CN.json": "bffae7731773bad698a7ca62cdcea199b6b7413758be3e6815d1f98fa142e56f",
+    "tools/verification/m0-compatibility/frontend/nuxt.config.ts": "8a34e6353f37eef3ee6c3ee3bf7497ad99024fca3af33e79e4a6616c7f3c5bf6",
+    "tools/verification/m0-compatibility/frontend/package-lock.json": "fc68f4b6121471bd37b3a10e986842c7e6443b6dbc136e9789b0da74e219cb52",
+    "tools/verification/m0-compatibility/frontend/package.json": "07d109f549115b69975d2397455c0c5d126959ed4cfd12a2b3535d5736c321f5",
+    "tools/verification/m0-compatibility/frontend/public/probe.png": "2d2c648b10bb8d6a380586cb4becf62f9ea17ce527f20f37467e5a252ca997ca",
+    "tools/verification/m0-compatibility/frontend/tsconfig.json": "665bfd2725ef0790a0173aacdd820037c4420f3df365ae3873953f8c953b9b08",
+    "tools/verification/m0-compatibility/requirements.txt": "28e36b0e232c8c81f931f863f886375d4f9454deef795cb4b52b913b286972c7",
+    "tools/verification/m0-compatibility/verify_backend.py": "988d4583493c5df1bb66431ce1450d2df254bec6ca1f3dfdc2b53746c27834d1",
+    "tools/verification/m0-compatibility/verify_design.py": "629e7424b1da0c6a80cac1d98e9bcd391292606765b9aac19a637e06eddd2c3b",
+    "tools/verification/m0-compatibility/verify_frontend.py": "adfe3da4e302d5b917c41e695832cc65d717851bb00a8363ae796ea180320190"
+  },
+  "static_design": {
+    "modules": 17,
+    "permissions": 96,
+    "components": 36,
+    "admin_endpoints": 234,
+    "acceptance_cases": 238,
+    "errors": [],
+    "documents_sha256": {
+      "docs/adr/0000-build-vs-buy.md": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+      "docs/adr/0001-compile-time-modules.md": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+      "docs/adr/0002-module-communication.md": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+      "docs/adr/0003-event-reliability.md": "71750d9131b8057e6f873ce4546e30d7945b52c66b532f9348981f89a6fed290",
+      "docs/adr/0004-content-kernel.md": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+      "docs/adr/0005-i18n-and-url-strategy.md": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+      "docs/adr/0006-template-and-page-builder.md": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+      "docs/adr/0007-editor-canvas-iframe.md": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+      "docs/adr/0008-seo-data-ownership.md": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+      "docs/adr/0009-site-and-locale.md": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+      "docs/adr/0010-admin-authentication.md": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+      "docs/adr/0011-technology-versions.md": "06200736d5b6a68be324656b86af19b2cb00d5ec40083d70077594454d88e123",
+      "docs/adr/0012-cache-tags.md": "215dc399c57ddd51977a5b80fc8cd46289c9008e4e83630ea9c06bc9b395bf4a",
+      "docs/adr/0013-search-read-model.md": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+      "docs/adr/0014-id-strategy.md": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+      "docs/adr/0015-hosting-region-and-data-residency.md": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+      "docs/adr/0016-privacy-compliance-baseline.md": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+      "docs/adr/0017-ai-translation-and-translation-memory.md": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+      "docs/adr/0018-framework-first-parallel-modules.md": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+      "docs/adr/0019-transactional-media-references.md": "d7728aab390bb08339abb29ad9377b74805142f602f90ffa2edc8d99e60b0733",
+      "docs/adr/0020-cache-invalidation-fences.md": "22bd83580c097c93e59841b71bd462f45a3904efee68646b26fadcf986b5e659",
+      "docs/adr/0021-immutable-search-generations.md": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+      "docs/adr/0022-current-route-recalculation.md": "921092c94eaf36382b06263439b6f80ee8c4b3251d9f93853c7c4db4799b3442",
+      "docs/adr/0023-form-notification-direction.md": "4b7b0a34bc009ac4afa48d485c04221a6302378d7bde3f3ed672d0ab60cac31e",
+      "docs/adr/0024-translation-review-guard.md": "3de53913446d080312f601b381afa32d68501f5ef6f74521398c0f738bd14fd5",
+      "docs/adr/0025-site-resource-lifecycle.md": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+      "docs/adr/README.md": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+      "docs/adr/template.md": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+      "docs/architecture/system-design.md": "9660c08b5a9ca5c15968643581859d463b5bcf22e33dbcd5ac6deae4f76d49a3",
+      "docs/design/visual-direction.md": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+      "docs/framework/platform-framework.md": "eb619d94d25974ab15201c22dff4064b60cccce292d10594517798c5951a5203",
+      "docs/modules/README.md": "3b520058fd67252515bb1987ff2aa6caa4f1d4fc6ee0e950df0ab74c8064cfca",
+      "docs/modules/article.md": "ac7f16e9f24ca4a7e381a1b2b326e6b25b80674e1d187490fa40e9edb248d1f8",
+      "docs/modules/content.md": "7d1a382425599d1285ce76b4df7119ef42b35151b3dea892f8b92262b1b154fe",
+      "docs/modules/delivery.md": "7b0a7e551f43f03481360b707fc607e8518c97fabffad9f54c481466fafaa3b7",
+      "docs/modules/form.md": "3496afae4f6df87da74b3e65ac7be6a1f79a1ce6519e2bcf77c5b3f11299b540",
+      "docs/modules/graph.md": "d6e757f7a11fea02f5d1e433486ffdfae4db9a56be0dc5393dbde3e7f4c97585",
+      "docs/modules/inquiry.md": "095c1346e8a1a9a39efc6bd8d5aa12fd1637d2a08e04962333cebd5a32438e09",
+      "docs/modules/media.md": "3b90b17e891b2257b0b58e76494aa1901ad550d09c9be194c350e259153f1637",
+      "docs/modules/navigation.md": "d31af1b6968039339a9bdb44918c6cf25b615d04295a553246b7452564cff05e",
+      "docs/modules/notification.md": "e4d8eaf87572d1544ffc1b0fa02453dbf9a844e1d8afef1b35820f33864c9ca7",
+      "docs/modules/page.md": "c138e8a265839e7c9ae309c6f13f6f5fb915745ff5d57a99b0480c8fe1c5ed59",
+      "docs/modules/product.md": "8674d530349ced88589845ace4cb2de2e91832876b08cef9195a40d437372934",
+      "docs/modules/search.md": "b964cacedcc3e39b8e0b41cd302bec11c148233eb48b6434e9280d0b6b586cec",
+      "docs/modules/seo.md": "6f16cdedc296f2349f28ca58f9522da30ddf4475d03d1cb34dd0d3c44cfb40b3",
+      "docs/modules/taxonomy.md": "351cd083182609ff64385ce2b2f7d8fa85f874aef32b7b616ed36326618e20af",
+      "docs/modules/tracking.md": "e3732b642c48d14401ef95cc867a0c104b993cfae0e8fe9d1f9757bca6c84d09",
+      "docs/modules/translation.md": "f303607270a52834d31ec47a73088bf83517ebaca5f362c5d9ffcb1d3bd2db8b",
+      "docs/modules/url.md": "11598bb3f3d0f06e3c3f18a3af0c1546500b2feaea5d45c061dfc1e3f193ebbb",
+      "docs/plans/development-plan.md": "2c1427b6ff591b227623c44fe88e3db6cc0eacc174a928c7e88d2a376e09d740",
+      "docs/reviews/design-issue-resolution-2026-10-20.md": "6c9ce5f6fbdef4857bb5788052116ea3675a30669b32c242d017385a740a4488",
+      "docs/reviews/formal-design-review-2026-10-20.md": "14316f328ccb6bec0311bc64b90831af183c6bc635b2bdaa058cfbc7e4ee3cfb",
+      "docs/reviews/m0-remediation-2026-10-20.md": "f892220eb154d84d7fe614dc67637e149d6d953e9b2a0f3bb9440e4474471d93",
+      "docs/reviews/module-design-review-2026-10-20.md": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e",
+      "CLAUDE.md": "d6cb57550ad3b62a21c083b0b72197d4ab69634b0ae702fd67c71efb37109c4d",
+      "tools/verification/m0-compatibility/README.md": "982abb017de498af5f0e7ce75ee9efd7a184516b98e1892031fc2d16e9bccf49"
+    }
+  },
+  "evidence_note": "Reports summarize successful final executions. Logs, ephemeral credentials, generated targets and caches are excluded. Source hashes reflect final documentation and runner hygiene changes; runtime sources were unchanged after successful tests."
+}

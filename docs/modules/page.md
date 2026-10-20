@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：`product-detail` 模板（模板元数据与 `TemplateProvider`）；M2：页面、模板与插槽、页面编辑器、全局区块；M3：法律页面（`legal` 模板）；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 10 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 10 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -168,7 +168,7 @@
 
 | 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
-| `ContentApi`（4.4.16） | create、updateDraftMeta、findPublishedSnapshot、findPublishedCards | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `ContentApi`（4.4.16） | lockDraftForWrite、setTranslationReviewRequirement、create、updateDraftMeta、findPublishedSnapshot、findPublishedCards | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
 | `MediaApi`（4.4.18） | findAll、views、imageSources | 媒体视图、图片源与授权下载；不读取媒体表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryMediaApi` |
 | `TaxonomyApi`（4.4.19） | findTerms、termViews、assignmentsOf | 词汇表、分类视图与内容指派；不读取分类表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTaxonomyApi` |
 | `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
@@ -177,8 +177,11 @@
 | `AuditApi`（4.4.9） | 按该契约声明的方法 | 同事务写审计，密钥与个人数据脱敏 | 业务事务内；站点切换由任务入口完成 | `InMemoryAuditApi` |
 | `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
 | `JobApi`（4.4.12） | 按该契约声明的方法 | 耗时任务提交、取消、进度与结果 | 业务事务内；站点切换由任务入口完成 | `InMemoryJobApi` |
+| `TransactionMutexApi`（4.10，Proposed） | lock、advance | 原保存事务内协调，失败回滚，站点隔离 | MANDATORY；不得afterCommit补写 | 框架4.10对应协议替身 |
 
 所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
+
+
 
 ### 2.3 提供的服务接口
 
@@ -526,7 +529,7 @@ CREATE TABLE pg_component_usage (
 | `pg_page.content_id`、`pg_global_block.content_id`、`pg_layout.content_id`、`pg_component_usage.content_id` | content.`cnt_content` | page 经 `ContentApi` 创建、移入回收站、恢复；彻底删除：删除本模块对应行（子页面须先移动） | `ContentPurgedEvent` |
 | `pg_layout.locale` | content.`cnt_localization` | 本地化删除：删除该语言的布局行与使用索引 | `LocalizationDeletedEvent` |
 | `pg_component_usage.localization_id`、`revision_no` | content.`cnt_localization`、`cnt_revision` | 发布时重建；下线时删除 | `ContentPublishedEvent`、`ContentUnpublishedEvent` |
-| 布局中的 `$media` | media.`mda_media` | 有引用记录的媒体不能删除；page 经 `MediaReferenceCollector` 上报引用 | `ContentPublishedEvent` → media |
+| 布局中的 `$media` | media.`mda_media` | 有引用记录的媒体不能删除；page 经 `MediaReferenceCollector` 上报引用 | content发布事务→ReferenceWriteApi |
 | 布局中的 `$content`、`$term`、`$source` | content、taxonomy、各 `DataSourceProvider` | 读取时解析；目标不存在或未发布时降级（不渲染卡片，链接降级为纯文本）；发布校验对未发布的引用给出警告 | — |
 | `inquiry-form` 的 `formKey`（`pg_component_usage.ref_key`） | form.`frm_form.form_key` | key 不可修改；表单停用或删除后组件不渲染；form 删除表单前经本表列出引用位置 | — |
 | `pg_page.template_key`、`pg_layout.template_key`、`pg_component_usage.component_type` | 代码（`TemplateProvider`、`packages/component-schemas`） | 模板或组件移除前先弃用；模板不存在时发布校验报 ERROR | — |
@@ -546,6 +549,8 @@ CREATE TABLE pg_component_usage (
 
 ## 5. 业务流程
 
+已有内容的编辑/翻译/导入保存先按框架4.4.16调用ContentApi.lockDraftForWrite校验目标共同版本并取得父先子后锁，再写本模块业务表，最后updateDraftMeta。新建先create取得内容身份；路由输入事务先取得content.route_tree锁。禁止先持有业务行锁再申请内容父锁。
+
 ### 5.1 核心业务流程
 
 | 步骤 | 事务及行为 | 失败处理 |
@@ -562,8 +567,16 @@ CREATE TABLE pg_component_usage (
 |---|---|---|
 | 编辑器并发与节点标识 | 布局的共同 version 由 ContentApi.updateDraftMeta 检查，pg_layout 的版本不能替代内容共同版本；节点使用稳定 ID，拖动排序不生成全新 ID。 | 两窗口用同一内容版本保存布局，只有一份成功；冲突后本地未保存布局保留供比较，不静默覆盖。 |
 | Schema、插槽和 HTML | 先按声明版本迁移已知旧结构，再校验 allowedIn、组件属性、插槽数量及引用；未知新版本拒绝。custom-html 仅开发者权限，仍走既有净化/CSP 约束。 | 非法变体、未知 schemaVersion、跨 slot 类型和超额插槽均有字段路径错误，线上旧修订不变；普通编辑不能保存 custom-html。 |
-| 全局区块与预览隔离 | 只读取同语言已发布区块；检测直接/间接循环及平台规定的深度/节点预算。预览令牌只授予指定用途，不允许画布通过 token 取得后台写权限。 | A→B→A 循环拒绝；360/768/1440px 三宽度预览成功但不写公共缓存；伪造 origin/source 消息无效。 |
+| 全局区块与预览隔离 | 只读取同语言已发布区块；检测直接/间接循环及平台规定的深度/节点预算。预览令牌只授予指定用途，不允许画布通过 token 取得后台写权限。 | A→B→A 循环拒绝；1440/768/390px 标准预览及 360px 补测成功但不写公共缓存；伪造 origin/source 消息无效。 |
 | 法律页审校 | page 的 TranslatableContentProvider.requiresHumanReview 对 legal 与法律页身份返回 true；translation 完成事件标志与 content 再校验共同约束自动发布。 | 普通页允许按站点配置自动发布，legal 页机器翻译只到草稿/待审，拥有相应审核/发布权限的人工完成后才上线。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1、4.10.5、4.10.7](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- 页面布局/全局区块保存由content草稿哈希流程收集媒体并同步登记；资源型图片按源事务登记，不能等异步引用更新后再保护删除。
+- 页面树移动先取得content.route_tree数据库事务锁，再写pg_元数据并调用ContentApi.requestRouteRecalculation；任务读取当前ContentTypeProvider.routeHints，不把旧树输入交给url恢复使用。
+- 创建/切换legal模板时同一事务按内容ID及内容version更新cnt_content.translation_review_required；新目标语言读取该共享策略，旧审批和旧翻译任务不得发布新草稿。
 
 ## 6. 接口
 
@@ -744,6 +757,14 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | page.loading | 正在加载 | 交互等待 |
 | page.retry | 重试 | 可恢复错误 |
 
+### 8.6 视觉方向与组件呈现
+
+遵循[前台视觉设计方向与 UI 基线](../design/visual-direction.md)，Token 集中在 design-tokens 包定义，变体由主题实现；后台仍使用 Element Plus。
+
+首页和营销页采用大幅产品/应用影像、黑白灰、疏朗图文与清楚的主次 CTA，使用既有 hero、image-text、rich-text、cta 等组件和模板。法律页保留易读单列；不因视觉需求新增内容类型或组件类型。Header/Footer 仍由主题固定提供。
+
+视觉稿覆盖默认、加载、空、错误、成功及键盘焦点等适用状态；本节为呈现要求，未声称已有设计稿或组件实现。
+
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
@@ -846,7 +867,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
 | A11 | 两窗口用同一内容版本保存布局，只有一份成功；冲突后本地未保存布局保留供比较，不静默覆盖。 | 模块自身 / 5.2 | 集成：`PageA11IT`；涉及界面 E2E：`page-A11` | M2 |
 | A12 | 非法变体、未知 schemaVersion、跨 slot 类型和超额插槽均有字段路径错误，线上旧修订不变；普通编辑不能保存 custom-html。 | 模块自身 / 5.2 | 集成：`PageA12IT`；涉及界面 E2E：`page-A12` | M2 |
-| A13 | A→B→A 循环拒绝；360/768/1440px 三宽度预览成功但不写公共缓存；伪造 origin/source 消息无效。 | 模块自身 / 5.2 | 集成：`PageA13IT`；涉及界面 E2E：`page-A13` | M2 |
+| A13 | A→B→A 循环拒绝；1440/768/390px 标准预览及 360px 补测成功但不写公共缓存；伪造 origin/source 消息无效。 | 模块自身 / 5.2 | 集成：`PageA13IT`；涉及界面 E2E：`page-A13` | M2 |
 | A14 | 普通页允许按站点配置自动发布，legal 页机器翻译只到草稿/待审，拥有相应审核/发布权限的人工完成后才上线。 | 模块自身 / 5.2 | 集成：`PageA14IT`；涉及界面 E2E：`page-A14` | M3 |
 
 用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
@@ -856,7 +877,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | PAGE-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| PAGE-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 已澄清：框架 4.5.16 已用草稿事件 + collectDraft 和发布快照扫描覆盖本模块内容媒体引用；无需新增 MediaApi 引用写方法。保存必须经 updateDraftMeta 产生事件，删除竞态见 MEDIA-02。 |
+| PAGE-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 已澄清：框架 4.5.16 已用源事务collectDraft/发布快照扫描并同步登记覆盖本模块内容媒体引用；无需新增 MediaApi 引用写方法。保存必须经 updateDraftMeta 产生事件，删除竞态见 MEDIA-02。 |
 
 ## 修订记录
 
@@ -865,3 +886,6 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.5 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |

@@ -1,6 +1,6 @@
 # 架构决策记录（ADR）
 
-本目录保存平台的架构决策记录（Architecture Decision Record，ADR）。系统设计说明书（[`docs/architecture/system-design.md`](../architecture/system-design.md)，以 V1.3 为准）第 2.5 节给出全部决策的摘要，附录 B 给出文件索引；本目录中的文件是每项决策的正式记录。
+本目录保存平台的架构决策记录（Architecture Decision Record，ADR）。系统设计说明书（[`docs/architecture/system-design.md`](../architecture/system-design.md)，当前 V1.6）第 2.5 节给出全部决策的摘要，附录 B 给出文件索引；本目录中的文件是每项决策的正式记录。
 
 ## ADR 是什么
 
@@ -43,7 +43,7 @@ ADR 是一份简短的文档，记录一项架构决策：当时要解决什么�
 
 ## 索引
 
-ADR-000、ADR-005、ADR-009、ADR-017 为 Accepted，其余为 Proposed（附录 B）。部署（云厂商与 CDN、是否需要美国源站）由业主自行负责，ADR-015 只作为建议；ADR-016 中需要法务确认的事项由业主自行负责（32 章 Q3、Q13、Q14、Q15）。
+ADR-000、ADR-005、ADR-009、ADR-017、ADR-018 为 Accepted，其余为 Proposed（附录 B）。部署（云厂商与 CDN、是否需要美国源站）由业主自行负责，ADR-015 只作为建议；ADR-016 中需要法务确认的事项由业主自行负责（32 章 Q3、Q13、Q14、Q15）。
 
 | 编号 | 标题 | 状态 | 文件 |
 |---|---|---|---|
@@ -66,3 +66,10 @@ ADR-000、ADR-005、ADR-009、ADR-017 为 Accepted，其余为 Proposed（附录
 | ADR-016 | 隐私合规基线 | Proposed（法务事项由业主负责） | [0016-privacy-compliance-baseline.md](0016-privacy-compliance-baseline.md) |
 | ADR-017 | AI 翻译与翻译记忆 | Accepted | [0017-ai-translation-and-translation-memory.md](0017-ai-translation-and-translation-memory.md) |
 | ADR-018 | 框架先行、契约优先，模块按独立设计文档并行开发 | Accepted | [0018-framework-first-parallel-modules.md](0018-framework-first-parallel-modules.md) |
+| ADR-019 | 媒体引用与源保存同事务登记 | Proposed | [0019-transactional-media-references.md](0019-transactional-media-references.md) |
+| ADR-020 | 缓存回填使用代次保护，失效义务持久重试 | Proposed | [0020-cache-invalidation-fences.md](0020-cache-invalidation-fences.md) |
+| ADR-021 | 搜索使用事务变更日志与不可变索引代次 | Proposed | [0021-immutable-search-generations.md](0021-immutable-search-generations.md) |
+| ADR-022 | 内容内核编排当前树的路由重算 | Proposed | [0022-current-route-recalculation.md](0022-current-route-recalculation.md) |
+| ADR-023 | 允许表单同事务写入通知发件箱 | Proposed | [0023-form-notification-direction.md](0023-form-notification-direction.md) |
+| ADR-024 | 人工审校要求由可信内容元数据持久化 | Proposed | [0024-translation-review-guard.md](0024-translation-review-guard.md) |
+| ADR-025 | 独立站点资源的生命周期事件与翻译事件分离 | Proposed | [0025-site-resource-lifecycle.md](0025-site-resource-lifecycle.md) |

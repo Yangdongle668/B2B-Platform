@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：—；M2：—；M3：关系、评分、相关内容；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.4 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 15 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 15 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -271,6 +271,7 @@
 | `grh_relation_type` | 关系类型（代码注册） | 否（全局，列入豁免清单） | 否（不再提供时 `available = 0`） | ≈ 15 |
 | `grh_config` | 评分配置 | 是 | 否（删除即回到内置默认值） | ≤ 5（每种可路由内容类型一行） |
 | `grh_content_mode` | 内容的相关推荐模式 | 是 | 否（恢复为 `AUTO` 即删除行） | 只有非默认模式的内容有行：≤ 数千 |
+| `grh_relation_set` | 人工/自动关系集合的共同版本；空集合保留 | 是 | 否（只在源内容purge时清理） | ≤源内容数量 |
 | `grh_dirty` | 增量重算队列 | 是 | 否（处理完成后删除） | 常驻 < 1 千；批量导入时峰值约 1 万 |
 
 **站点过滤**：`grh_relation_type` 是全局表，列入行级拦截器的豁免清单。其余为站点级表；例外：增量重算任务跨站点轮询 `grh_dirty` 的到期记录，使用标注 `@InterceptorIgnore` 的专用查询，取到记录后按其 `site_id` 设置站点上下文再计算；每晚的全量重建按站点逐个执行。
@@ -527,6 +528,28 @@ CREATE TABLE grh_dirty (
 - 重算一个源内容：读取其发布态分类项 → 候选集（经 content 的服务接口查询 `cnt_published_term`，同站点、可路由、未进回收站，排除自身、已有人工关系与 `EXCLUDED` 的内容，按分类项稀有度截取 ≤ 2,000 个）→ 评分 → 按目标类型截取 → 整体替换该源的自动关系；分类重叠分是对称的，同时更新排名可能受影响的候选的列表（直接在同一次计算中更新，不再入队）（系统设计 15.3、15.4）。
 - `TermChangedEvent`（分类移动或删除）影响的内容超过 1,000 个，或配置变化时，不逐条入队，改为创建该站点的全量重建任务。
 
+#### 4.3.6 `grh_relation_set`：关系集合版本
+
+GRAPH-01 的模块内部方案：GET 的完整关系集合与 ETag 由此状态行定界，不复用内容草稿版本。首次 GET 无状态行时视为 v0；首次写入创建状态行并锁定，成功后从 v1 返回；空集合也保留 version，防止 ABA。每种影响 GET 返回集合的修改都同事务递增，含 AUTO、双向关系、排除、pinned、模式切换和目标清理。多源修改按ID升序锁全部状态行，失败整笔回滚；详见框架4.10.8。
+
+```sql
+CREATE TABLE grh_relation_set (
+  id                 BIGINT       NOT NULL COMMENT 'TSID',
+  site_id            BIGINT       NOT NULL COMMENT '站点ID',
+  source_content_id  BIGINT       NOT NULL COMMENT '源内容ID，逻辑引用',
+  version            BIGINT       NOT NULL DEFAULT 0 COMMENT '集合版本；空集合也递增和保留',
+  created_at         DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_by         BIGINT       NOT NULL DEFAULT 0,
+  updated_at         DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  updated_by         BIGINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_relation_set (site_id, source_content_id),
+  CONSTRAINT ck_relation_set_version CHECK (version >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='内容关系集合的共同版本';
+```
+
+不建立跨模块外键。既有关系的首次升级在维护窗口按源创建状态行，随后所有写入口都启用此协议；ContentPurgedEvent 清理状态行，停用期间仍清理。DDL 待后续 MySQL 实测。
+
 ### 4.4 枚举
 
 | 字段 | 取值 | 说明 |
@@ -596,6 +619,7 @@ CREATE TABLE grh_dirty (
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
 | `db/migration/graph/V001__init.sql` | 4.3 中的全部表（5 张：`grh_relation`、`grh_relation_type`、`grh_config`、`grh_content_mode`、`grh_dirty`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
+| `db/migration/graph/V002__relation_set.sql` | 新增grh_relation_set及既有源状态初始化；不改V001 | M3 |
 
 ## 5. 业务流程
 
@@ -618,6 +642,14 @@ CREATE TABLE grh_dirty (
 | 规模与容量 | 按系统设计 1.5 的单站≤50万关系行控制规模；topK 按内容类型组合估算总量，包含反向/人工/固定行。不得将表清单中旧 60–150万估算当作已获准容量。 | 用1万产品/5千文章基线压测，报告真实关系行数≤50万；配置超预算告警并要求调低自动候选，不静默删除人工关系。 |
 | 推荐补足与语言 | 先按更严格 RelatedMode 取人工/自动候选，再批量过滤当前语言已发布可路由目标；EXCLUDED 不输出，数量不足继续取后续候选，最多 request.limit≤24。 | 前3个目标无当前语言但后续有合法目标时补足请求数量；模块停用后结果中无其卡片，不回退其他语言。 |
 
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.8](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- 新增4.3.6 grh_relation_set作为整个GET关系集合的版本来源；状态行在空集合时保留，版本不归零。
+- PUT必须If-Match，缺失428、过期412。所有影响集合的写入（含AUTO重算、反向关系和清理）在同一事务排序锁定所有源集合、比较版本并递增。
+- 计算在锁外，写回重验依赖版本；Redis租约只减少重复工作。两个编辑器、空集合ABA、反向边死锁/回滚必须验证。
+
 ## 6. 接口
 
 ### 6.1 Admin 端点
@@ -636,7 +668,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 
 **请求与结果约束**：人工关系输入 targetContentId、relationType、顺序及预期集合摘要；以 If-Match 原子替换，EXCLUDED 为独立显式选择。评分配置含允许的因子/权重、阈值、topK；拒绝负权重和未知因子。返回关系方向、来源、排名及计算理由；不向前台暴露草稿目标。
 
-PUT /contents/{id}/relations 的集合没有现成 version，不能把通用表格中的聚合 version 当作已存在字段；该入口的替换协议以 GRAPH-01 为开工前提。单条关系行不新增 version 或跨模块外键来掩盖这一问题。
+PUT /contents/{id}/relations 使用4.3.6的grh_relation_set.version；If-Match缺失428、版本不符412。GET在同一读事务中返回关系集合和对应ETag；所有相关写入口按框架4.10.8排序锁定集合状态并递增版本，原grh_relation行结构保持不变。
 
 ### 6.2 Public 端点
 
@@ -739,6 +771,14 @@ PUT /contents/{id}/relations 的集合没有现成 version，不能把通用表�
 | graph.empty | 暂无内容 | 列表/组件空态 |
 | graph.loading | 正在加载 | 交互等待 |
 | graph.retry | 重试 | 可恢复错误 |
+
+### 8.6 视觉方向与组件呈现
+
+遵循[前台视觉设计方向与 UI 基线](../design/visual-direction.md)，Token 集中在 design-tokens 包定义，变体由主题实现；后台仍使用 Element Plus。
+
+related-content 使用与产品/文章一致的低装饰卡片，保留标题、缩略图及必要关系说明。内容数量有限时自然收缩，不补虚构推荐；无结果不留下大块空白。发布态、语言隔离、停用回退继续按现有数据源与组件规则处理。
+
+视觉稿覆盖默认、加载、空、错误、成功及键盘焦点等适用状态；本节为呈现要求，未声称已有设计稿或组件实现。
 
 ## 9. 配置项
 
@@ -856,7 +896,7 @@ PUT /contents/{id}/relations 的集合没有现成 version，不能把通用表�
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | GRAPH-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| GRAPH-01 | grh_relation 没有集合聚合 version，PUT relations 声称 If-Match 原子替换但现有数据模型未定义版本来源 | 人工关系并发替换 | 是 | 框架负责人 / 模块负责人 | M3 人工关系开工前 | 不得虚构 ETag v12 或复用内容草稿版本；冻结模块内部预期集合校验与分布式源内容锁/事务协议后，补两窗口并发替换用例。现有关系表 SQL 不改动。 |
+| GRAPH-01 | grh_relation 没有集合聚合 version，PUT relations 声称 If-Match 原子替换但现有数据模型未定义版本来源 | 人工关系并发替换 | 否（设计已明确；待实现验证） | 框架负责人 / 模块负责人 | M3 人工关系开工前 | 统一方案：新增grh_relation_set，空集合保留版本、排序行锁、If-Match原子替换。详见框架4.10.8及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 
 ## 修订记录
 
@@ -865,3 +905,5 @@ PUT /contents/{id}/relations 的集合没有现成 version，不能把通用表�
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |

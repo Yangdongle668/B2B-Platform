@@ -24,25 +24,27 @@
 | 组件 | 必须验证的能力 |
 |---|---|
 | JDK + Spring Boot 4.x | 虚拟线程（数据源并行解析、通知发送，2.4、10.5）；Spring Security 与 Spring Session（Redis）（26.1）；Spring HTTP 客户端（AI 翻译引擎适配器，5.9） |
-| Spring Modulith 2.x | 模块边界验证 `verify()`；`@ApplicationModuleListener` 事务提交后异步投递；Event Publication Registry（`event_publication` 表）与重新投递；`@ApplicationModuleTest` 与 Scenario API（4.1、28） |
+| Spring Modulith 2.x | 模块边界验证 `verify()`；`@ApplicationModuleListener` 事务提交后异步投递；Event Publication Registry（`EVENT_PUBLICATION` 表）与重新投递；`@ApplicationModuleTest` 与 Scenario API（4.1、28） |
 | MyBatis-Plus | 与 Spring Boot 4.x 集成；行级拦截器 `TenantLineInnerInterceptor`（列名 `site_id`）与豁免清单（25.7） |
 | Flyway | 每个模块独立的位置与 history 表 `flyway_{module}_history`，由模块管理器按依赖顺序执行；独立的 migrate 任务（`--mode=migrate`）；在 MySQL 8.4 LTS 上运行（3.6、25.6） |
 | Nuxt 4 + Vue 3.5 | SSR 与懒水合（21.4）；@nuxt/image 自定义 imgproxy provider（2.4）；主题在构建时打包、组件变体按需异步加载（11.2） |
 
 3. **验证方式**：以 M0 的工程骨架为载体。M0 的验收（示例模块违反边界时 CI 失败；按模板新建一个模块并接入 ≤ 1 小时）与 CI 的全部门禁（编译、单元测试、架构测试、Testcontainers 集成测试、OpenAPI 生成、前端构建，27.3）都在锁定组合上通过，即视为验证通过（30）。
 
-4. **版本表**（M0 填写）：
+4. **版本表**（M0正式冻结前填写；下列仅隔离原型候选，未完成所有锁定门禁）：
 
-| 组件 | 选型方向（2.4） | 锁定版本 |
+| 组件 | 选型方向（2.4） | 隔离原型候选 / 冻结状态 |
 |---|---|---|
-| JDK | 25 LTS（最低 21） | 待 M0 验证 |
-| Spring Boot | 4.x | 待 M0 验证 |
-| Spring Modulith | 2.x | 待 M0 验证 |
-| MyBatis-Plus | — | 待 M0 验证 |
-| Flyway | — | 待 M0 验证 |
-| Nuxt / Vue | Nuxt 4 / Vue 3.5 | 待 M0 验证 |
+| JDK | 25 LTS（最低 21） | 25.0.4.1（原型）；未冻结 |
+| Spring Boot | 4.x | 4.0.8（原型）；未冻结 |
+| Spring Modulith | 2.x | 2.0.8（原型）；未冻结 |
+| MyBatis-Plus | — | 3.5.17 Boot4 starter + jsqlparser（原型）；未冻结 |
+| Flyway | — | 11.14.1（Boot管理，原型）；未冻结 |
+| Nuxt / Vue | Nuxt 4 / Vue 3.5 | 4.6.2 / 3.5.44；@nuxt/image 2.2.0（原型）；未冻结 |
 
    其他组件沿用 2.4 的选型（如 MySQL 8.4 LTS、Redis 7 或兼容的 Valkey、Element Plus、Tiptap），锁定时可以一并记入此表。
+
+2026-10-20原型已覆盖与未覆盖的能力逐项见[M0复审](../reviews/m0-remediation-2026-10-20.md)及[可复现验证](../../tools/verification/m0-compatibility/README.md)。原型使用单库Flyway，不代表独立模块history、Security/Session、Scenario API、主题/变体、完整CI已通过；这些仍是正式冻结条件。
 
 5. **锁定之后的升级**：补丁与次版本通过 Renovate / Dependabot 渐进升级，必须通过全部 CI 门禁（26.3、31）；锁定组合中任一组件的主版本升级或替换，视为修改本决策：重新执行第 2、3 条的验证，并更新版本表与变更记录。
 
@@ -87,3 +89,4 @@
 | 日期 | 变更 |
 |---|---|
 | 2026-10-06 | 创建 |
+| 2026-10-20 | 登记隔离验证候选，保留完整M0门禁及Proposed状态 |

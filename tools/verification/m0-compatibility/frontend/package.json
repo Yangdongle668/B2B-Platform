@@ -1,0 +1,10 @@
+{
+  "name": "b2b-m0-nuxt-compatibility",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": { "postinstall": "nuxt prepare", "typecheck": "nuxt typecheck", "build": "nuxt build" },
+  "dependencies": { "nuxt": "4.6.2", "vue": "3.5.44", "@nuxt/image": "2.2.0" },
+  "devDependencies": { "typescript": "5.9.3", "vue-tsc": "3.3.13" },
+  "engines": { "node": "^24.15.0" }
+}

@@ -2,15 +2,15 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.4（在 V1.3 基础上修订；V1.3 基于 V1.2 修订；V1.2 基于 V1.1 修订，V1.1 基于 V1.0《系统架构设计说明书》修订） |
-| 状态 | 草案（Draft）：产品形态、目标市场、自研、语言策略、AI 翻译与开发方式已确认，其余待评审 |
-| 更新日期 | 2026-10-07 |
+| 文档版本 | V1.7（整改正式评审DR-01～04，进入M0隔离验证；历史决策见0.5） |
+| 状态 | 草案（Draft）：产品形态、目标市场、自研、语言策略、AI 翻译、开发方式与前台视觉参考方向已确认，其余待评审 |
+| 更新日期 | 2026-10-20 |
 | 项目代号 | B2B Web Platform |
 | 定位 | 模块化、可扩展、SEO 原生、设计系统驱动的企业网站与询盘获客平台 |
 
 > 阅读提示：
 > - 标注 **【V1】** 的内容属于第一版交付范围；标注 **【V2+】** 的为预留设计，V1 只保证数据结构和接口不阻碍其实现。
-> - 第 0.4 节列出了本文依赖的关键假设，第 0.5 节记录了 V1.2、V1.3 已确认的决策，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
+> - 第 0.4 节列出了本文依赖的关键假设，第 0.5 节记录了各版本已确认的决策，第 32 章列出了待业务确认的问题。假设不成立时，需回到对应章节调整。
 
 ## 目录
 
@@ -155,6 +155,24 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 |---|---|---|
 | 框架先行、契约优先，模块按独立设计文档并行开发 | 新增 ADR-018；设计文档分三层（本文 → 《平台框架设计》→ 各模块设计文档）；原计划的单一《领域模型与数据库设计》拆入框架文档与模块文档；M1–M4 改为集成与验收节奏 | 2.5、25.8、29.1、30、附录 B、附录 C |
 
+**V1.5（2026-10-20）**
+
+| 确认事项 | 主要影响 | 涉及章节 |
+|---|---|---|
+| 前台参考 Tesla 官网风格 | 采用大幅产品影像、黑白灰、充足留白、简洁导航与明确询盘入口；保留规格、资料及表单的 B2B 可用性；沿用单主题 industrial，后台继续 Element Plus。详细基线见[前台视觉设计方向](../design/visual-direction.md)；参数建议与高保真稿的完成状态分别记录 | 11.7；平台框架 8.6.3；相关模块第 8 章 |
+
+**V1.6（2026-10-20）**
+
+| 提案 | 影响 | 状态 |
+|---|---|---|
+| 11 项实现前设计问题统一方案 | 媒体引用事务保护、缓存代次与可靠失效、搜索变更日志/不可变代次、当前树路由重算、下载通知方向、审校标记和资源事件；图谱补集合版本表。完整契约只在框架4.10，表结构分别由core/search/graph维护 | ADR-019～025为Proposed；仅设计方案补齐，待评审冻结及实现测试 |
+
+**V1.7（2026-10-20）**
+
+| 整改 | 统一行为 | 状态 |
+|---|---|---|
+| DR-01～04 | 内容级共享审校策略与明确父/子写锁；翻译持久化目标版本；媒体软删/恢复/到期清理；下载结果和发件箱同事务；移除旧异步引用/长stale缓存路径。新增字段以模块V002补丁维护 | 文档整改及M0隔离验证，非1.0.0冻结；ADR与运行证据分别记录 |
+
 ---
 
 ## 1. 需求与范围
@@ -250,7 +268,7 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 | AI 翻译 | 单条内容发布到目标语言生成 | ≤ 5 分钟（不含人工审校）；翻译记忆命中的原文不调用 AI |
 | 规模 | 单站内容 | 1 万产品 × 10 种语言、5 千篇文章；Content Graph 关系 ≤ 50 万条 |
 | | 并发 | 前台 200 RPS（CDN 未命中），后台 50 个并发用户 |
-| 可用性 | 前台（含 CDN） | 99.9%；后端故障时 CDN 继续提供过期缓存（stale-if-error） |
+| 可用性 | 前台（含 CDN） | 99.9%目标；仅复用freshUntil内缓存，过期且后端不可用时503，不以过期页面突破新鲜度预算 |
 | | 后台 | 99.5% |
 | 数据 | 备份 | RPO ≤ 15 分钟，RTO ≤ 4 小时，每季度做一次恢复演练 |
 | 安全 | 标准 | OWASP ASVS Level 2；后台高权限账号强制 2FA |
@@ -403,8 +421,16 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 | 016 | 隐私合规基线 | GDPR / UK GDPR / ePrivacy（英国为 PECR）+ CCPA/CPRA：非必要 Cookie 事先同意并保存同意记录；识别 GPC；询盘的合法性基础（订立合同前的步骤或正当利益）由法务确认，不强制勾选同意，营销同意单独勾选；数据主体请求按法定时限处理 |
 | 017 | AI 翻译与翻译记忆 | **已确认（Accepted）**。默认 OpenAI 兼容接口；段级翻译记忆，同一原文只翻译一次；人工修订优先；法律页面人工审校 |
 | 018 | 开发方式 | **已确认（Accepted）**。框架先行、契约优先：M0 完成平台框架与冻结的 platform-api 契约及测试替身，各模块按独立设计文档并行开发 |
+| 019 | 媒体引用与源保存同事务登记 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 020 | 缓存回填使用代次保护，失效义务持久重试 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 021 | 搜索使用事务变更日志与不可变索引代次 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 022 | 内容内核编排当前树的路由重算 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 023 | 允许表单同事务写入通知发件箱 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 024 | 人工审校要求由可信内容元数据持久化 | Proposed；统一契约草案见平台框架4.10，未冻结 |
+| 025 | 独立站点资源的生命周期事件与翻译事件分离 | Proposed；统一契约草案见平台框架4.10，未冻结 |
 
 ---
+
 
 ## 3. 模块化设计
 
@@ -452,7 +478,7 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 | delivery | L4 | 前台交付聚合：解析路由、组装渲染数据、解析数据源、生成缓存标签 | 无表 | 否 | V1 |
 | seo | L4 | SEO 元数据、生成规则、Schema.org、Sitemap、robots、链接索引、健康检查、IndexNow | `seo_` | 否 | V1 |
 | graph | L4 | 内容关系、关系类型、评分计算、相关推荐 | `grh_` | 否 | V1 |
-| search | L4 | 搜索索引、站内搜索、分面筛选 | 索引在 Meilisearch | 是 | V1 |
+| search | L4 | 搜索索引、站内搜索、分面筛选 | `sch_`控制表（ADR-021提案）；索引在Meilisearch | 是 | V1 |
 | tracking | L4 | 统计代码、同意管理（含同意记录、GPC）、转化事件配置 | `trk_` | 是 | V1 |
 | crm、quotation、whatsapp、newsletter、ai、analytics、portal | L3/L4 | 见 1.4 | 各自前缀 | 是 | V2+ |
 
@@ -481,6 +507,8 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 | R5 数据访问 | 模块只访问自己前缀的表；不允许跨模块外键与跨模块 JOIN |
 
 由于所有跨模块契约都是 `platform-api` 中的接口，模块之间在编译期互相不可见，V1.0 中“Product 依赖 SEO”的问题从结构上被消除：Product 实现 `SchemaOrgProvider` 等扩展点，SEO 模块收集这些实现，两者互不知道对方存在。
+
+> V1.6补充提案：form→notification仅用于同事务入发件箱，见ADR-023（Proposed）与框架4.10.6；core协调ReferenceWriteApi/ProjectionChangeApi通过SPI回调实现，不直接依赖业务模块。新增方案正式评审后才冻结。
 
 ### 3.4 模块内部结构
 
@@ -687,7 +715,7 @@ public record TranslationUnit(
 |---|---|
 | 发布 | 应用服务在业务事务内调用 `ApplicationEventPublisher.publishEvent(event)` |
 | 投递 | 监听器使用 Spring Modulith 的 `@ApplicationModuleListener`：事务提交后异步执行，并在新事务中运行 |
-| 可靠性 | Event Publication Registry 在发布事务中把事件写入 `event_publication` 表；监听器成功后标记完成；未完成的事件在启动时与定时任务中重新投递（至少一次） |
+| 可靠性 | Event Publication Registry 在发布事务中把事件写入 `EVENT_PUBLICATION` 表；监听器成功后标记完成；未完成的事件在启动时与定时任务中重新投递（至少一次） |
 | 幂等 | 所有监听器必须幂等：按 `eventId` 去重，或采用天然幂等的 upsert |
 | 顺序 | 不保证全局顺序；同一内容的事件携带 `revisionNo` 与 `occurredAt`，监听器丢弃过期事件 |
 | 外部化 | V1 不引入 MQ；V2 需要时通过 Modulith 事件外部化到 Kafka / RabbitMQ，业务代码不变 |
@@ -757,7 +785,7 @@ content.publish(localizationId, expectedVersion)        ──── 同一个�
    4. 依次调用 PublishContributor.contribute()，组装快照                         │
    5. 写入 cnt_revision（快照），更新 cnt_localization 与 cnt_published_term     │
    6. url.applyRoute()：更新路由；路径变化时自动生成 301                          │
-   7. 发布 ContentPublishedEvent（写入 event_publication）                      │
+   7. 发布 ContentPublishedEvent（写入 EVENT_PUBLICATION）                      │
 提交事务 ─────────────────────────────────────────────────────────────────────┘
    │ 事务提交后，异步、各自独立重试
    ├─ delivery：按 Cache Tag 清除 Redis 与 CDN
@@ -1628,11 +1656,23 @@ frontend/packages/themes/industrial/
 - **中文使用系统字体栈**，不下载中文 Web 字体（中文字体文件体积大）：中文页面的 `font-family` 为主题的拉丁字体 + `"PingFang SC", "Microsoft YaHei", "Noto Sans SC"` 等系统中文字体 + `sans-serif`，拉丁字母与数字使用主题字体，中文字符由系统字体显示；按 `<html lang>` 切换字体栈。
 - 不使用 Google Fonts CDN（欧盟隐私判例风险，以及中国大陆后台预览时的访问问题）。
 
+### 11.7 前台视觉方向与设计交付
+
+业主已确认前台以 [tesla.com](https://www.tesla.com/) 为风格参考：大幅产品/应用影像、黑白灰、留白、大标题、精简导航及明确的主次行动入口。项目参数、页面结构与响应式要求统一见[前台视觉设计方向与 UI 基线](../design/visual-direction.md)。该文档是第 11 章的细化，不另设模块或跨模块契约。
+
+- 沿用 V1 单主题 `industrial`，将视觉参数归入现有三层 Design Token；组件只使用 Token 与主题变体。
+- 产品规格、型号、资料下载、搜索筛选和询盘按各自交付阶段保持清楚、可操作；默认普通滚动，长表格和表单不强制整屏展示。
+- 使用企业自己的素材与数据；图像文字对比度、移动端、键盘、减弱动画及性能继续按 1.5、11.5、11.6 验收。
+- 后台沿用 Element Plus 与其独立主题变量，iframe 画布展示前台真实主题。
+- 参考方向已确定；字号、配色、间距是待设计与实现验证的项目基线。当前尚无高保真设计稿、组件代码或浏览器视觉验收结果。
+
 ---
 
 ## 12. 媒体模块（Media）
 
 ### 12.1 模型
+
+> **V1.6 提案**：媒体引用由源保存事务经core协调登记，media不反向读取内容；共享/排他数据库锁保护删除，替代旧异步引用写入说明。见框架4.10.1、ADR-019（Proposed）。
 
 | 表 | 关键字段 |
 |---|---|
@@ -2197,6 +2237,8 @@ CLOSED ──重新打开──▶ ASSIGNED
 
 ## 19. 站内搜索（Search）
 
+> **V1.6 提案**：补search自有sch_控制表和事务变更捕获，物理索引采用不可变代次及数据库指针切换；替代旧固定索引原地upsert/swap假设。见框架4.10.4、ADR-021（Proposed）。
+
 - **索引**：每个站点的每种语言一个 Meilisearch 索引，索引名为 `s{site}_{locale}_content`（如 `s1_de_content`）。文档由各类型的 `SearchDocumentProvider` 在发布时根据快照构建：`id`、`type`、`title`、`summary`、`body_text`（去除标记，≤ 10,000 个字符）、`terms`（ID 与名称）、`attr.*`（分面字段）、`model_nos`、`url`、`cover`、`published_at`。
 - **配置**：
   - 搜索字段优先级：title > model_nos > summary > terms > body_text；
@@ -2307,15 +2349,15 @@ GET https://www.example.com/de/produkte/li-ion-pack-x200
 
 | 页面 | 策略 | 缓存 |
 |---|---|---|
-| 内容页（产品、文章、页面、分类） | SSR | CDN：`s-maxage=86400, stale-while-revalidate=604800, stale-if-error=604800`；按 Cache-Tag 清除 |
+| 内容页（产品、文章、页面、分类） | SSR | CDN按最早依赖freshUntil计算剩余秒数（≤55秒）；Cache-Tag失效，动态页不启用stale扩展 |
 | 带筛选参数的分类页 | SSR 首屏 + 客户端筛选 | 不同查询参数分别缓存；`noindex` |
-| 站内搜索 | SSR 外壳 + 客户端查询 | `s-maxage=60` |
-| sitemap、robots | 服务端路由 | `s-maxage=3600` + Cache-Tag |
+| 站内搜索 | SSR 外壳 + 客户端查询 | 共享freshUntil剩余预算（≤55秒），无可信到期时刻则no-store |
+| sitemap、robots | 服务端路由 | 共享freshUntil剩余预算（≤55秒）+ Cache-Tag |
 | 预览、编辑器 | SSR / CSR | `no-store` |
-| 404 | SSR | `s-maxage=60` |
+| 404 | SSR | 共享freshUntil剩余预算（≤55秒），无可信到期时刻则no-store |
 | 5xx | SSR | 不缓存 |
 
-- 浏览器端：HTML 使用 `max-age=0, must-revalidate`（CDN 使用 `s-maxage`）；带哈希的静态资源使用 `max-age=31536000, immutable`。
+- 浏览器端：动态HTML使用`max-age=0, must-revalidate`，CDN另用CDN-Cache-Control传递freshUntil剩余预算；带哈希的静态资源使用 `max-age=31536000, immutable`。
 - **不使用 SSG**：发布事件 + 按标签清除 CDN 已经提供了类似 ISR 的新鲜度，无需构建时生成页面。
 
 ### 21.4 性能
@@ -2327,7 +2369,7 @@ GET https://www.example.com/de/produkte/li-ion-pack-x200
 
 ### 21.5 故障处理
 
-- Delivery 不可用时：CDN 通过 `stale-if-error` 继续提供旧页面；没有缓存时返回 **503 + Retry-After** 维护页，**绝不返回 404**，以免页面被搜索引擎移出索引。
+- Delivery不可用时只复用仍在freshUntil内的缓存；到期或无缓存返回503 + Retry-After维护页，不返回404。动态新鲜度按框架4.10.3/8.3.11统一，不能用故障stale扩展延长。
 - 单个数据源失败：该组件渲染为空，页面其余部分正常。
 
 ### 21.6 安全头
@@ -2404,12 +2446,14 @@ registerContentTab({
 
 ## 23. 缓存架构
 
+> **V1.6 提案**：缓存回填按代次保护；失效义务依赖持久投递，BufferStore仅优化。见框架4.10.3、ADR-020（Proposed），旧去抖示意不能单独提供可靠性。
+
 ### 23.1 缓存层
 
 | 层 | 内容 | 失效方式 |
 |---|---|---|
 | 浏览器 | 静态资源（文件名带哈希，缓存 1 年） | 文件名变化 |
-| CDN | HTML、图片、sitemap | Cache-Tag 清除 + TTL + stale-while-revalidate |
+| CDN | 动态HTML/sitemap与静态图片 | 动态按freshUntil/标签失效且不stale；带版本静态资源独立immutable策略 |
 | Nuxt | 站点引导数据（进程内，≤ 60 秒） | TTL |
 | Redis | Delivery 结果、站点引导数据、路由、权限、设置 | 标签索引清除 |
 | 应用内存 | 扩展点注册表、Schema、域名到站点的映射 | Redis Pub/Sub 广播 |
@@ -2437,13 +2481,13 @@ Nuxt 层不缓存 HTML：HTML 缓存交给 CDN，Nuxt 保持无状态，便于�
 ```text
 ContentPublishedEvent(contentId = 42)
  → delivery.CacheInvalidator（事务提交后，异步执行）
-     1. 计算标签：s1:c:42；首次发布再加 s1:list:PRODUCT；路径变化再加旧路径对应的条目
-     2. Redis：通过标签索引（tag → 缓存键集合）删除 Delivery 结果
-     3. CDN：调用按标签清除的接口（2 秒去抖合并；失败重试）
+     1. 每次发布计算s1:c:42与s1:list:PRODUCT；路径变化处理旧/新路径
+     2. Redis先推进站点代次，再删除相关键；回填必须校验回源前代次
+     3. CDN按标签清除；Redis与CDN均成功才完成持久事件投递，失败抛出重投
 ```
 
 - 导航或站点设置变化会清除 `nav` / `settings` 标签，相当于清除整站 HTML；这类变化频率低，可以接受。
-- **防击穿**：CDN 使用 stale-while-revalidate；Delivery 对同一个缓存键使用 Redis 锁合并并发回源。
+- **防击穿**：Delivery合并同键回源，回填由代次保护；V1可靠失效不依赖可丢失去抖缓冲。动态缓存命中不重置freshUntil，超时无可用值则503。
 
 ---
 
@@ -2551,7 +2595,7 @@ ContentPublishedEvent(contentId = 42)
     "alternates": [ { "hreflang": "zh", "href": "…/zh/products/…" }, { "hreflang": "en", "href": "…/en/products/…" }, { "hreflang": "de", "href": "…/de/produkte/…" }, { "hreflang": "x-default", "href": "…（默认对外语言版本）" } ],
     "jsonLd": { "@context": "https://schema.org", "@graph": [] }
   },
-  "cache": { "tags": ["s1", "s1:c:7201893453912345", "s1:t:7201893453900001", "s1:nav", "s1:settings"], "maxAge": 86400 }
+  "cache": { "tags": ["s1", "s1:c:7201893453912345", "s1:t:7201893453900001", "s1:nav", "s1:settings"], "maxAge": 55 }
 }
 ```
 
@@ -2624,7 +2668,7 @@ ALTER TABLE frm_form
 
 | 模块 | 主要表 |
 |---|---|
-| core | `sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_ui_text`（前台界面文案的站点覆盖与译文）、`sys_dict`、`sys_audit_log`、`sys_dsr_request`、`sys_job`、`sys_lock`、`event_publication` |
+| core | `sys_site`、`sys_site_domain`、`sys_site_locale`、`sys_site_module`、`sys_site_profile`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_role_permission`、`sys_user_site_role`、`sys_permission`、`sys_menu`、`sys_module`、`sys_setting`、`sys_ui_text`（前台界面文案的站点覆盖与译文）、`sys_dict`、`sys_audit_log`、`sys_dsr_request`、`sys_job`、`sys_lock`、`EVENT_PUBLICATION` |
 | content | `cnt_content`、`cnt_localization`、`cnt_revision`、`cnt_published_term`、`cnt_review`、`cnt_preview_token` |
 | url | `url_route`、`url_redirect`、`url_pattern`、`url_not_found` |
 | media | `mda_media`、`mda_media_localization`、`mda_folder`、`mda_usage` |
@@ -3114,7 +3158,7 @@ V1.3 调整：M1 为中文单语闭环（前台只开放中文，多语言数据
 | Q6 | V1 是否需要在系统内直接给客户发邮件？ | 17 |
 | Q7 | 销售团队结构与分配规则？ | 17.7 |
 | Q8 | 哪些站点、哪些内容类型需要审核？ | 6.7 |
-| Q9 | V1 唯一主题的设计方向与设计稿由谁提供？ | 11 |
+| Q9 | 方向已确认：前台参考Tesla，沿用industrial主题，后台Element Plus；稿件与素材按开发计划M0/M1/M2交付并由业主验收，具体设计稿尚未完成 | 11 |
 | Q10 | 邮件服务商？是否已有 GA4 / GTM 账号？ | 18、20 |
 | Q11 | 团队规模与技能（是否有专职前端与设计师）？ | 30 |
 | Q12 | 是否确认“自研”（ADR-000）？**已确认：自研**（ADR-000 为 Accepted） | 全局 |
@@ -3204,8 +3248,16 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件。ADR-000、ADR-005�
 | ADR-016 | `docs/adr/0016-privacy-compliance-baseline.md` | 隐私合规基线：GDPR / UK GDPR / ePrivacy + CCPA/CPRA |
 | ADR-017 | `docs/adr/0017-ai-translation-and-translation-memory.md` | AI 翻译与翻译记忆 |
 | ADR-018 | `docs/adr/0018-framework-first-parallel-modules.md` | 框架先行、契约优先，模块按独立设计文档并行开发 |
+| ADR-019（Proposed） | `docs/adr/0019-transactional-media-references.md` | 媒体引用与源保存同事务登记 |
+| ADR-020（Proposed） | `docs/adr/0020-cache-invalidation-fences.md` | 缓存回填使用代次保护，失效义务持久重试 |
+| ADR-021（Proposed） | `docs/adr/0021-immutable-search-generations.md` | 搜索使用事务变更日志与不可变索引代次 |
+| ADR-022（Proposed） | `docs/adr/0022-current-route-recalculation.md` | 内容内核编排当前树的路由重算 |
+| ADR-023（Proposed） | `docs/adr/0023-form-notification-direction.md` | 允许表单同事务写入通知发件箱 |
+| ADR-024（Proposed） | `docs/adr/0024-translation-review-guard.md` | 人工审校要求由可信内容元数据持久化 |
+| ADR-025（Proposed） | `docs/adr/0025-site-resource-lifecycle.md` | 独立站点资源的生命周期事件与翻译事件分离 |
 
 ---
+
 
 ## 附录 C：后续详细设计文档
 
@@ -3215,5 +3267,5 @@ M0 阶段把 2.5 节的摘要整理为正式的 ADR 文件。ADR-000、ADR-005�
 |---|---|---|---|
 | 1 | 《平台框架设计》`docs/framework/platform-framework.md` | 工程结构；全部跨模块契约的完整签名（含原计划的《Module SPI 与扩展点详细设计》）；platform-core 与基础设施；platform-core 数据模型；数据库通用约定与框架表；前端框架（含组件与模板 Schema 规范）；测试替身与契约测试；质量门禁；本地开发环境；模块设计文档模板；并行开发计划 | M0 开始前 |
 | 2 | 模块设计文档 `docs/modules/<模块ID>.md`（17 份） | 每个模块的职责、使用与实现的契约、领域模型、表结构与 DDL、业务流程、接口、后台界面、前台组件、配置、任务、测试、独立开发说明、验收标准。原计划的《内容发布、快照与投影》《URL 与 SEO 引擎》《REST API 与 Delivery API》《询盘与反垃圾》《Content Graph》等详细设计分别并入 content、url、seo、delivery、form 与 inquiry、graph 等模块文档 | 平台框架契约冻结后并行编写；各模块开工前完成 |
-| 3 | 《Design System 规范与主题开发指南》 | 11 章的细化：Token 清单、组件视觉规范、主题开发方法 | M2 开始前 |
+| 3 | [前台视觉设计方向与 UI 基线](../design/visual-direction.md) | 11 章的细化：Token 清单、组件视觉规范、主题开发方法 | M2 开始前 |
 | 4 | 《部署、运维与运维手册》 | 27 章的细化 | M4 |

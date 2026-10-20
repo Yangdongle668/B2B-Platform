@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：上传、图片变换、引用追踪；M2：文件夹；M3：alt / 标题作为可翻译资源；私有文件（留资文档）；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.2 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.4 第 12 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 12 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -107,10 +107,6 @@
       "TranslatableResourceChangedEvent"
     ],
     "subscribes": [
-      "ContentDraftChangedEvent",
-      "ContentPublishedEvent",
-      "ContentUnpublishedEvent",
-      "NavigationChangedEvent",
       "SiteSettingsChangedEvent",
       "ContentPurgedEvent"
     ]
@@ -146,16 +142,14 @@
 |---|---|---|---|---|
 | `TranslatableResourceProvider`（4.5.21） | `MediaTranslatableResourceProvider` | 媒体 alt、标题与说明；文件路径、hash、尺寸不翻译 | DEFAULT=1000 | translation |
 | `PlatformModule`（4.5.22） | `MediaModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
+| `MediaReferenceSink`（4.10.1，Proposed） | `MediaReferenceSinkImpl` | 当前站点事务内媒体引用 | 唯一实现 | core |
 
 以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。本模块不可站点级停用；对可选依赖缺失/停用仍须按框架约定降级。
 
+
 ### 2.5 收集的扩展点
 
-| 扩展点 | 调用时机 | 过滤 | 失败行为 | 测试示例 |
-|---|---|---|---|---|
-| `MediaReferenceCollector`（4.5.16） | 见第 5 章流程 | ExtensionRegistry 按站点启用状态、内容类型或 key 过滤 | 事务内校验/发布异常则回滚；只读可选部分失败记指标并降级，核心部分失败返回 503 | `SampleMediaReferenceCollector` |
-
-引用收集是只读扫描：收集器输出媒体 ID、用途和 owner，不自行修改其他模块表。短事务按 owner/stage/part 整组替换 mda_usage；收集失败保留旧集合并报告，不能清空后当成功。
+不再收集MediaReferenceCollector；草稿/资源由源拥有者收集。media实现core收集的MediaReferenceSink，完整语义见框架4.10.1。
 
 ### 2.6 发布与订阅的事件
 
@@ -172,10 +166,6 @@
 
 | 事件 | 处理 | 幂等 | 过期与删除 | 失败与重试 |
 |---|---|---|---|---|
-| `ContentDraftChangedEvent` | 经 MediaReferenceCollector.collectDraft 读取当前草稿引用，按 owner/locale/stage/part 整组替换 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
-| `ContentPublishedEvent` | 从当前发布快照 ReferenceSet.scan 收集 PUBLISHED 引用；不得把 collectDraft 的结果当成发布态 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
-| `ContentUnpublishedEvent` | 移除该语言的公开投影/候选/缓存依赖，人工关系及历史快照按 4.6 保留 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
-| `NavigationChangedEvent` | 按 menuId 调用 collectResource(navigation.menu, menuId) 替换该菜单的资源引用；删除菜单时空集合清理 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
 | `SiteSettingsChangedEvent` | 仅 PROFILE 等相关 scope 触发对应资源 Collector，其他 settings 变化忽略 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
 | `ContentPurgedEvent` | 按事件 contentId/localizationIds 清理本模块外部引用或子行；历史业务快照按 4.6 保留；不回查已不存在的父内容 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
 
@@ -230,7 +220,7 @@
 | 8 | `mda_usage` 中仍有引用（任一阶段）的媒体不能删除（包括移入回收站），界面列出引用位置 | 应用层（软删除前检查）；数据库：`fk_mda_usage_media`（RESTRICT，针对物理删除） |
 | 9 | 每个媒体每种语言最多一条本地化；中文行 `translation_state = 'NONE'`、`source_fingerprint` 为空；其他语言行只由 translation 经 `TranslatableResourceProvider` 写入，或在翻译编辑器中修订 | 数据库：`uk_ml_media_locale`；应用层 |
 | 10 | 文件夹：同一父文件夹下名称唯一（不区分大小写与重音）；根 `depth = 1`，子文件夹 `depth` = 父 + 1，最大 10；`path` = 父 `path` + 自身 ID + `/`；非空文件夹（有子文件夹或媒体，含回收站中的媒体）不能删除 | 数据库：`uk_folder_name`、`ck_mda_folder_depth`、`fk_mda_folder_parent`、`fk_mda_media_folder`（RESTRICT）；应用层 |
-| 11 | `mda_usage` 以（`owner_type`、`owner_id`、`locale`、`stage`、`part`）为单位整组替换；`PUBLISHED` 行与该本地化当前的发布修订一致（发布时重算，下线时删除） | 应用层（幂等：先删后插，同一事务） |
+| 11 | `mda_usage`以(owner_type, owner_id, locale, stage)完整替换所有part；`PUBLISHED` 行与该本地化当前的发布修订一致（发布时重算，下线时删除） | 应用层（幂等：先删后插，同一事务） |
 | 12 | `sha256` 不要求唯一：发现重复只提示复用已有文件，由用户决定 | 应用层 |
 
 ### 3.3 状态机
@@ -504,13 +494,27 @@ CREATE TABLE mda_usage (
 
 | 阶段 | 触发 | 处理 |
 |---|---|---|
-| `PUBLISHED`（内容） | `ContentPublishedEvent`（事务提交后，异步） | media 用 ReferenceSet.scan 扫描当前发布快照，不调用草稿 Collector 作为发布态来源，按（内容，语言）整组替换 `PUBLISHED` 行 |
-| `PUBLISHED`（内容） | `ContentUnpublishedEvent` | 删除该（内容，语言）的 `PUBLISHED` 行 |
-| `DRAFT`（内容） | 业务模块保存草稿 | 业务模块同事务调用 ContentApi.updateDraftMeta 产生 ContentDraftChangedEvent，media 再 collectDraft 并按 part 整组替换；语言无关字段仍按 Collector 和事件上下文处理 |
-| `PUBLISHED`（站点资源） | 资源保存（如站点资料的 Logo、作者头像、SEO 默认分享图） | 只经已登记资源变更事件，由 media 调用 collectResource 整组替换；未登记作者资源见 ARTICLE-01；站点资源保存即生效，只记 `PUBLISHED` |
-| 全部 | `ContentPurgedEvent` | 删除该内容的全部行 |
+| `PUBLISHED`（内容） | content发布事务 | content扫描已组装快照，经ReferenceWriteApi同步替换完整集合 |
+| `PUBLISHED`（内容） | content下线事务 | 同事务清除此内容/语言PUBLISHED集合，保留DRAFT |
+| `DRAFT`（内容） | 原草稿保存事务 | content收集完整草稿并经ReferenceWriteApi替换；不等待异步事件 |
+| `PUBLISHED`（站点资源） | 原资源保存/删除事务 | 拥有者传完整集合或空集合，同步登记作者头像、菜单图片、站点Logo等 |
+| 全部 | content彻底清理原事务经ReferenceWriteApi | 删除该内容的全部行；事件不得晚到覆盖新集合 |
 
 历史修订中的引用不记录：回滚到旧修订后再次发布时，发布校验（“引用的媒体存在”，系统设计 6.3）会拦截已删除的媒体。
+
+#### 4.3.5 门控元数据补丁
+
+新增持久门控表单key与单调版本，供MediaApi.setDownloadGate/issueGatedDownload使用；字段属于media，不建立指向form的外键。setDownloadGate、软删除、恢复及门控撤销在媒体排他行锁内推进download_gate_version。其他描述/文件夹变化不改变门控版本。
+
+```sql
+ALTER TABLE mda_media
+  ADD COLUMN gated_form_key VARCHAR(64) COLLATE utf8mb4_0900_bin NULL COMMENT '留资门控表单key；空表示无门控',
+  ADD COLUMN download_gate_version BIGINT NOT NULL DEFAULT 0 COMMENT '门控及删除/恢复变更代次，不回退',
+  ADD COLUMN purge_job_id BIGINT NULL COMMENT '已提交物理清理任务ID；非空禁止恢复，逻辑引用core任务',
+  ADD CONSTRAINT ck_mda_gate_version CHECK (download_gate_version >= 0);
+```
+
+这是V002追加草案，4.3.2的原CREATE块保留；新库必须依序执行V001及本补丁，不得只执行CREATE便宣称门控已就绪。
 
 ### 4.4 枚举
 
@@ -547,7 +551,7 @@ CREATE TABLE mda_usage (
 | 本模块字段 | 引用对象（模块.表） | 被引用对象删除 / 下线时的处理 | 触发事件 |
 |---|---|---|---|
 | `mda_usage.owner_id`（`owner_type = 'CONTENT'`）、`content_id` | content.`cnt_content` | 下线：删除该语言的 `PUBLISHED` 行；彻底删除：删除该内容的全部行 | `ContentUnpublishedEvent`、`ContentPurgedEvent` |
-| `mda_usage.owner_id`（站点资源） | 资源所属模块的表（如 core.`sys_site_profile`、article.`art_author`） | 已登记资源按对应变更事件 → collectResource 返回当前集合（删除为空）清理；未登记的 article.author 通道见 ARTICLE-01，不能调用未定义写方法 | 所属模块的删除操作 |
+| `mda_usage.owner_id`（站点资源） | 资源所属模块的表（如 core.`sys_site_profile`、article.`art_author`） | 已登记资源由源事务collectResource后同步登记，删除传空集合；article.author由源事务经core协调登记，见框架4.10.1–2 | 所属模块的删除操作 |
 | `mda_media.owner_module` | core.`sys_module` | 所属模块停用：文件保留；被 PURGED：删除该模块的文件与行 | `onPurge` |
 | `mda_media_localization.locale` | core.`sys_site_locale` | V1 不删除站点语言，无需清理 | `SiteSettingsChangedEvent` |
 | `created_by`、`updated_by` | core.`sys_user` | 不清理 | — |
@@ -556,7 +560,7 @@ CREATE TABLE mda_usage (
 
 | 被引用对象 | 引用方 | 本模块对象变化时的处理 | 事件 |
 |---|---|---|---|
-| `mda_media.id` | 布局文档 `$media`（page）、`prd_product_media`、`prd_product_document`（product）、`cnt_localization.pub_cover_media_id`（content）、`art_author`（article）、SEO 分享图（seo）、`sys_site_profile` 的 Logo 等（core） | 有引用记录时不能删除；引用方实现 MediaReferenceCollector 并通过已登记草稿/资源事件触发收集；MediaApi 不含引用写方法；修改 alt、焦点等只需按 `m:{mediaId}` 失效缓存，引用方无需重新发布 | `MediaUpdatedEvent`、`MediaDeletedEvent` |
+| `mda_media.id` | 布局文档 `$media`（page）、`prd_product_media`、`prd_product_document`（product）、`cnt_localization.pub_cover_media_id`（content）、`art_author`（article）、SEO 分享图（seo）、`sys_site_profile` 的 Logo 等（core） | 有引用记录时不能删除；引用方实现 MediaReferenceCollector 并由源保存事务收集并经ReferenceWriteApi同步登记；MediaApi 不含引用写方法；修改 alt、焦点等只需按 `m:{mediaId}` 失效缓存，引用方无需重新发布 | `MediaUpdatedEvent`、`MediaDeletedEvent` |
 | `mda_media.id`（`owner_module = 'inquiry'`） | inquiry.`inq_attachment.media_id`（员工在后台上传的询盘附件） | 由 inquiry 经 `MediaApi` 删除（询盘匿名化、数据主体删除请求） | — |
 | `mda_media.id`（留资文档） | form.`frm_submission.download_media_id` | 历史记录，不清理；签发下载链接时按 3.2 不变量 5 校验 | — |
 
@@ -569,6 +573,8 @@ CREATE TABLE mda_usage (
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
 | `db/migration/media/V001__init.sql` | 4.3 中的全部表（4 张：`mda_folder`、`mda_media`、`mda_media_localization`、`mda_usage`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
+| `db/migration/media/V002__download_gate.sql` | 4.3.5追加字段；不改V001 | M3；启用依赖功能前 |
+
 
 ## 5. 业务流程
 
@@ -578,9 +584,24 @@ CREATE TABLE mda_usage (
 |---|---|---|
 | 1 | 上传流在事务外执行魔数、MIME、扩展名、大小检查和 ObjectStorage 写入；短事务登记 PROCESSING；提交后扫描及提取元数据，成功置 READY，感染置 QUARANTINED，异常保持不可下载并重试。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 | 2 | 媒体被内容草稿或已发布快照引用时，草稿经 MediaReferenceCollector.collectDraft、发布态经 ReferenceSet.scan 重算对应 owner/stage/part 的引用集合，整组替换；读取当前修订，丢弃旧事件。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
-| 3 | 删除前查询引用并拒绝仍使用的文件；清理任务在保留期满后删对象与元数据。私有文件只有授权后才能签发短期 URL，留资文件经下载票据访问。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | 软删除先锁媒体并当前读引用，拒绝仍使用的文件；软删除保留对象30天，恢复同锁校验对象/扫描状态；到期purge登记持久清理任务后删对象。私有文件只有授权后才能签发短期 URL，留资文件经下载票据访问。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 
 后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
+
+### 5.1.1 媒体生命周期与下载授权
+
+| 操作 | 数据库当前读/锁 | 对象文件 | 版本/授权结果 |
+|---|---|---|---|
+| 普通软删除 | 媒体FOR UPDATE，当前读确认无保护引用后写deleted_at | 保留30天 | version及download_gate_version增加，公开视图和票据失效 |
+| 新引用保存 | 同站点媒体FOR SHARE，明确deleted_at IS NULL；按阶段检查扫描状态 | 不修改 | 软删先提交则保存失败；引用先提交则软删等待后拒绝 |
+| 恢复 | 同一媒体FOR UPDATE，purge_job_id为空，文件存在且扫描状态允许 | 保留/复用原对象 | 清deleted_at并增加两个版本，旧下载票据不复活 |
+| 到期purge | 重验30天/无引用；同事务登记media.purge_object的sys_job | 提交后幂等删除 | 清理义务持久化且禁止恢复；对象删除成功再清元数据，失败重试 |
+| 门控签发/访问 | 按框架4.10.6核对门控版本、content/locale的PUBLISHED引用、PRIVATE/READY和未软删 | 访问通过后才签短期对象URL | 不向回滚/待审/拒绝/测试提交返回票据 |
+
+force仅用于调用模块管理、没有任何受保护引用的私有附件，不能“忽略mda_usage”。purge_job_id非空就是已提交物理清理义务，恢复必须拒绝；清理任务与此字段同事务创建，不依赖查询其他模块表。任务成功删除对象后再清本地化/媒体行，失败保留任务及标记。当前DDL补丁见4.3.5；没有发布引用时不能仅凭formKey签发。
+
+
+M0-07实施检查：M0-07实测媒体保存/删除、恢复/purge及清理失败；保留期来自锁定行的当前值，不使用旧快照；对象存储端口仍待集成。验证范围与复现方式见[事务协议复审](../reviews/m0-transaction-protocol-review-2026-10-20.md)。
 
 ### 5.2 一致性、失败与恢复约束
 
@@ -588,8 +609,17 @@ CREATE TABLE mda_usage (
 |---|---|---|
 | 对象存储与数据库部分失败 | 校验后事务外写对象，短事务登记 PROCESSING；登记失败时用相同 storageKey 补偿删除对象，补偿失败进入可见的孤立对象清理。处理中的文件不生成可用公开链接。 | 注入写对象成功但登记失败、登记成功但扫描超时两种故障；无 READY 假成功，补偿任务可重复执行。 |
 | 草稿引用与发布引用来源 | DRAFT 走 collectDraft；PUBLISHED 走当前发布快照 ReferenceSet.scan，不能把正在编辑的草稿当成发布态。资源按完整聚合替换，失败保留旧集合。 | 同内容草稿换图但尚未发布，旧线上图仍有 PUBLISHED 引用，新图只有 DRAFT 引用；旧事件重投不回退集合。 |
-| 异步引用与删除竞争 | 仅查询到 mda_usage 为空不足以证明刚保存的草稿没有引用；删除前需覆盖事件未处理窗口与删除/保存并发，不能强制删除来绕过此约束。具体闭环见 MEDIA-02。 | 暂停草稿事件消费者，保存带新图片的内容后立即删图；删除必须拒绝或等待核对，不得产生可发布的悬空引用。 |
+| 引用写入与删除竞争 | 保存事务持媒体共享锁并同步替换引用；删除持排他锁并当前读，两个操作串行，不能以force绕过。详见MEDIA-02及框架4.10.1。 | 并行执行新草稿保存与媒体软删除：保存先提交则删除拒绝；删除先提交则保存因deleted_at拒绝。暂停事件消费者不得改变结果。 |
 | 私有文件与签名期限 | 先核验站点、owner_module、READY、业务授权或 DOWNLOAD 票据，才生成短期链接；URL 与文件名不包含令牌、个人信息或客户端目录。公开媒体读取也不自动暴露原始私有对象路径。 | 对 A/B 站、非所属业务、未扫描、过期票据逐一请求均失败；员工授权下载成功且有脱敏审计，响应 no-store。 |
+
+### 5.3 实现前统一方案与接入要求
+
+依据[平台框架 4.10.1](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
+
+- media 实现 core 收集的 MediaReferenceSink，同源保存事务替换完整引用集合，不再读取 ContentApi 或异步扫描cnt快照。
+- sink按媒体ID升序取得共享行锁；delete先取得媒体排他行锁、当前读检查引用。双方至少一方等待/失败，不能同时提交悬空引用。
+- 旧ContentDraftChanged/Published等异步引用写入路径取消。修复由源模块取得源对象锁后重新登记；停用不删除保护引用，purge仍清理。
+- force不绕过受保护资产引用；软删除保留对象30天；只有到期purge/合法私有附件清理通过持久任务在提交后删对象，可重复执行。PROCESSING只可用于草稿，发布必须READY；软删除先提交则根据deleted_at拒绝新引用；物理删除按不存在拒绝。
 
 ## 6. 接口
 
@@ -820,7 +850,7 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
 | A11 | 注入写对象成功但登记失败、登记成功但扫描超时两种故障；无 READY 假成功，补偿任务可重复执行。 | 模块自身 / 5.2 | 集成：`MediaA11IT`；涉及界面 E2E：`media-A11` | M1 |
 | A12 | 同内容草稿换图但尚未发布，旧线上图仍有 PUBLISHED 引用，新图只有 DRAFT 引用；旧事件重投不回退集合。 | 模块自身 / 5.2 | 集成：`MediaA12IT`；涉及界面 E2E：`media-A12` | M1 |
-| A13 | 暂停草稿事件消费者，保存带新图片的内容后立即删图；删除必须拒绝或等待核对，不得产生可发布的悬空引用。 | 模块自身 / 5.2 | 集成：`MediaA13IT`；涉及界面 E2E：`media-A13` | M1 |
+| A13 | 并行新草稿保存与媒体软删除，分别控制锁顺序；保存先提交则删除拒绝，删除先提交则保存拒绝；暂停事件消费者不影响结果。 | 模块自身 / 5.2 | 集成：`MediaA13IT`；涉及界面 E2E：`media-A13` | M1 |
 | A14 | 对 A/B 站、非所属业务、未扫描、过期票据逐一请求均失败；员工授权下载成功且有脱敏审计，响应 no-store。 | 模块自身 / 5.2 | 集成：`MediaA14IT`；涉及界面 E2E：`media-A14` | M3 |
 
 用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
@@ -830,8 +860,8 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
 | MEDIA-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
-| MEDIA-01 | 框架 4.4.16 将 media 列为 ContentApi 读取方，但 4.1.3 明确禁止 media→任何 L2；发布态扫描与最新版本读取的调用方向不一致 | 引用追踪的调用边界 | 是 | 框架负责人 / 模块负责人 | M1 引用追踪开工前 | 由框架按 ADR/4.9 统一合法快照输入或调用规则；模块文档不擅自新增 requires(content)，也不读取 cnt_ 表。 |
-| MEDIA-02 | mda_usage 异步更新与媒体删除存在空窗，现有空引用查询不是完整安全证明 | 防止内容新引用与删除并发形成悬空媒体 | 是 | 框架负责人 / 模块负责人 | M1 引用追踪开工前 | 冻结删除前校验/事件积压/并发保存协议并补故障注入用例；未覆盖窗口时不能承诺“无引用即可安全删除”。 |
+| MEDIA-01 | 框架 4.4.16 将 media 列为 ContentApi 读取方，但 4.1.3 明确禁止 media→任何 L2；原发布态扫描与最新版本读取的调用方向不一致 | 引用追踪的调用边界 | 方案已补齐，待评审冻结 | 框架负责人 / 模块负责人 | M1 引用追踪开工前 | 统一方案：取消media→ContentApi读取，源模块经core同步登记完整引用；ADR-019。详见框架4.10.1及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
+| MEDIA-02 | mda_usage 异步更新与媒体删除存在空窗，现有空引用查询不是完整安全证明 | 防止内容新引用与删除并发形成悬空媒体 | 方案已补齐，待评审冻结 | 框架负责人 / 模块负责人 | M1 引用追踪开工前 | 统一方案：共享/排他媒体行锁、当前读引用与同事务替换，删除与新引用不能同时成功；ADR-019。详见框架4.10.1及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 
 ## 修订记录
 
@@ -840,3 +870,6 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.0 | 2026-10-14 | 初稿 |
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
+| V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
+| V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.5 | 2026-10-20 | M0-07实测媒体保存/删除、恢复/purge及清理失败；保留期来自锁定行的当前值，不使用旧快照；对象存储端口仍待集成 |

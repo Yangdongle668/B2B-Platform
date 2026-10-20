@@ -1,0 +1,1385 @@
+{
+  "review_id": "FR-2026-10-20",
+  "baseline": {
+    "review_date": "2026-10-20",
+    "git_head": "0b72bfb39cc0fc89ecf44e9914ea83d0821a316b",
+    "includes_uncommitted_work": true,
+    "files": [
+      {
+        "path": "CLAUDE.md",
+        "sha256": "5c6c432992f2e261c2d838ca699084425208c11d6a325279b7707a4769bf39e7",
+        "lines": 108
+      },
+      {
+        "path": "docs/adr/0000-build-vs-buy.md",
+        "sha256": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+        "lines": 77
+      },
+      {
+        "path": "docs/adr/0001-compile-time-modules.md",
+        "sha256": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+        "lines": 79
+      },
+      {
+        "path": "docs/adr/0002-module-communication.md",
+        "sha256": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+        "lines": 87
+      },
+      {
+        "path": "docs/adr/0003-event-reliability.md",
+        "sha256": "fdf2d8b6145f9008382fb0d2e3b6c76b345c6fa8580faafa035651e50350c23e",
+        "lines": 91
+      },
+      {
+        "path": "docs/adr/0004-content-kernel.md",
+        "sha256": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+        "lines": 89
+      },
+      {
+        "path": "docs/adr/0005-i18n-and-url-strategy.md",
+        "sha256": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+        "lines": 86
+      },
+      {
+        "path": "docs/adr/0006-template-and-page-builder.md",
+        "sha256": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+        "lines": 104
+      },
+      {
+        "path": "docs/adr/0007-editor-canvas-iframe.md",
+        "sha256": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+        "lines": 99
+      },
+      {
+        "path": "docs/adr/0008-seo-data-ownership.md",
+        "sha256": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+        "lines": 92
+      },
+      {
+        "path": "docs/adr/0009-site-and-locale.md",
+        "sha256": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+        "lines": 113
+      },
+      {
+        "path": "docs/adr/0010-admin-authentication.md",
+        "sha256": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+        "lines": 87
+      },
+      {
+        "path": "docs/adr/0011-technology-versions.md",
+        "sha256": "064c924939c24a318aadacd530f7c6c2f1d4804c6674c246c4b6bfa29bd48f13",
+        "lines": 89
+      },
+      {
+        "path": "docs/adr/0012-cache-tags.md",
+        "sha256": "15f66ba34be25dbf2127706787a46eabf9baca77e2f22a50730421f260a7ccb6",
+        "lines": 95
+      },
+      {
+        "path": "docs/adr/0013-search-read-model.md",
+        "sha256": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+        "lines": 85
+      },
+      {
+        "path": "docs/adr/0014-id-strategy.md",
+        "sha256": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+        "lines": 81
+      },
+      {
+        "path": "docs/adr/0015-hosting-region-and-data-residency.md",
+        "sha256": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+        "lines": 87
+      },
+      {
+        "path": "docs/adr/0016-privacy-compliance-baseline.md",
+        "sha256": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+        "lines": 94
+      },
+      {
+        "path": "docs/adr/0017-ai-translation-and-translation-memory.md",
+        "sha256": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+        "lines": 102
+      },
+      {
+        "path": "docs/adr/0018-framework-first-parallel-modules.md",
+        "sha256": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+        "lines": 78
+      },
+      {
+        "path": "docs/adr/0019-transactional-media-references.md",
+        "sha256": "99e60a920fa0dfca4c50485aede86aa0c3c27726927cfa0032beedcfe7254eac",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0020-cache-invalidation-fences.md",
+        "sha256": "8941e81761371fcef05dc8c5eb8a9a034483cd0dbffe9a3cf02276f785b0cbc1",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0021-immutable-search-generations.md",
+        "sha256": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0022-current-route-recalculation.md",
+        "sha256": "921092c94eaf36382b06263439b6f80ee8c4b3251d9f93853c7c4db4799b3442",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0023-form-notification-direction.md",
+        "sha256": "0962e56bd13cbde7b013432f9f7bb865e4102c005f0a1da5eb4d3fe12daac4f7",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0024-translation-review-guard.md",
+        "sha256": "ab27c28cd94a775c357687598d531f098aa76420e82e6859bdb9398f8724f33f",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/0025-site-resource-lifecycle.md",
+        "sha256": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+        "lines": 53
+      },
+      {
+        "path": "docs/adr/README.md",
+        "sha256": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+        "lines": 75
+      },
+      {
+        "path": "docs/adr/template.md",
+        "sha256": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+        "lines": 57
+      },
+      {
+        "path": "docs/architecture/system-design.md",
+        "sha256": "91c418b72de8f1be2e20bc3ac61808f14aef16a8bfbb2f345373d11da2f33543",
+        "lines": 3265
+      },
+      {
+        "path": "docs/design/visual-direction.md",
+        "sha256": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+        "lines": 190
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "sha256": "5cd7e5ac742f4310c140a2bc00973ac0a5b44191190a9d739280aa5ed1cd6bb7",
+        "lines": 13766
+      },
+      {
+        "path": "docs/modules/README.md",
+        "sha256": "1e1c9c815d66c13a6ecc6939eaffd9eac263e5e670973c071ba1a77e52889238",
+        "lines": 49
+      },
+      {
+        "path": "docs/modules/article.md",
+        "sha256": "6642adfc205dd50fa0b7b4335f45ad26340d97556b74b986ec60203ae94273f8",
+        "lines": 1046
+      },
+      {
+        "path": "docs/modules/content.md",
+        "sha256": "d3b6199c2022e6c33d5684d8ff99c72600ba38217871861b6d9d6980ce2d065f",
+        "lines": 1329
+      },
+      {
+        "path": "docs/modules/delivery.md",
+        "sha256": "3b30d7f95cb9ab923ae9e06490f743b1fd976a3a24549e142f16689bdfb718b9",
+        "lines": 536
+      },
+      {
+        "path": "docs/modules/form.md",
+        "sha256": "3357c8985f4021a2bbcb7419880672b0780a48c7d10a961991ff84d3db4e5281",
+        "lines": 1007
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "sha256": "490c97997edfb772d8c7d0d072cfbb9dc1c4a69afda1883356b223c707c1a76b",
+        "lines": 909
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "sha256": "6d7106fd47e807853d83f1181bc65938a2ad70dfeaea40addc1c007c5b3a1c2c",
+        "lines": 1238
+      },
+      {
+        "path": "docs/modules/media.md",
+        "sha256": "f16ad926251cc5a44ed20a4c04e13ef52ebecf8eed942cc576195598b5f1af4a",
+        "lines": 842
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "sha256": "4e5bcb55523b7ff386cea354992be7c724af78268af4442c9e3037d4e441e35d",
+        "lines": 691
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "sha256": "170550fbccb37f1facb264f42a36cb56f6a5027f12f3b1446e85ae684fd287b8",
+        "lines": 788
+      },
+      {
+        "path": "docs/modules/page.md",
+        "sha256": "1f119c2345c05eb19bacf4a1b3bd4f0a487b7b1a1403d5b2827bd57fce4bbd64",
+        "lines": 887
+      },
+      {
+        "path": "docs/modules/product.md",
+        "sha256": "05466034710aa3d6273550ab8da53279afaf2f29b8918a52f1b93cffdba679a6",
+        "lines": 1462
+      },
+      {
+        "path": "docs/modules/search.md",
+        "sha256": "09a2f1ef5707179005fb89971407b7347010e2050e2f83a4f8a68d3e0eed002c",
+        "lines": 626
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "sha256": "4f42fb6b334da0d26c39179d3a2035beecbe8f8ce30508a26a54038c014aae07",
+        "lines": 1037
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "sha256": "40452c7b926cca0d407b6025b9883ffbb6f3e6fe447e15e213955558592c4c6e",
+        "lines": 798
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "sha256": "46bc2985c8cc26f5c3e0efd4310da3663650b5ab221fc9b399f3d3c0aec15b9f",
+        "lines": 911
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "sha256": "fe7c37b4c4b370612119b13d685212b540f516a637e67e4bf5ae987f5da14aa5",
+        "lines": 1362
+      },
+      {
+        "path": "docs/modules/url.md",
+        "sha256": "c04b30f0af513e84c478333a34ad143a36b2cd9c40a1e6f96c0234527e780e71",
+        "lines": 812
+      },
+      {
+        "path": "docs/reviews/design-issue-resolution-2026-10-20.md",
+        "sha256": "58c15b29cc47d8ff8aca33e79008b2a771486d093beec3b8a3e5e027a0fce722",
+        "lines": 76
+      },
+      {
+        "path": "docs/reviews/module-design-review-2026-10-20.md",
+        "sha256": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e",
+        "lines": 89
+      }
+    ]
+  },
+  "static_checks": {
+    "module_descriptors": 17,
+    "declared_permissions": 96,
+    "component_types": 36,
+    "admin_endpoint_designs": 234,
+    "module_acceptance_requirements": 238,
+    "additional_fault_requirements": 25,
+    "module_schema_and_structure_errors": [],
+    "proposals_pending_review": 9,
+    "source_ADRs_accepted": 5,
+    "source_ADRs_proposed": 21,
+    "all_document_local_links_checked": 248,
+    "all_document_link_errors": [],
+    "reviewed_contract_sources_unchanged": true
+  },
+  "mysql": {
+    "engine_version": "8.4.11",
+    "image_digest": "sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+    "foreign_key_checks": 1,
+    "readiness": "final TCP listener, not temporary init socket",
+    "blocks_attempted": 119,
+    "succeeded": 119,
+    "failed": 0,
+    "tables_created": 119,
+    "results": [
+      {
+        "path": "docs/modules/article.md",
+        "block": 1,
+        "tables": [
+          "art_author"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 5,
+        "tables": [
+          "art_case_study"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 7,
+        "tables": [
+          "art_faq"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 1,
+        "tables": [
+          "cnt_content"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 6,
+        "tables": [
+          "frm_blocklist"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 1,
+        "tables": [
+          "frm_form"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 3,
+        "tables": [
+          "grh_config"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 4,
+        "tables": [
+          "grh_content_mode"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 5,
+        "tables": [
+          "grh_dirty"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 1,
+        "tables": [
+          "grh_relation"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 6,
+        "tables": [
+          "grh_relation_set"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 2,
+        "tables": [
+          "grh_relation_type"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 4,
+        "tables": [
+          "inq_inquiry"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 8,
+        "tables": [
+          "inq_no_sequence"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 1,
+        "tables": [
+          "inq_sales_group"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 9,
+        "tables": [
+          "inq_work_calendar"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 1,
+        "tables": [
+          "mda_folder"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 1,
+        "tables": [
+          "nav_menu"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 1,
+        "tables": [
+          "ntf_template"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 2,
+        "tables": [
+          "ntf_webhook"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 4,
+        "tables": [
+          "pg_component_usage"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 2,
+        "tables": [
+          "pg_global_block"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 3,
+        "tables": [
+          "pg_layout"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 1,
+        "tables": [
+          "pg_page"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 3,
+        "tables": [
+          "prd_attribute_group"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 9,
+        "tables": [
+          "prd_attribute_set"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 1,
+        "tables": [
+          "prd_product"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 3,
+        "tables": [
+          "sch_build"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 2,
+        "tables": [
+          "sch_change"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 1,
+        "tables": [
+          "sch_index_state"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 4,
+        "tables": [
+          "seo_audit"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 3,
+        "tables": [
+          "seo_link"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 1,
+        "tables": [
+          "seo_meta"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 7,
+        "tables": [
+          "seo_ping_queue"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 6,
+        "tables": [
+          "seo_robots_rule"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 2,
+        "tables": [
+          "seo_template"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 19,
+        "tables": [
+          "sys_audit_log"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 20,
+        "tables": [
+          "sys_job"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 21,
+        "tables": [
+          "sys_lock"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 1,
+        "tables": [
+          "sys_module"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 11,
+        "tables": [
+          "sys_role"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 16,
+        "tables": [
+          "sys_setting"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 2,
+        "tables": [
+          "sys_site"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 23,
+        "tables": [
+          "sys_transaction_mutex"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 9,
+        "tables": [
+          "sys_user"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 5,
+        "tables": [
+          "trk_consent_log"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 3,
+        "tables": [
+          "trk_consent_text"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 2,
+        "tables": [
+          "trk_script"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 1,
+        "tables": [
+          "trk_setting"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 1,
+        "tables": [
+          "trn_engine"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 3,
+        "tables": [
+          "trn_glossary_term"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 6,
+        "tables": [
+          "trn_job"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 5,
+        "tables": [
+          "trn_style_guide"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 1,
+        "tables": [
+          "tx_vocabulary"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 4,
+        "tables": [
+          "url_not_found"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 3,
+        "tables": [
+          "url_pattern"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 2,
+        "tables": [
+          "url_redirect"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 1,
+        "tables": [
+          "url_route"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 3,
+        "tables": [
+          "art_article"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 2,
+        "tables": [
+          "art_author_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 6,
+        "tables": [
+          "art_case_study_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 8,
+        "tables": [
+          "art_faq_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 2,
+        "tables": [
+          "cnt_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 2,
+        "tables": [
+          "frm_form_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 3,
+        "tables": [
+          "frm_form_notice_version"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 6,
+        "tables": [
+          "inq_activity"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 3,
+        "tables": [
+          "inq_assignment_rule"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 7,
+        "tables": [
+          "inq_attachment"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 10,
+        "tables": [
+          "inq_calendar_day"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 5,
+        "tables": [
+          "inq_inquiry_item"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 2,
+        "tables": [
+          "inq_sales_group_member"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 2,
+        "tables": [
+          "mda_media"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 2,
+        "tables": [
+          "nav_item"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 3,
+        "tables": [
+          "ntf_message"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 5,
+        "tables": [
+          "prd_attribute"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 4,
+        "tables": [
+          "prd_attribute_group_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 11,
+        "tables": [
+          "prd_category_attribute_set"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 12,
+        "tables": [
+          "prd_model"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 15,
+        "tables": [
+          "prd_product_document"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 2,
+        "tables": [
+          "prd_product_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 14,
+        "tables": [
+          "prd_product_media"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 5,
+        "tables": [
+          "seo_audit_issue"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 17,
+        "tables": [
+          "sys_dict_type"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 22,
+        "tables": [
+          "sys_dsr_request"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 15,
+        "tables": [
+          "sys_menu"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 12,
+        "tables": [
+          "sys_permission"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 3,
+        "tables": [
+          "sys_site_domain"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 4,
+        "tables": [
+          "sys_site_locale"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 5,
+        "tables": [
+          "sys_site_module"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 6,
+        "tables": [
+          "sys_site_profile"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 8,
+        "tables": [
+          "sys_ui_text"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 10,
+        "tables": [
+          "sys_user_mfa"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 14,
+        "tables": [
+          "sys_user_site_role"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 4,
+        "tables": [
+          "trk_consent_text_version"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 4,
+        "tables": [
+          "trn_glossary_translation"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 2,
+        "tables": [
+          "trn_memory"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 8,
+        "tables": [
+          "trn_usage_daily"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 2,
+        "tables": [
+          "tx_term"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 4,
+        "tables": [
+          "art_article_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 6,
+        "tables": [
+          "cnt_preview_token"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 4,
+        "tables": [
+          "cnt_published_term"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 5,
+        "tables": [
+          "cnt_review"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 3,
+        "tables": [
+          "cnt_revision"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 4,
+        "tables": [
+          "frm_submission"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 3,
+        "tables": [
+          "mda_media_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 4,
+        "tables": [
+          "mda_usage"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 3,
+        "tables": [
+          "nav_item_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 6,
+        "tables": [
+          "prd_attribute_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 7,
+        "tables": [
+          "prd_attribute_option"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 10,
+        "tables": [
+          "prd_attribute_set_item"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 13,
+        "tables": [
+          "prd_attribute_value"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 18,
+        "tables": [
+          "sys_dict_item"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 13,
+        "tables": [
+          "sys_role_permission"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 7,
+        "tables": [
+          "sys_site_profile_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 7,
+        "tables": [
+          "trn_job_item"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 4,
+        "tables": [
+          "tx_assignment"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 3,
+        "tables": [
+          "tx_term_localization"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 5,
+        "tables": [
+          "frm_attachment"
+        ],
+        "success": true,
+        "error": ""
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 8,
+        "tables": [
+          "prd_attribute_option_localization"
+        ],
+        "success": true,
+        "error": ""
+      }
+    ]
+  },
+  "schema_observation": {
+    "translation_review_required_tables": [
+      "cnt_content"
+    ],
+    "absent_from_cnt_localization": true
+  },
+  "limitations": [
+    "CREATE TABLE only; no application/Flyway upgrade/ORM tests",
+    "No Redis/Meilisearch/SMTP/browser/load or transaction protocol tests",
+    "Initial temporary startup-server attempt discarded; final TCP-ready fresh database rerun is authoritative"
+  ],
+  "cleanup": {
+    "temporary_container_removed": true,
+    "anonymous_volumes_removed": true,
+    "ports_published": false,
+    "external_container_network": "none"
+  }
+}

@@ -1,0 +1,1677 @@
+{
+  "review_id": "M0-2026-10-20-02",
+  "date": "2026-10-20",
+  "git_reference": "0b72bfb39cc0fc89ecf44e9914ea83d0821a316b",
+  "scope": "Executable protocol feasibility against authoritative document schema; not production service/testkit/G0 approval",
+  "previous_evidence": {
+    "path": "docs/reviews/evidence/m0-remediation-2026-10-20.json",
+    "sha256": "5dbd161e4da3f2b1c617ef21e1baea56e2fbc53099b0166bbbf0a865b125f570"
+  },
+  "run": {
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976"
+    },
+    "schema": {
+      "mysql": "8.4.11",
+      "foreign_key_checks": 1,
+      "create_blocks": 119,
+      "alter_blocks": 3,
+      "tables": 119,
+      "columns": [
+        "cnt_content.translation_review_required",
+        "frm_submission.download_grant",
+        "mda_media.download_gate_version",
+        "mda_media.gated_form_key",
+        "mda_media.purge_job_id",
+        "prd_product_document.gated_form_key",
+        "trn_job_item.expected_target_version"
+      ],
+      "statements": [
+        {
+          "path": "docs/modules/article.md",
+          "block": 1,
+          "table": "art_author",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 5,
+          "table": "art_case_study",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 7,
+          "table": "art_faq",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 1,
+          "table": "cnt_content",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 6,
+          "table": "frm_blocklist",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 1,
+          "table": "frm_form",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 3,
+          "table": "grh_config",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 4,
+          "table": "grh_content_mode",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 5,
+          "table": "grh_dirty",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 1,
+          "table": "grh_relation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 6,
+          "table": "grh_relation_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 2,
+          "table": "grh_relation_type",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 4,
+          "table": "inq_inquiry",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 8,
+          "table": "inq_no_sequence",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 1,
+          "table": "inq_sales_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 9,
+          "table": "inq_work_calendar",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 1,
+          "table": "mda_folder",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 1,
+          "table": "nav_menu",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 1,
+          "table": "ntf_template",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 2,
+          "table": "ntf_webhook",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 4,
+          "table": "pg_component_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 2,
+          "table": "pg_global_block",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 3,
+          "table": "pg_layout",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 1,
+          "table": "pg_page",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 3,
+          "table": "prd_attribute_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 9,
+          "table": "prd_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 1,
+          "table": "prd_product",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 3,
+          "table": "sch_build",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 2,
+          "table": "sch_change",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 1,
+          "table": "sch_index_state",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 4,
+          "table": "seo_audit",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 3,
+          "table": "seo_link",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 1,
+          "table": "seo_meta",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 7,
+          "table": "seo_ping_queue",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 6,
+          "table": "seo_robots_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 2,
+          "table": "seo_template",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 19,
+          "table": "sys_audit_log",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 20,
+          "table": "sys_job",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 21,
+          "table": "sys_lock",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 1,
+          "table": "sys_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 11,
+          "table": "sys_role",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 16,
+          "table": "sys_setting",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 2,
+          "table": "sys_site",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 23,
+          "table": "sys_transaction_mutex",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 9,
+          "table": "sys_user",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 5,
+          "table": "trk_consent_log",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 3,
+          "table": "trk_consent_text",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 2,
+          "table": "trk_script",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 1,
+          "table": "trk_setting",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 1,
+          "table": "trn_engine",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 3,
+          "table": "trn_glossary_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 6,
+          "table": "trn_job",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 5,
+          "table": "trn_style_guide",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 1,
+          "table": "tx_vocabulary",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 4,
+          "table": "url_not_found",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 3,
+          "table": "url_pattern",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 2,
+          "table": "url_redirect",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 1,
+          "table": "url_route",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 3,
+          "table": "art_article",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 2,
+          "table": "art_author_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 6,
+          "table": "art_case_study_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 8,
+          "table": "art_faq_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 2,
+          "table": "cnt_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 2,
+          "table": "frm_form_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 3,
+          "table": "frm_form_notice_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 6,
+          "table": "inq_activity",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 3,
+          "table": "inq_assignment_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 7,
+          "table": "inq_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 10,
+          "table": "inq_calendar_day",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 5,
+          "table": "inq_inquiry_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 2,
+          "table": "inq_sales_group_member",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 2,
+          "table": "mda_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 2,
+          "table": "nav_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 3,
+          "table": "ntf_message",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 5,
+          "table": "prd_attribute",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 4,
+          "table": "prd_attribute_group_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 11,
+          "table": "prd_category_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 12,
+          "table": "prd_model",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 15,
+          "table": "prd_product_document",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 2,
+          "table": "prd_product_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 14,
+          "table": "prd_product_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 5,
+          "table": "seo_audit_issue",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 17,
+          "table": "sys_dict_type",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 22,
+          "table": "sys_dsr_request",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 15,
+          "table": "sys_menu",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 12,
+          "table": "sys_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 3,
+          "table": "sys_site_domain",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 4,
+          "table": "sys_site_locale",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 5,
+          "table": "sys_site_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 6,
+          "table": "sys_site_profile",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 8,
+          "table": "sys_ui_text",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 10,
+          "table": "sys_user_mfa",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 14,
+          "table": "sys_user_site_role",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 4,
+          "table": "trk_consent_text_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 4,
+          "table": "trn_glossary_translation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 2,
+          "table": "trn_memory",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 8,
+          "table": "trn_usage_daily",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 2,
+          "table": "tx_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 4,
+          "table": "art_article_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 6,
+          "table": "cnt_preview_token",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 4,
+          "table": "cnt_published_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 5,
+          "table": "cnt_review",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 3,
+          "table": "cnt_revision",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 4,
+          "table": "frm_submission",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 3,
+          "table": "mda_media_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 4,
+          "table": "mda_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 3,
+          "table": "nav_item_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 6,
+          "table": "prd_attribute_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 7,
+          "table": "prd_attribute_option",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 10,
+          "table": "prd_attribute_set_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 13,
+          "table": "prd_attribute_value",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 18,
+          "table": "sys_dict_item",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 13,
+          "table": "sys_role_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 7,
+          "table": "sys_site_profile_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 7,
+          "table": "trn_job_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 4,
+          "table": "tx_assignment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 3,
+          "table": "tx_term_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 5,
+          "table": "frm_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 8,
+          "table": "prd_attribute_option_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 7,
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 5,
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 9,
+          "success": true
+        }
+      ]
+    },
+    "backend": {
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.b2bplatform.compat.CompatibilityTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 5.149,
+          "cases": [
+            "flywayAndSiteFilteredReads",
+            "siteFilteredWritesRejectAnotherSite",
+            "committedEventIsDeliveredAfterCommit",
+            "rollbackPersistsNeitherDocumentNorPublication",
+            "failedListenerIsPersistedAndCanBeResubmitted",
+            "modulithBoundariesVerify",
+            "java25VirtualThreadsAreAvailable"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.DownloadProtocolTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.684,
+          "cases": [
+            "missingActualTemplateRowRollsBackInsteadOfDeferringFailureToSmtp",
+            "simultaneousSameKeyWaitsForWinnerAndReplaysInFreshTransaction",
+            "lostHttpResponseAfterCommitReplaysWithoutSecondSubmissionOrSignature",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[1]",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[2]",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[3]",
+            "replayReturnsOriginalGrantWithoutResigningEvenAfterExpiryOrGateRevocation",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[1]",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[2]",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[3]",
+            "uncommittedSubmissionAndOutboxAreInvisibleToOtherConnections",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[1]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[2]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[3]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[4]",
+            "smtpFailureAfterCommitRetainsOriginalGrantAndQueuedObligation"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.MediaProtocolTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.352,
+          "cases": [
+            "repeatableReadSnapshotMissesNewReferenceButCurrentReadProtectsDelete",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[1]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[2]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[3]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[4]",
+            "deleteFirstBlocksSaveThenRejectsItAndRetainsObject",
+            "crossSiteMediaCannotBeReferenced",
+            "purgeFirstBlocksRestoreAndSurvivesDeleteFailureAndLostAcknowledgment",
+            "restoreFirstMakesWaitingPurgeIneligible",
+            "saveFirstBlocksDeleteThenRejectsIt",
+            "rolledBackPurgeLeavesNoTaskOrMarkerAndAllowsRestore"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.TranslationProtocolTest",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.59,
+          "cases": [
+            "applyFirstBlocksPolicyAndLateCompletionCannotAutoPublish",
+            "providerFailureRollsBackAllContributionsAndTaskCompletion",
+            "missingCapturedVersionCannotWriteAnyProvider",
+            "manualModeCannotReceiveMachineOutput",
+            "lostLeaseCannotWriteAnyProvider",
+            "legalPolicyAndPolicyAbaBothRejectLateCompletion",
+            "identicalPolicyIsNoOpButStaleContentVersionStillConflicts",
+            "recoveredTaskNeverRefreshesTheCapturedVersionForOldOutput",
+            "policyFirstBlocksApplyThenInvalidatesAllLocalesAndPendingApproval",
+            "manualEditRejectsCapturedOldResultWithoutRefreshingVersion",
+            "newerSourceRevisionSupersedesOldMachineResult",
+            "contributorsCommitTogetherAndIncrementCommonVersionExactlyOnce"
+          ]
+        }
+      ],
+      "java": "25.0.4.1",
+      "dependencies": [
+        "spring-boot-4.0.8.jar",
+        "flyway-core-11.14.1.jar",
+        "mybatis-plus-core-3.5.17.jar",
+        "spring-modulith-core-2.0.8.jar"
+      ],
+      "registry_table": "EVENT_PUBLICATION",
+      "cases": [
+        "flywayAndSiteFilteredReads",
+        "siteFilteredWritesRejectAnotherSite",
+        "committedEventIsDeliveredAfterCommit",
+        "rollbackPersistsNeitherDocumentNorPublication",
+        "failedListenerIsPersistedAndCanBeResubmitted",
+        "modulithBoundariesVerify",
+        "java25VirtualThreadsAreAvailable"
+      ]
+    }
+  },
+  "new_protocol_tests": 39,
+  "compatibility_regression_tests": 7,
+  "lock_wait_observation": {
+    "mechanism": "performance_schema.data_lock_waits JOIN performance_schema.threads on REQUESTING_THREAD_ID; matching contender CONNECTION_ID",
+    "assertion": "Positive waiting lock count before releasing blocker; then assert durable outcome",
+    "fixed_sleep_used_to_infer_lock_wait": false
+  },
+  "unchanged_ddl": {
+    "create_blocks": 119,
+    "alter_blocks": 3,
+    "all_122_blocks_unchanged": true,
+    "sha256": [
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 1,
+        "sha256": "95f3ab09aa3a2227b9dd6902ef345dcabb13b857d1b2702470acbf43d73a7a49"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 2,
+        "sha256": "5e9eaeaacab4b0f0cd314fcc6dbadb42171ab7cb977c2e5f38a7d82aafb617f9"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 3,
+        "sha256": "4fae2aa9ad18a157fe7ea3b24dde89f2dd6b104e0e2c8d764b1e1cfa4d43d52e"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 4,
+        "sha256": "25ab968825ce1a5a8852ec53cc5175902f977fcb2688677db17ecee14e4f287d"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 5,
+        "sha256": "3db807215164cf58be51867330af6ed5a59e98e31c92a3b09cabb997f49758ee"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 6,
+        "sha256": "d0a68d072d1bd72b66d4c4cb8f0e887068bb72234020c69d11f95fd93d6c1e6f"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 7,
+        "sha256": "508eaa61f5ed26c0c186a764fdf4c8895d52a26c41fe4cd257378f21918cba0e"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 8,
+        "sha256": "8c6c4d089e752582bd428848a007f03fa7ec3e291bdd55f997068d03b75551bf"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 9,
+        "sha256": "bcfea216d79913e0eee2b16f12f4de6c8d02ffc6580d1299c1d132af6985eb97"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 10,
+        "sha256": "e729a6ac7bd10e2dcc4270b706d58126fcb61a7e782cd1a959cb3bcbcaa13635"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 11,
+        "sha256": "398681e6d6f1f5777ef4d3004cf196f9fdfbfc29ef62362457ac1046e49d9a41"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 12,
+        "sha256": "d0136407e4c865741d002e79d157b6dc54c113466025cab6d73f286cf579bb83"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 13,
+        "sha256": "2cb2c5ff35800b9045a9939f36445cdac267a00d2af73e9d064bafc0a8f73525"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 14,
+        "sha256": "b013742322458185f31a09f6de4840f4ca802eb216cc1b668cda51890486eba8"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 15,
+        "sha256": "67b544b372b3d84fb77ce4509fb73a89e274a067af53c8a8c691d81fcd5559f6"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 16,
+        "sha256": "0525360b862d74f8ee6921af0d8079facad051857a202c6e6db7e4be292c907a"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 17,
+        "sha256": "71e23cfce62cccb13e8c25d452a70d2783c90d224d9e30d43007e0b137d98fbb"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 18,
+        "sha256": "0603423837679a7b1a53e57e15e17b3e69d5bf99675b22be35d7255f86bb563a"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 19,
+        "sha256": "7110f7e89f3b4bc9b956c0f2c00ec54029b985ed86b6e461b1fe0055b645d5fc"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 20,
+        "sha256": "8abc40879679654d53459ffb2f5c4ba765b109cee9d0b49ef87dc9ba1bc66a10"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 21,
+        "sha256": "cb32e45cacd1c360f70987fe0004050655ca16bbc52112fb27783efff90bfec2"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 22,
+        "sha256": "a58c78f123174f45a8d7177735274e19f1eb149b6015e997862131952a4a7450"
+      },
+      {
+        "path": "docs/framework/platform-framework.md",
+        "block": 23,
+        "sha256": "2005a1f490cf3d616a0c2916ebc899bd96ed64316088e13e17bceea3272a16da"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 1,
+        "sha256": "8717b885452e4ee56bc18f2ab21abede53926de1d7d4b09a9b50c3cc1674902f"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 2,
+        "sha256": "f60cf5f398b55c13783d513dc11dbbdc4ff0018d76dc36d8d896a3e914801136"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 3,
+        "sha256": "c07e70168b212a12fa4dacc223226b0ed367c1705c9d98fc8a3ddc2f44542f18"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 4,
+        "sha256": "7cbfd3c6b63539330b147adf0ff865e6b272f113ec0cd85218854cbaf9357e86"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 5,
+        "sha256": "b0659b873deb7ad8727ed27a337ffddaf8e4d44a973ab451440fa52092f993df"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 6,
+        "sha256": "a2e18bc4c896b2a721f288e10ac28b8e1d60aa5ae8af604870f40c1799ba9804"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 7,
+        "sha256": "f280066b8da544b912835d3313b474b67479395ee14f5ee20597e48afa7b2f41"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "block": 8,
+        "sha256": "5e9070009b611b221afdcce66359e6c1bf9f9223c3b73339038acf8e5aab719f"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 1,
+        "sha256": "120fe60f04e476cab66ed3c44a82d6c97b252337d5aa82a9b59df4b08d17c060"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 2,
+        "sha256": "73408d10b9f6ea0ab86acd40a0fac61d3d0e57abbc9188f4eab1ccf396336f8f"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 3,
+        "sha256": "8c28eae2df04058163780a2a346bf516db160ee397261077ec19d7b8cc272532"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 4,
+        "sha256": "182ccc7dc5d586e7f5582100a0cca6cb5d57ae015f0de9c18c9d6b3e2d498a89"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 5,
+        "sha256": "80cffe01e1cce04f5f1bc87f0cc70e1feb944eb2921a236e744e72347c209422"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "block": 6,
+        "sha256": "389973ca1e241f9f6b78f9412c3b9b17672e3c5e80b4fb11038c9a7caa975a60"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 1,
+        "sha256": "8cda24bde72e5fd89ff31d83970eb14160113aa606d706743cfeb7ab93904821"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 2,
+        "sha256": "232c2f333d8d7d2466e9630771ac55b2b724cde75d782e866c14b8e3958eeb98"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 3,
+        "sha256": "05de6ffc9341664b92a98225ad787556dc1fe9317eef1a4dab50246f9c24b341"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 4,
+        "sha256": "004b7ae757111a386deb6532886c0af55ea5a088e940d280080818ef2460f0af"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 5,
+        "sha256": "097348df5aef242c05218b68d0b33054c40bba385e8fa9e64774623bcda6a026"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 6,
+        "sha256": "a8be31e146a9d3d5c308b6090085c32f25364de560ed2662ff5bdba1c9abdb72"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "block": 7,
+        "sha256": "af86deba2d0b891034cbf0eaf829c6c8d8a78d55400477ac89ef58db8100d483"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 1,
+        "sha256": "26e92717a92e9324999b4d91eada7ebc8361ddd417e472533ea80aafc2490d77"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 2,
+        "sha256": "153fef157d97f23041855eee14f0fa85edd25a8b66428c485545d08542f85f48"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 3,
+        "sha256": "3b63daf19c21916528c72348f3c168836a4f1c51736db97226309749b14643c2"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 4,
+        "sha256": "ccce8ca475c1ab837a4842f70b788a825ffc76fc945df84fdb350ba39a0a92ce"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 5,
+        "sha256": "33284b2e9ec0e499936dc80b45d7256fd2f9b7ae2728097669620716c2e1364c"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "block": 6,
+        "sha256": "c4b9db9c4bc1987ea0feb3f71a660bae92c590147ac0369fbda7811d42d373b4"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 1,
+        "sha256": "fe85ae4f2af765dc2b120ade932c920c6da5e42883c2017180e5c75defa75e8c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 2,
+        "sha256": "90112cc475e15d659d952c719ed3730705b60900dabb691606337d5079156b7c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 3,
+        "sha256": "a59eb7e90e2885d65983e4d38d1575dec0d6a4039a4931a676783cce5db02df8"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 4,
+        "sha256": "f7f711a61533f95745c54f23af1f4b76be1aa80ee3c4f2a7d9c9a102bb398606"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 5,
+        "sha256": "d14b3dc6238511318968488b854e7d8b3bcc80abb2cb66db5f2e201a4cff845d"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 6,
+        "sha256": "72c46dc9d8c12c37d408a6eec4b8ffd8856a328bd1c6677a483a665760babb60"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 7,
+        "sha256": "ca5e1e4ee0aa6385fd3e2b4afa6876cd42785d60a8fbbeb8d602d489068c4671"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 8,
+        "sha256": "799453dfb11b285978329faa68e185f844c7d9291bcccf68940d00a9cec753c2"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 9,
+        "sha256": "a9c163f95830698e0c3c1f474e691f7d764a8523c4c1df53169aae8cb2b0ef5c"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "block": 10,
+        "sha256": "257f0d3890ae665913a7f05f9f724887e115b6421e44f3168cb99c4633265f1a"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 1,
+        "sha256": "5e7d6f6795f42e7ddec1907293e2bef2f3cde8061f0dde5d7c9e71e9cb94627a"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 2,
+        "sha256": "9e1948b2c628dc8ca5aae310790e24c02773fe117e1195a3204a04045cfb0e3c"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 3,
+        "sha256": "3ed066678db069682557668106dcc51928a339e353ea6631e252d35f8375bcdf"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 4,
+        "sha256": "3c32a52b0e3505f5ec5423963839060fced1d26e2c58c2bbd6e3c9a1903b0e67"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "block": 5,
+        "sha256": "9cc66066eb384be93508be59b445e397b7dbc8d4dda93118e599612d3aa30513"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 1,
+        "sha256": "0e08e22315b89d0a000854f2f966ff6941de015b6bea3a12ea3db2d5d8668d9b"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 2,
+        "sha256": "7f4447863d0ac8fddfd2bf7e31c15f2540f2aad74f7c75a934584e7c264aa1d6"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "block": 3,
+        "sha256": "550ac3b0ab991e81b80157afbee2f1f336ea2a986204da789a558530784aa9b3"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 1,
+        "sha256": "d3f73faf0593d66cb6f29885f9404e10eaa343f77e4666ab75d7cc54db663ddc"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 2,
+        "sha256": "631b72fda2893b1513cba8d96c532e5b332064404c2cda0d9ffc722d1d89c557"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "block": 3,
+        "sha256": "e42329ad385d5150a55236eadcede39b78caa8599d1d36c5d449e629799c2375"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 1,
+        "sha256": "db693ff7d8db16d450148f154bb7609db470e960228f90e56ccc19146b2b3d53"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 2,
+        "sha256": "26d75d331ea1189ffc704067172e27dac25eec1a1fb6579b968dc4772d2d5227"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 3,
+        "sha256": "7b7ff014be8b578cc3d2a78840e7740bb967ee57b56571eb7aa12bb03e7996c2"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "block": 4,
+        "sha256": "cf752a37243e1e0123b5a9a20cddb6cd48c3442e4bb52bcdeac0609cc4e03d63"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 1,
+        "sha256": "4738d3f76ea01fb39695fa685e9e62fe44805b50fadd2afcf20bb934aa2ce674"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 2,
+        "sha256": "cac5c12b0ca5647404c41f7417436a5fba9d38f87049fc99cc0f177652466a0c"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 3,
+        "sha256": "2109fa9c484b03ad0c16d07aecbc326ee15dfc8dbadf0bd155ccb17c63e64caa"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 4,
+        "sha256": "72a0fa3dedcdb5ebed950bcad078cae0cbd008343cb5fd5926fdd5d9ebf98c8e"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 5,
+        "sha256": "f98e0127fb4a02229e4abcc05a41f5c1b53b0cac9caefd3c02e528eace6b5b0f"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 6,
+        "sha256": "2cb54801ef74689e8b1c2af8c54787d48e081cd8cc351a817aa8a95d0ce469c5"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 7,
+        "sha256": "fc1da720a4abca8863000e0a0eaf6c91b2e9376564fedb695097d841868f8e62"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 8,
+        "sha256": "d1f4e8a882adae1e5072f8754af0d1ed074239b8db90f8d6d18a1a7fdc795519"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 9,
+        "sha256": "386d0fcf1a1999908455c6f6421db73a810005b77b74ce015dde1fbe91f191ec"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 10,
+        "sha256": "64abeba854e9906b6d6020688b7a403750be79cbe44491c438b0ce59a2c561d8"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 11,
+        "sha256": "68e4285905aa56a8faf39b35ed0686d4abbb362a0edbe3d5715456371624dc85"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 12,
+        "sha256": "d12406fa99fcdff3563711e5fe02f6eee9aa58067a5d2abcad368fe4dc0dff76"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 13,
+        "sha256": "d72dff7f087d0313cca6f50c09133c5098c0f73becd2251567666665814d5f52"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 14,
+        "sha256": "f3a5f58eb2d19298a868ee55d512bd8b09055494bc36678754e6c41cb7b6025c"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "block": 15,
+        "sha256": "2999cb2ecc59985731b2c956d6fd76c34b6337ca2e15d043b1c2229eaf86152d"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 1,
+        "sha256": "4786ce2413e237707b612f20453715ab3600f8770e92b9d9bb45dcf56aa34108"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 2,
+        "sha256": "253e60ff96267020f306fe5658b908e1e6d1357961f1d9b79a0f067d891dfe84"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "block": 3,
+        "sha256": "abd8b53773ab03d7cd77353189e2bba612f8f0d430513ebd867d5d009847aebb"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 1,
+        "sha256": "af9f67755c18043942a36bc30680b0d2ff74fc1f73fa4abb869b9946f3ba0d46"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 2,
+        "sha256": "7956914de3352a723b64c9eced0b516fec3620ae7549d595b09b2374b8e3741f"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 3,
+        "sha256": "09ae5b10ec9a5e3db7e58f05281d84e6a9a5379c4cbdf396d4f45f9cbe6af28e"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 4,
+        "sha256": "28351696f69030d58af78b6e646c665f3c10f336fa4f16a2439fb66d7e272f2a"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 5,
+        "sha256": "9bf27692d9d29d4f065ab2855a8c3fde1bffc299a384a1c06f5a2fe18602d75c"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 6,
+        "sha256": "7aa9206179c33322313634ec1a12b8242d5c2fc965cf1ecd5a5e104e8cd95f93"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "block": 7,
+        "sha256": "7414ee41b591b2e3ac5bbfba38ee386e09e9a8f252fa4e5fe10ac72024b5c449"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 1,
+        "sha256": "c5a089c5eeaf32e5020ba6b8099fdf727e076f80e8433563cda701d1a62ecbda"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 2,
+        "sha256": "f18185df35223120b8cc4dabeb9f460cfb0a9503bf9e4790bb3b228edd3002de"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 3,
+        "sha256": "200ac0f4798acfb109d459c124850182a730507acd4e2e51a260e5cebb703eb6"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "block": 4,
+        "sha256": "cd54487bf2189f70b89e0c947eaf8d953c968b043a12102a38a7dcde4cce02ee"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 1,
+        "sha256": "fd4fd8e4ca894fd99168da78dccce0ef200e3a9ae9f1e4042067a7e9480cfc50"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 2,
+        "sha256": "6e8ff266aa18680069977a625a1fe6c79e141e350ebab1290e1d48bd6847c0d2"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 3,
+        "sha256": "2924b179e9e125a4fe58196b8c79f25f96f6f0065b28de58ea053ebbc11ca680"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 4,
+        "sha256": "df1e322fc7c7a7e6f95704308dfff14a6955a36680d19a31a82b2fdca0157251"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "block": 5,
+        "sha256": "9c458edc1ee0666245127f4adf2b5f5503c9ad38dcaca2f044c64b1a04a02052"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 1,
+        "sha256": "20fefbb89263fb6d74ded8e275f7b2d48bf9935dfd86ba98365cdf1dc85d7481"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 2,
+        "sha256": "318e25a66b145a827785c90170013b9431e5f1ae41ba44b61532948c194b50af"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 3,
+        "sha256": "73d4d8ceca58366bd733d58c9a3d1099ffaddd55ecfe3d1662ccf38d94cc3961"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 4,
+        "sha256": "6ef025b9b30d9017c14db80e6ef1ca0b7f54612503dc6026759328b5efc8d5b4"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 5,
+        "sha256": "0b1df99179e160c14b61c1f1332280386be0261206662a3b79c2ef2e95818b11"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 6,
+        "sha256": "95f45b269dcf738d7867d18304c1ee848a126379ebef5a48f821007fe76e31c8"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 7,
+        "sha256": "4ed77fccf151e4cdf56bdca38abcbf5b60a1cbba05624f7667368009984c8f82"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 8,
+        "sha256": "1eefee4540e208ebb7033853f738972fd08f7b18824220d2217b4f6075fa95d9"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "block": 9,
+        "sha256": "61af7048f75f1633a3a9fba296a12b48e4fd695865f2851caa4a3c29591fbbe9"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 1,
+        "sha256": "a4243c8df0ff600f82ea4b9a063f4b819ddf0c5c205cd3266439679784566a5f"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 2,
+        "sha256": "e2d8f1cd0fac68ed6fb71a1fe285d93be4ba9cf26799abca66d43a796b9df68d"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 3,
+        "sha256": "917521ec72c92b9ea0a88179432792587389b06fb647c821a58c65d1e1bd4c95"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "block": 4,
+        "sha256": "1c9621d51f0285c9e1dd5865a5686e10197f4ebf2af217523f2ef933ff506c5f"
+      }
+    ]
+  },
+  "pre_review_documents_sha256": {
+    "docs/adr/0000-build-vs-buy.md": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+    "docs/adr/0001-compile-time-modules.md": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+    "docs/adr/0002-module-communication.md": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+    "docs/adr/0003-event-reliability.md": "71750d9131b8057e6f873ce4546e30d7945b52c66b532f9348981f89a6fed290",
+    "docs/adr/0004-content-kernel.md": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+    "docs/adr/0005-i18n-and-url-strategy.md": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+    "docs/adr/0006-template-and-page-builder.md": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+    "docs/adr/0007-editor-canvas-iframe.md": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+    "docs/adr/0008-seo-data-ownership.md": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+    "docs/adr/0009-site-and-locale.md": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+    "docs/adr/0010-admin-authentication.md": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+    "docs/adr/0011-technology-versions.md": "06200736d5b6a68be324656b86af19b2cb00d5ec40083d70077594454d88e123",
+    "docs/adr/0012-cache-tags.md": "215dc399c57ddd51977a5b80fc8cd46289c9008e4e83630ea9c06bc9b395bf4a",
+    "docs/adr/0013-search-read-model.md": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+    "docs/adr/0014-id-strategy.md": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+    "docs/adr/0015-hosting-region-and-data-residency.md": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+    "docs/adr/0016-privacy-compliance-baseline.md": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+    "docs/adr/0017-ai-translation-and-translation-memory.md": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+    "docs/adr/0018-framework-first-parallel-modules.md": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+    "docs/adr/README.md": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+    "docs/adr/template.md": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+    "docs/adr/0023-form-notification-direction.md": "4b7b0a34bc009ac4afa48d485c04221a6302378d7bde3f3ed672d0ab60cac31e",
+    "docs/adr/0021-immutable-search-generations.md": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+    "docs/adr/0024-translation-review-guard.md": "3de53913446d080312f601b381afa32d68501f5ef6f74521398c0f738bd14fd5",
+    "docs/adr/0019-transactional-media-references.md": "d7728aab390bb08339abb29ad9377b74805142f602f90ffa2edc8d99e60b0733",
+    "docs/adr/0022-current-route-recalculation.md": "921092c94eaf36382b06263439b6f80ee8c4b3251d9f93853c7c4db4799b3442",
+    "docs/adr/0020-cache-invalidation-fences.md": "22bd83580c097c93e59841b71bd462f45a3904efee68646b26fadcf986b5e659",
+    "docs/adr/0025-site-resource-lifecycle.md": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+    "docs/architecture/system-design.md": "9660c08b5a9ca5c15968643581859d463b5bcf22e33dbcd5ac6deae4f76d49a3",
+    "docs/framework/platform-framework.md": "eb619d94d25974ab15201c22dff4064b60cccce292d10594517798c5951a5203",
+    "docs/modules/article.md": "ac7f16e9f24ca4a7e381a1b2b326e6b25b80674e1d187490fa40e9edb248d1f8",
+    "docs/modules/content.md": "7d1a382425599d1285ce76b4df7119ef42b35151b3dea892f8b92262b1b154fe",
+    "docs/modules/delivery.md": "7b0a7e551f43f03481360b707fc607e8518c97fabffad9f54c481466fafaa3b7",
+    "docs/modules/form.md": "3496afae4f6df87da74b3e65ac7be6a1f79a1ce6519e2bcf77c5b3f11299b540",
+    "docs/modules/graph.md": "d6e757f7a11fea02f5d1e433486ffdfae4db9a56be0dc5393dbde3e7f4c97585",
+    "docs/modules/inquiry.md": "095c1346e8a1a9a39efc6bd8d5aa12fd1637d2a08e04962333cebd5a32438e09",
+    "docs/modules/media.md": "3b90b17e891b2257b0b58e76494aa1901ad550d09c9be194c350e259153f1637",
+    "docs/modules/navigation.md": "d31af1b6968039339a9bdb44918c6cf25b615d04295a553246b7452564cff05e",
+    "docs/modules/notification.md": "e4d8eaf87572d1544ffc1b0fa02453dbf9a844e1d8afef1b35820f33864c9ca7",
+    "docs/modules/page.md": "c138e8a265839e7c9ae309c6f13f6f5fb915745ff5d57a99b0480c8fe1c5ed59",
+    "docs/modules/product.md": "8674d530349ced88589845ace4cb2de2e91832876b08cef9195a40d437372934",
+    "docs/modules/search.md": "b964cacedcc3e39b8e0b41cd302bec11c148233eb48b6434e9280d0b6b586cec",
+    "docs/modules/seo.md": "6f16cdedc296f2349f28ca58f9522da30ddf4475d03d1cb34dd0d3c44cfb40b3",
+    "docs/modules/taxonomy.md": "351cd083182609ff64385ce2b2f7d8fa85f874aef32b7b616ed36326618e20af",
+    "docs/modules/tracking.md": "e3732b642c48d14401ef95cc867a0c104b993cfae0e8fe9d1f9757bca6c84d09",
+    "docs/modules/translation.md": "f303607270a52834d31ec47a73088bf83517ebaca5f362c5d9ffcb1d3bd2db8b",
+    "docs/modules/url.md": "11598bb3f3d0f06e3c3f18a3af0c1546500b2feaea5d45c061dfc1e3f193ebbb",
+    "docs/modules/README.md": "3b520058fd67252515bb1987ff2aa6caa4f1d4fc6ee0e950df0ab74c8064cfca",
+    "docs/design/visual-direction.md": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+    "docs/reviews/m0-remediation-2026-10-20.md": "f892220eb154d84d7fe614dc67637e149d6d953e9b2a0f3bb9440e4474471d93",
+    "docs/reviews/formal-design-review-2026-10-20.md": "14316f328ccb6bec0311bc64b90831af183c6bc635b2bdaa058cfbc7e4ee3cfb",
+    "docs/reviews/design-issue-resolution-2026-10-20.md": "6c9ce5f6fbdef4857bb5788052116ea3675a30669b32c242d017385a740a4488",
+    "docs/reviews/module-design-review-2026-10-20.md": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e",
+    "docs/plans/development-plan.md": "2c1427b6ff591b227623c44fe88e3db6cc0eacc174a928c7e88d2a376e09d740"
+  },
+  "prototype_sources_sha256": {
+    "tools/verification/m0-compatibility/.gitignore": "6d187191e244f1883a2c6750fa4d40a3c734619fad8a20f4a21f4ab9b6542756",
+    "tools/verification/m0-compatibility/README.md": "700fa286171258a24b5e230b4b8e39acd99edfd9fa3cf1c44cfb4d04627f95ff",
+    "tools/verification/m0-compatibility/backend/pom.xml": "5e2466d3c0bcf4d3e8dea1ae0f8209586aef601d53f5098b915fb806b54db3bc",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/ProbeApplication.java": "57c660e1974358bfc939b0908afe00c887faf7c7c74a5608c68cc2c2065416c2",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/DocumentCreated.java": "a55b5a78df9d67b52e29d9a6200e65c57b3e5cb64c8357a7a8022e9022574e05",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeMapper.java": "c515fae656c9e718607ecb0748f1ca1b700557d672dfbd8612a965ad435ea47b",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeRow.java": "c9ded128a3ec4b2f7a9b77be8ad9dae1a768beb01229433919b5e033a57e0656",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeWriter.java": "4d7fafa3bcb9084d355675c83911ff550539a69d665d443e91b47f6f67d9fb2d",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/infra/ProbePersistence.java": "bdaab56c26970cdcf51b835dcf403aeb65abd9ebbf35d0b60196675348b9e244",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/receipts/ProbeListener.java": "a618065972eb886fe6bd70ee140d7c45e0cd33670a46916c68d80f85b8e71417",
+    "tools/verification/m0-compatibility/backend/src/main/resources/application.properties": "f687192436a3d90eac09d9042efb6e6e80516f66a3bff2c22d2be823e5514e9f",
+    "tools/verification/m0-compatibility/backend/src/main/resources/db/migration/V001__probe.sql": "d42e70c8035994c17c0e2e7d9034054025f9bd38e1e8d0a078b330b494432605",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/CompatibilityTest.java": "ebb77195dadeb9d38e1b8d85b7b3df5d1c5628b3ab9bbd44586f65c398807511",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/DownloadProtocolTest.java": "0c468241e67b74a00534eda08cca55c90dd0f2d6bc5cf660b66830dfe589c010",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/MediaProtocolTest.java": "fd1a2efc7eec90b94e72d9687733e9662a268d0dbc1024541edd13125c40240d",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/ProtocolFixture.java": "02c1ccf7f3298fc29f8d6c193290dc8cf479241d9bead1a840acac3ab8471078",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/ProtocolModel.java": "86c98490bb13bced7693c84a8faea4813d0b6f8a67c68dc40793c25fc545cf64",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/TranslationProtocolTest.java": "c25db73f01b6bb18cb3e42be0c70d301b38496d54dc09c055705da9c0bf4598a",
+    "tools/verification/m0-compatibility/frontend/app/app.vue": "0c20f0162f2151785aa06f3c73bc0efa84e76337bbaf7aa82e6252590cf21ba9",
+    "tools/verification/m0-compatibility/frontend/app/components/ProbeCounter.vue": "09c9df8443ae6d3ad967ee14d6559eba06c19b6976a0f71755a41f73057b5d56",
+    "tools/verification/m0-compatibility/frontend/app/providers/probe.ts": "5b21e6ccdf1cf52af7a5ba5cf17d83e474e41f426b84a5c9e0bdba06119c6953",
+    "tools/verification/m0-compatibility/frontend/app/texts/zh-CN.json": "bffae7731773bad698a7ca62cdcea199b6b7413758be3e6815d1f98fa142e56f",
+    "tools/verification/m0-compatibility/frontend/nuxt.config.ts": "8a34e6353f37eef3ee6c3ee3bf7497ad99024fca3af33e79e4a6616c7f3c5bf6",
+    "tools/verification/m0-compatibility/frontend/package-lock.json": "fc68f4b6121471bd37b3a10e986842c7e6443b6dbc136e9789b0da74e219cb52",
+    "tools/verification/m0-compatibility/frontend/package.json": "07d109f549115b69975d2397455c0c5d126959ed4cfd12a2b3535d5736c321f5",
+    "tools/verification/m0-compatibility/frontend/public/probe.png": "2d2c648b10bb8d6a380586cb4becf62f9ea17ce527f20f37467e5a252ca997ca",
+    "tools/verification/m0-compatibility/frontend/tsconfig.json": "665bfd2725ef0790a0173aacdd820037c4420f3df365ae3873953f8c953b9b08",
+    "tools/verification/m0-compatibility/requirements.txt": "28e36b0e232c8c81f931f863f886375d4f9454deef795cb4b52b913b286972c7",
+    "tools/verification/m0-compatibility/verify_backend.py": "1674f3ea97117df47752bdf6de796c0d6696cad3bb82ffca77aaa5ca04263a5b",
+    "tools/verification/m0-compatibility/verify_design.py": "629e7424b1da0c6a80cac1d98e9bcd391292606765b9aac19a637e06eddd2c3b",
+    "tools/verification/m0-compatibility/verify_frontend.py": "adfe3da4e302d5b917c41e695832cc65d717851bb00a8363ae796ea180320190"
+  },
+  "limitations": [
+    "JDBC protocol models in src/test, not the real platform-api services",
+    "One content, two localizations, one media; not a capacity benchmark",
+    "Filesystem stand-in for object store; FAILED database state stand-in for SMTP failure; no real network delivery",
+    "No Redis/CDN/route mutex/search capacity proof",
+    "No complete request fingerprint/captcha/attachment/FormSubmittedEvent or production ticket access integration",
+    "No all-provider assembly, multi-media replacement/order/deadlock retries, authorization or target-language creation testkit"
+  ],
+  "known_corrected_fixture_errors": [
+    "Initial fixture used mda_localization instead of authoritative mda_media_localization; corrected without changing DDL.",
+    "Revision fixture initially omitted mandatory published_at; corrected seed and reran all tests."
+  ],
+  "next_wip": "M0-07B route mutex and generation; then M0-07C Redis/CDN",
+  "adr_status_changed": false,
+  "pushed": false,
+  "static_design": {
+    "modules": 17,
+    "permissions": 96,
+    "components": 36,
+    "admin_endpoints": 234,
+    "acceptance_cases": 238,
+    "errors": [],
+    "documents_sha256": {
+      "docs/adr/0000-build-vs-buy.md": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+      "docs/adr/0001-compile-time-modules.md": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+      "docs/adr/0002-module-communication.md": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+      "docs/adr/0003-event-reliability.md": "71750d9131b8057e6f873ce4546e30d7945b52c66b532f9348981f89a6fed290",
+      "docs/adr/0004-content-kernel.md": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+      "docs/adr/0005-i18n-and-url-strategy.md": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+      "docs/adr/0006-template-and-page-builder.md": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+      "docs/adr/0007-editor-canvas-iframe.md": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+      "docs/adr/0008-seo-data-ownership.md": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+      "docs/adr/0009-site-and-locale.md": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+      "docs/adr/0010-admin-authentication.md": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+      "docs/adr/0011-technology-versions.md": "06200736d5b6a68be324656b86af19b2cb00d5ec40083d70077594454d88e123",
+      "docs/adr/0012-cache-tags.md": "215dc399c57ddd51977a5b80fc8cd46289c9008e4e83630ea9c06bc9b395bf4a",
+      "docs/adr/0013-search-read-model.md": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+      "docs/adr/0014-id-strategy.md": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+      "docs/adr/0015-hosting-region-and-data-residency.md": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+      "docs/adr/0016-privacy-compliance-baseline.md": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+      "docs/adr/0017-ai-translation-and-translation-memory.md": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+      "docs/adr/0018-framework-first-parallel-modules.md": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+      "docs/adr/0019-transactional-media-references.md": "d2ee0e4181ba79fca3d9c13de6730f1a2c5a181fd4f4a6151cfe3016b344f69e",
+      "docs/adr/0020-cache-invalidation-fences.md": "22bd83580c097c93e59841b71bd462f45a3904efee68646b26fadcf986b5e659",
+      "docs/adr/0021-immutable-search-generations.md": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+      "docs/adr/0022-current-route-recalculation.md": "921092c94eaf36382b06263439b6f80ee8c4b3251d9f93853c7c4db4799b3442",
+      "docs/adr/0023-form-notification-direction.md": "a4652c4c3a97d80c42154d274b8338c72d7a7e681f764116d4b8548a171aff15",
+      "docs/adr/0024-translation-review-guard.md": "e50d8983047385a1e08b09363b357e79a7639efa325d58edea88fb0386a268f4",
+      "docs/adr/0025-site-resource-lifecycle.md": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+      "docs/adr/README.md": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+      "docs/adr/template.md": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+      "docs/architecture/system-design.md": "9660c08b5a9ca5c15968643581859d463b5bcf22e33dbcd5ac6deae4f76d49a3",
+      "docs/design/visual-direction.md": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+      "docs/framework/platform-framework.md": "883bf6a01547a88d1202ebfe76b9e9a76e53a03b65e6c9bdce361759da5f1547",
+      "docs/modules/README.md": "604dfb0f2f4557af35c92022a17cdd74fb75dbc9aa64c5a75e6b1fb3cd24259b",
+      "docs/modules/article.md": "4fc2d054135b9895609cb9e3a7ea5c352efaa62e8da6492cef4c827a9ff3f5fd",
+      "docs/modules/content.md": "a906a4f59e847dcceeab41172dc901631c99d2571132e42e06753507a2e0fe01",
+      "docs/modules/delivery.md": "75a2a64419819ab10e3acac3b878c51b58a4fbabb67dd3689aa7210b5f13ad10",
+      "docs/modules/form.md": "22f63ecacc66aab461dd4dff9f20bf444b776f6b1f0f5c3bf161b9f900bce283",
+      "docs/modules/graph.md": "abb6034c0d9ec567c0d3bb9d50835670c41b5b877f09da1364559a2ac908de79",
+      "docs/modules/inquiry.md": "7f77a0dc3133d83d7521d2e5e47198f5afe85810a0bc3f4247237b5ebe8126f9",
+      "docs/modules/media.md": "b4e1a4e902b4bac91eafca4320ab949feb348766983aa92aa7e2147ae8c26403",
+      "docs/modules/navigation.md": "f09008c3a416fc65b22c8b27389a96ea8f8cab02c3f84a699a93e8cf8395c437",
+      "docs/modules/notification.md": "b184d6f8baf16ac8374f11369eb78698aec10f4cf233147fc6d18c53021c7d68",
+      "docs/modules/page.md": "875970d1341ffe3e6194db1682e44d9c03860ff67558def9f809f9ba55e3a848",
+      "docs/modules/product.md": "0445dd6319779b885b0fdbb49077ae8215d0a30230332629d926f594531a8e19",
+      "docs/modules/search.md": "2cfe6555f0412da9927ff632925752ce16bda5f4233143f66e6294737342d48c",
+      "docs/modules/seo.md": "aa464863813916db0ea9b9f820d3a8df96af7fbe81049b5195e3614cfac578ea",
+      "docs/modules/taxonomy.md": "f11f4e75523a681995c96b3b314d5a65fcfed31e209d41b921d78d44a62e4185",
+      "docs/modules/tracking.md": "7ba7e1e26de6e2ce42b8aa39bfe54dd2eb12ee266b0c34d7a8911efc17f9ebc5",
+      "docs/modules/translation.md": "1b12a880a03d7ad2afedbe0b9100879dc6a53ed9389d546c5855263360dbe814",
+      "docs/modules/url.md": "f307afcd57836efe763cb674ab268a625a9ae5550855cb2630d19c5d02410521",
+      "docs/plans/development-plan.md": "fa182d0e0f34bc377c212112a3fbf3d9a1a9aa1ba90ef18dfbef881efd4da3a4",
+      "docs/reviews/design-issue-resolution-2026-10-20.md": "6c9ce5f6fbdef4857bb5788052116ea3675a30669b32c242d017385a740a4488",
+      "docs/reviews/formal-design-review-2026-10-20.md": "14316f328ccb6bec0311bc64b90831af183c6bc635b2bdaa058cfbc7e4ee3cfb",
+      "docs/reviews/m0-remediation-2026-10-20.md": "7d20acccdd5b62245afb23431024c7d96aee73082e720d455dd8a210fbb732c4",
+      "docs/reviews/m0-transaction-protocol-review-2026-10-20.md": "05074ca3f083e62698826d3ae046c69b44c19102975a58b6519f7dfe6c6a737a",
+      "docs/reviews/module-design-review-2026-10-20.md": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e",
+      "CLAUDE.md": "44adbdfa2f491e57cba25678bba4954e88c6f15966a0c8e18e37a5e34bdf51b5",
+      "tools/verification/m0-compatibility/README.md": "700fa286171258a24b5e230b4b8e39acd99edfd9fa3cf1c44cfb4d04627f95ff"
+    }
+  },
+  "extended_module_checks": {
+    "modules": 17,
+    "permissions": 96,
+    "components": 36,
+    "admin_endpoints_after": 234,
+    "acceptance_cases": 238,
+    "static_errors": []
+  }
+}

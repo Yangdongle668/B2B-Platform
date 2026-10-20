@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.0 |
+| 文档版本 | V1.4 |
 | 状态 | 草案（Draft），待评审 |
-| 更新日期 | 2026-10-14 |
+| 更新日期 | 2026-10-20 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.4（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-018（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.7（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-018（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -134,7 +134,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 - 模块用**模块 ID** 指称（`content`、`inquiry` 等，见系统设计 3.2）；platform-core 在 `module.json` 与数据库中的模块 ID 为 `core`，platform-api 只有契约，没有模块 ID。
 - Java 基础包名为 `com.b2bweb`，Maven groupId 为 `com.b2bweb`，前端包作用域为 `@b2bweb/*`（M0 开工前可以统一替换为正式名称，替换时同步修改本文）。
 - 文中的 GitHub 账号与团队（如 `@arch-lead`）是占位符，M0 时替换为真实账号。
-- 表格中的“系统设计 N.M”指《系统设计说明书》V1.4 的章节。
+- 表格中的“系统设计 N.M”指《系统设计说明书》V1.7 的章节。
 
 ### 1.6 术语
 
@@ -177,6 +177,10 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | V1.0 | 2026-10-07 | 初稿：依据系统设计 V1.4 与 ADR-018 编写；数据库通用约定与 platform-core 数据模型由原《领域模型与数据库设计》并入（第 6、7 章） |
+| V1.1 | 2026-10-20 | 补充 8.6.3 前台视觉基线与设计稿交付边界，依据系统设计 V1.5；现有 platform-api 契约不变 |
+| V1.2 | 2026-10-20 | 为11项实现前设计问题补齐4.10统一契约草案、事务/恢复协议和新增表；ADR-019～025待评审，未冻结或实现 |
+| V1.3 | 2026-10-20 | 整改DR-01～04：内容级审校策略与明确写锁、翻译目标版本、媒体三阶段删除、原子下载提交及持久幂等结果；统一事件/缓存规则。ADR仍待评审，运行验证另记 |
+| V1.4 | 2026-10-20 | M0-07原型反馈：明确RR当前读、锁内保留期判断、下载唯一冲突后新事务重放及恢复保留已捕获版本；业务服务验收仍待实现 |
 
 ---
 
@@ -794,7 +798,7 @@ frontend/
 
 | 对象 | 规则 | 示例 |
 |---|---|---|
-| 表前缀 | 按系统设计 3.2：core `sys_`、content `cnt_`、url `url_`、media `mda_`、taxonomy `tx_`、form `frm_`、notification `ntf_`、translation `trn_`、product `prd_`、article `art_`、page `pg_`、inquiry `inq_`、navigation `nav_`、seo `seo_`、graph `grh_`、tracking `trk_`；delivery、search 无表 | `inq_inquiry` |
+| 表前缀 | 按系统设计 3.2：core `sys_`、content `cnt_`、url `url_`、media `mda_`、taxonomy `tx_`、form `frm_`、notification `ntf_`、translation `trn_`、product `prd_`、article `art_`、page `pg_`、inquiry `inq_`、navigation `nav_`、seo `seo_`、graph `grh_`、tracking `trk_`；delivery无表；search按ADR-021提案增加 `sch_` 控制表 | `inq_inquiry` |
 | 表、字段、索引、外键 | 第 7 章 | `uk_route_path` |
 | Flyway | 位置 `db/migration/{模块 ID}`；文件 `V{三位序号}__{描述}.sql`；history 表 `flyway_{模块 ID}_history`（系统设计 25.6） | `V001__init.sql`、`flyway_core_history` |
 | Redis key | 站点级 `s{siteId}:{模块 ID}:{用途}:…`；系统级 `sys:{模块 ID}:…`（系统设计 5.3） | `s1:delivery:resolve:…` |
@@ -919,6 +923,7 @@ modules/*（compile：platform-api、platform-core；test：platform-testkit）
 | taxonomy → content | 为可路由分类项创建与维护 `TERM_PAGE` 内容 |
 | translation → content | 创建目标语言本地化、读写翻译状态、读取源语言发布状态 |
 | form → media | 表单附件上传为私有媒体；留资文档的下载票据校验与签名链接 |
+| form → notification（ADR-023，Proposed） | 原DOWNLOAD提交事务调用NotificationApi.send入发件箱；完整方案4.10.6 |
 
 由此禁止的方向（会形成环）：url → content、url → taxonomy、content → taxonomy、content → translation、media → 任何 L2。
 
@@ -1163,6 +1168,8 @@ public final class CoreErrors {
 
 ### 4.2 包结构与契约总表
 
+> **补充契约草案登记**：ReferenceWriteApi、ProjectionChangeApi、TransactionMutexApi、MediaReferenceSink、SearchChangeCapture、SiteResourceChangedEvent 及端口/ContentApi 增量统一见 4.10.9。当前为 Proposed；原目录中冲突的 media 快照读取、异步引用写入、form 通知方向及搜索 swap 描述按 4.10 记录替代方案，正式冻结前必须合并到完整目录和代码。
+
 #### 4.2.1 包结构
 
 ```text
@@ -1208,13 +1215,16 @@ backend/platform/platform-api/src/main/java/com/b2bweb/api/
 | `DictApi` | `common` | core | inquiry 等使用后台字典的模块 | 4.4.13 | 3.2、25.8 |
 | `EventMetaFactory` | `event` | core | 全部发布事件的模块 | 4.4.14 | 4.2 |
 | `ExtensionRegistry` | `extension` | core | content、url、delivery、seo、search、graph、media、translation、notification、inquiry、core | 4.4.15 | 3.7、3.8 |
-| `ContentApi` | `content` | content | product、article、page、taxonomy、translation、navigation、inquiry、delivery、seo、graph、search、media | 4.4.16 | 4.4、5.7、6 |
+| `ContentApi` | `content` | content | product、article、page、taxonomy、translation、navigation、inquiry、delivery、seo、graph、search（media资格取消，4.10.1） | 4.4.16 | 4.4、5.7、6 |
 | `UrlApi` | `url` | url | content、delivery、seo、product、navigation | 4.4.17 | 4.4、13 |
 | `MediaApi` | `media` | media | form、product、article、page、inquiry、delivery、seo、search | 4.4.18 | 8.4、12、17.3 |
 | `TaxonomyApi` | `taxonomy` | taxonomy | product、article、page、inquiry、navigation、delivery、seo、search、graph | 4.4.19 | 7、16.2、17.7 |
 | `FormApi` | `form` | form | inquiry、product | 4.4.20 | 17.1、17.2 |
 | `NotificationApi` | `notification` | notification | inquiry、form | 4.4.21 | 18 |
 | `TranslationApi` | `translation` | translation | inquiry、seo | 4.4.22 | 5.7、17.10 |
+| `ReferenceWriteApi`（Proposed） | `common` | core | content、资源拥有者/core | 4.10.1 | 12.6 |
+| `ProjectionChangeApi`（Proposed） | `common` | core | 公开事实/配置写入方 | 4.10.4 | 19 |
+| `TransactionMutexApi`（Proposed） | `common` | core | content、page、url、core路由输入写入方 | 4.10.5 | 13 |
 
 #### 4.2.3 扩展点与平台 SPI
 
@@ -1235,14 +1245,16 @@ backend/platform/platform-api/src/main/java/com/b2bweb/api/
 | `SitemapProvider` | `seo` | seo | （预留） | 4.5.13 | 14.6 |
 | `SearchDocumentProvider` | `extension` | search | product、article、page | 4.5.14 | 8.2、19 |
 | `RelationTypeProvider` | `extension` | graph | graph、product | 4.5.15 | 15.2 |
-| `MediaReferenceCollector` | `media` | media | product、article、page、seo、core；框架补充：navigation（菜单推荐图片） | 4.5.16 | 12.1、12.6 |
+| `MediaReferenceCollector` | `media` | content、资源拥有者/core（4.10.1） | product、article、page、seo、core；框架补充：navigation（菜单推荐图片） | 4.5.16 | 12.1、12.6 |
 | `ContentVariantProvider` | `content` | inquiry | product | 4.5.17 | 3.5、8.3、17.5 |
 | `PersonalDataProvider` | `extension` | core（数据主体请求工具） | inquiry、form、notification | 4.5.18 | 17.11 |
 | `NotificationTemplateProvider` | `notification` | notification | inquiry、content；框架补充：form（下载链接邮件）、translation（翻译失败通知） | 4.5.19 | 18 |
 | `TranslatableContentProvider` | `translation` | translation | product、article、page、taxonomy、seo | 4.5.20 | 5.5–5.7 |
-| `TranslatableResourceProvider` | `translation` | translation | navigation、form、media、product、taxonomy、notification、core、tracking | 4.5.21 | 5.5–5.7 |
+| `TranslatableResourceProvider` | `translation` | translation | navigation、form、media、product、taxonomy、notification、core、tracking、article（4.10.2） | 4.5.21 | 5.5–5.7 |
 | `PlatformModule`（模块生命周期 SPI） | `extension` | core（模块管理器） | 每个模块 | 4.5.22 | 3.6 |
 | `JobHandler`、`ScheduledTask`（任务 SPI） | `common` | core（任务执行器、调度器） | 需要异步任务或定时任务的模块 | 4.4.12 | 2.4、3.8 |
+| `MediaReferenceSink`（Proposed） | `media` | core | media | 4.10.1 | 12.6 |
+| `SearchChangeCapture`（Proposed） | `extension` | core | search | 4.10.4 | 19 |
 
 #### 4.2.4 领域事件
 
@@ -1251,9 +1263,9 @@ backend/platform/platform-api/src/main/java/com/b2bweb/api/
 | 事件 | 发布方 | 订阅方 | 小节 | 系统设计 |
 |---|---|---|---|---|
 | `ContentCreatedEvent` | content | graph | 4.6.2 | 4.3 |
-| `ContentDraftChangedEvent`（框架补充） | content | media（草稿引用） | 4.6.2 | 12.1 |
-| `ContentPublishedEvent` | content | seo、graph、search、media、delivery、translation | 4.6.2 | 4.3、4.4、5.7 |
-| `ContentUnpublishedEvent` | content | seo、graph、search、media、delivery | 4.6.2 | 4.3 |
+| `ContentDraftChangedEvent`（框架补充） | content | 诊断/源修复提示，引用已同步登记（4.10.1） | 4.6.2 | 12.1 |
+| `ContentPublishedEvent` | content | seo、graph、search、delivery、translation | 4.6.2 | 4.3、4.4、5.7 |
+| `ContentUnpublishedEvent` | content | seo、graph、search、delivery | 4.6.2 | 4.3 |
 | `ContentTrashedEvent` / `ContentRestoredEvent` | content | graph、search、delivery | 4.6.2 | 4.3 |
 | `ContentPurgedEvent` | content | 所有以 `content_id` 保存数据的模块 | 4.6.2 | 4.3、25.5 |
 | `LocalizationCreatedEvent` / `LocalizationDeletedEvent` | content | seo、delivery、translation | 4.6.2 | 4.3 |
@@ -1264,13 +1276,14 @@ backend/platform/platform-api/src/main/java/com/b2bweb/api/
 | `RedirectChangedEvent` | url | delivery | 4.6.3 | 4.3 |
 | `TermChangedEvent` | taxonomy | graph、search、delivery、content、product、navigation | 4.6.4 | 4.3、7.3 |
 | `MediaUploadedEvent` / `MediaUpdatedEvent` / `MediaDeletedEvent` | media | delivery、seo | 4.6.5 | 4.3 |
-| `NavigationChangedEvent` | navigation | delivery、media | 4.6.6 | 4.3、16.1 |
+| `NavigationChangedEvent` | navigation | delivery | 4.6.6 | 4.3、16.1 |
 | `SiteSettingsChangedEvent` | core | delivery、seo、url、search、translation、media | 4.6.7 | 4.3 |
 | `ModuleEnabledEvent` / `ModuleDisabledEvent` | core | delivery、seo、search、graph | 4.6.7 | 4.3、3.8 |
 | `UserDeactivatedEvent`（框架补充） | core | inquiry | 4.6.7 | 17.7 |
 | `RelationChangedEvent` | graph | delivery | 4.6.8 | 4.3 |
 | `FormSubmittedEvent` | form | inquiry | 4.6.9 | 17.2 |
 | `FormChangedEvent`（框架补充） | form | delivery | 4.6.9 | 17.1 |
+| `SiteResourceChangedEvent`（Proposed） | article、tracking、url | delivery、content（url.pattern） | 4.10.2 | 4.3、20、23.3 |
 | `InquiryCreatedEvent` / `InquiryAssignedEvent` / `InquiryStatusChangedEvent` | inquiry | V1 无跨模块订阅方；V2：crm、analytics | 4.6.10 | 4.3 |
 | `TranslationCompletedEvent` | translation | content、delivery | 4.6.11 | 4.3、5.7 |
 | `TranslationFailedEvent` | translation | notification | 4.6.11 | 4.3 |
@@ -1843,20 +1856,21 @@ public sealed interface TranslationSubject permits TranslationSubject.Content, T
 /**
  * 翻译上下文：携带站点、翻译对象、源语言与目标语言。
  *
- * @param jobId  translation 的任务 ID（trn_job.id），用于日志与幂等；extract 预估时为 0
+ * @param jobId translation 的任务 ID（trn_job.id），用于日志与幂等；extract 预估时为 0
+ * @param expectedTargetVersion 内容任务在调用引擎前捕获并持久化的目标草稿version；内容apply必填，预估extract及资源上下文可空
  */
 public record TranslationContext(long siteId, TranslationSubject subject, String sourceLocale,
-                                 String targetLocale, long jobId) {
+                                 String targetLocale, long jobId, @Nullable Integer expectedTargetVersion) {
 
     public static TranslationContext forContent(long siteId, TranslationSubject.Content subject,
-                                                String targetLocale, long jobId) {
-        return new TranslationContext(siteId, subject, com.b2bweb.api.common.Locales.SOURCE, targetLocale, jobId);
+                                                String targetLocale, long jobId, @Nullable Integer expectedTargetVersion) {
+        return new TranslationContext(siteId, subject, com.b2bweb.api.common.Locales.SOURCE, targetLocale, jobId, expectedTargetVersion);
     }
 
     public static TranslationContext forResource(long siteId, String resourceType, String resourceId,
                                                  String targetLocale, long jobId) {
         return new TranslationContext(siteId, new TranslationSubject.Resource(resourceType, resourceId),
-                com.b2bweb.api.common.Locales.SOURCE, targetLocale, jobId);
+                com.b2bweb.api.common.Locales.SOURCE, targetLocale, jobId, null);
     }
 
     /** 内容翻译时取内容对象；资源翻译时调用抛出 IllegalStateException。 */
@@ -2869,9 +2883,9 @@ public record ExtensionInfo(String point, String implementationClass, String mod
 
 内容的身份、本地化、草稿元数据、生命周期（审核、发布、定时、下线、回滚、回收站）、发布快照与投影的读取、预览，以及翻译所需的本地化操作（系统设计 4.4、5.5–5.7、6.1–6.7）。业务字段（草稿态）由各业务模块保存在自己的表中，以 `content_id` 关联；内容内核只保存身份、状态、修订与投影。
 
-- 提供方：content。使用方：product、article、page、taxonomy（创建与维护业务内容、TERM_PAGE）；translation（目标语言本地化与翻译状态）；delivery、seo、graph、search、navigation、inquiry、media（读取快照与投影）。
+- 提供方：content。使用方：product、article、page、taxonomy（创建与维护业务内容、TERM_PAGE）；translation（目标语言本地化与翻译状态）；delivery、seo、graph、search、navigation、inquiry（读取快照与投影；media资格按4.10.1取消）。
 - **生命周期写方法的权限**：存在当前用户时按 `Permissions.forContent(type, action)` 校验（4.1.3），无权限抛出 `ForbiddenException`（`CORE_FORBIDDEN`）；以 `system` 身份执行（定时发布、译文自动发布、任务）时跳过。
-- **乐观锁**：本地化的 `version` 是该本地化全部草稿数据（内核与各业务模块）的共同版本：任何模块保存某本地化的草稿时都经 `updateDraftMeta` 递增它；`expectedVersion` 为空表示系统写入（翻译回写、导入），不做检查。
+- **乐观锁**：本地化的 `version` 是该本地化全部草稿数据（内核与各业务模块）的共同版本：任何模块保存某本地化的草稿时都经 `updateDraftMeta` 递增它；翻译和交互保存必须携带非空expectedVersion；只有已持有内容父锁、没有外部计算窗口的受控系统导入可用空值。所有保存先lockDraftForWrite，再写业务表，最后updateDraftMeta。
 - **草稿哈希**：`updateDraftMeta`、`markDraftChanged` 之后，内容内核以 `AssemblyPurpose.DRAFT_HASH` 调用全部 `PublishContributor.contribute`（4.5.3）组装快照并计算 `draft_hash`，与 `pub_hash` 比较得出“有未发布的修改”；因此草稿哈希与发布快照使用同一套代码，不会误报。
 - **发布事务**（系统设计 4.4）：`publish` 在调用方事务中依次执行：状态 / 权限 / 乐观锁 → `RouteHints`（4.5.2）→ `UrlApi.reservePath` → `PublishContributor.validate` → `contribute` 组装快照 → 写修订、投影、`cnt_published_term` → `UrlApi.applyRoute` → 源语言发布时把 `MANUAL` 目标语言标记为 `OUTDATED` → 发布 `ContentPublishedEvent`。**不调用 AI 引擎**（CLAUDE.md 禁止 16），翻译由 translation 监听事件后异步执行。
 - Delivery 热路径：`findPublishedSnapshot`、`findPublishedCards`、`publishedVersions`（4.1.3）。
@@ -2882,6 +2896,14 @@ package com.b2bweb.api.content;
 public interface ContentApi {
 
     // ───────────── 创建与草稿 ─────────────
+
+    /**
+     * 已有内容保存前调用：先锁cnt_content，再锁目标cnt_localization并核对expectedVersion。
+     * 返回当前本地化；锁保持到调用方事务结束。必须先于所属模块业务表写入/贡献方apply。
+     * MANDATORY，使用当前读；跨站/不存在拒绝。多内容操作按contentId排序；路由事务锁在本方法之前。
+     */
+    LocalizationInfo lockDraftForWrite(long localizationId, int expectedVersion);
+
 
     /**
      * 创建内容及其源语言本地化（系统设计 6.1）。业务模块在保存自己业务表的同一事务中调用。
@@ -3076,6 +3098,12 @@ public interface ContentApi {
      * partOverrides 用于编辑器画布传入未保存的部分（如 "layout"）。
      */
     PreviewSnapshot assemblePreview(@Valid PreviewRequest request);
+
+    /** M0新增草案，ADR-022；content任务读取当前树，事务内提交，见4.10.5。 */
+    JobInfo requestRouteRecalculation(Set<String> locales);
+
+    /** 内容级策略：锁cnt_content并比较其version，变化时使各本地化旧审批/版本失效；见4.10.7。 */
+    ContentInfo setTranslationReviewRequirement(long contentId, int expectedContentVersion, boolean required);
 }
 ```
 
@@ -3097,7 +3125,7 @@ public record CreateLocalizationCommand(long contentId, @NotBlank String locale,
                                         @Nullable @Size(max = 80) String slug) {}
 
 /**
- * @param expectedVersion   为空表示系统写入（翻译回写、导入），不做乐观锁检查
+ * @param expectedVersion 翻译/交互保存必填；仅持有父锁的受控导入可空，禁止用null绕过翻译冲突
  * @param title             新的草稿标题；为空表示不变
  * @param slug              新的 slug；为空表示不变（已发布的本地化修改 slug 时，下次发布自动生成 301）
  * @param sharedDataChanged 语言无关的数据是否也变化了（见 updateDraftMeta）
@@ -3147,7 +3175,7 @@ public record TranslationStateUpdate(long localizationId, TranslationState state
 /** @param primaryLocale 源语言（zh-CN） */
 public record ContentInfo(long contentId, String contentType, String ownerModule, boolean routable,
                           String primaryLocale, @Nullable Instant trashedAt,
-                          long createdBy, Instant createdAt) {
+                          long createdBy, Instant createdAt, int version, boolean translationReviewRequired) {
     public boolean trashed() { return trashedAt != null; }
 }
 
@@ -3167,7 +3195,8 @@ public record LocalizationInfo(
         UnpublishStrategy unpublishStrategy, @Nullable Long unpublishRedirectContentId,
         TranslationMode translationMode, TranslationState translationState,
         @Nullable String sourceLocale, @Nullable Integer sourceRevisionNo,
-        @Nullable String pubPath, boolean hasUnpublishedChanges, int version, Instant updatedAt) {
+        @Nullable String pubPath, boolean hasUnpublishedChanges, int version, Instant updatedAt,
+        boolean translationReviewRequired) {
 
     public boolean isSource() { return translationMode == TranslationMode.SOURCE; }
     public boolean isPublished() { return publishState == PublishState.PUBLISHED; }
@@ -3275,6 +3304,7 @@ public final class ContentErrors {
     public static final ErrorCode PUBLISH_VALIDATION_FAILED  = ErrorCode.of("CONTENT_PUBLISH_VALIDATION_FAILED", 422, "发布校验未通过");
     public static final ErrorCode SLUG_INVALID               = ErrorCode.of("CONTENT_SLUG_INVALID", 422, "slug 格式不正确");
     public static final ErrorCode SLUG_CONFLICT              = ErrorCode.of("CONTENT_SLUG_CONFLICT", 409, "路径已被其他内容占用");
+    public static final ErrorCode CARD_MISSING               = ErrorCode.of("CONTENT_CARD_MISSING", 422, "发布快照缺少卡片信息");
     public static final ErrorCode SNAPSHOT_TOO_LARGE         = ErrorCode.of("CONTENT_SNAPSHOT_TOO_LARGE", 422, "快照超过 1 MB");
     public static final ErrorCode REDIRECT_TARGET_INVALID    = ErrorCode.of("CONTENT_REDIRECT_TARGET_INVALID", 422, "下线跳转目标无效");
     public static final ErrorCode TRASHED                    = ErrorCode.of("CONTENT_TRASHED", 409, "内容在回收站中");
@@ -3289,10 +3319,10 @@ public final class ContentErrors {
 | 跨模块用例 | 调用 |
 |---|---|
 | 业务模块新建内容（产品、文章、页面） | 在自己的事务中：写业务表 → `create` → 用返回的 `contentId` 关联业务表 |
-| 业务模块保存草稿（含 SEO 面板、页面插槽） | 写自己的表 → `updateDraftMeta(localizationId, expectedVersion, title, slug, sharedDataChanged)` |
+| 业务模块保存草稿（含 SEO 面板、页面插槽） | 先`lockDraftForWrite(localizationId, expectedVersion)`取得父/子行锁 → 写自己的表 → `updateDraftMeta`；新内容先create取得身份及锁 |
 | taxonomy 为可路由分类项创建落地页 | `create(TERM_PAGE, zh-CN, 分类名)`；删除分类项时 `unpublishAll(contentId, REDIRECT_CONTENT, 上级分类落地页)` → `trash` |
 | product 导入后直接发布、批量发布 / 下线 | 每个产品一个事务：`publish` / `unpublish`（当前用户须有 publish 权限） |
-| translation 开始翻译 | `ensureTargetLocalization` → `updateTranslationState(QUEUED, sourceRevisionNo)`；回写后 `updateTranslationState(TRANSLATED / NEEDS_REVIEW / FAILED)`；各 `TranslatableContentProvider.apply` 自行调用 `updateDraftMeta(expectedVersion = null)` |
+| translation 开始翻译 | 调用引擎前捕获并持久化expectedTargetVersion；回写事务先lockDraftForWrite校验；非拥有者provider先apply、拥有者最后apply并以该版本调用一次updateDraftMeta；事件携带回写后targetVersion |
 | 译文自动发布 | content 监听 `TranslationCompletedEvent`，以 `system` 身份、`PublishTrigger.TRANSLATION` 执行 `publish` 的同一流程（系统设计 6.3） |
 | delivery 渲染线上页面 | `UrlApi.resolve(path)` → `findPublishedSnapshot(localizationId)`；卡片与 hreflang：`findPublishedCards`、`publishedVersions` |
 | delivery 预览 / 编辑器画布 | `resolvePreviewToken` → `assemblePreview` |
@@ -3494,7 +3524,7 @@ public final class UrlErrors {
 上传（含病毒扫描与去重）、媒体元数据与按语言的 alt / 标题、图片 URL（imgproxy 签名）、公开文件与私有文件的下载、留资文档的下载授权、引用查询与删除（系统设计 8.4、12、17.3）。业务模块只依赖本接口，不接触 `ObjectStorage`（系统设计 12.5）。
 
 - 提供方：media。使用方：form（表单附件、留资文档下载）、product（图集、文档、导入图片）、article、page、inquiry（附件下载）、delivery、seo、search。
-- 引用追踪（`mda_usage`）由 media 收集 `MediaReferenceCollector`（4.5.16）并监听内容与资源事件维护，调用方不需要登记引用。
+- 引用追踪（`mda_usage`）按4.10.1的事务内登记方案维护；旧的media异步收集写入路径被替代。业务拥有者通过core协调器登记，不直接访问mda_表。
 - 媒体的 alt、标题、说明以中文录入，作为站点资源翻译（资源类型 `media.media`，4.5.21）；按语言读取时该语言没有译文的字段为空（不回退）。
 - Delivery 热路径：`views`、`imageSources`。
 
@@ -3556,18 +3586,20 @@ public interface MediaApi {
     void setDownloadGate(long mediaId, @Nullable String formKey);
 
     /**
-     * 签发留资文档的下载票据（form 在 DOWNLOAD 表单提交通过后调用，系统设计 8.4）：校验媒体为私有、READY，且门控表单等于 formKey，
-     * 否则抛出 MEDIA_DOWNLOAD_NOT_ALLOWED（防止用任意媒体 ID 换取下载链接）。票据 URL 指向 media 的公开下载端点，
-     * 访问时再签发对象存储的预签名链接；ttl ≤ 7 天（随邮件发送）。
+     * 签发留资文档票据：同站点、未软删、PRIVATE/READY、门控表单匹配，且mda_usage存在
+     * 此contentId/locale的PUBLISHED文档引用。仅本地签名，无对象存储/SMTP网络调用。
+     * 签名包括site/submission/media/content/locale/formKey/当前download_gate_version/固定expiresAt。
+     * form把返回URL及expiresAt写入自身download_grant，数据库提交后才可返回/发送；详见4.10.6。
      */
-    DownloadTicket issueGatedDownload(long mediaId, String formKey, Duration ttl);
+    DownloadTicket issueGatedDownload(@Valid GatedDownloadCommand command);
 
     /** 媒体的引用位置（来自 mda_usage）。 */
     List<MediaUsageInfo> usages(long mediaId);
 
     /**
-     * 删除媒体：仍有引用时抛出 MEDIA_IN_USE（properties.usageCount）；force 为 true 时忽略引用
-     * （只用于没有引用追踪的私有附件：表单临时附件过期、数据主体请求删除、保留期清理）。发布 MediaDeletedEvent。幂等。
+     * 普通资产检查引用后移入回收站，文件保留30天；到期由清理任务物理删除。
+     * force只清理由调用模块管理且无受保护引用的私有附件，不能忽略mda_usage。
+     * 排他媒体行锁保护状态变化；引用共享锁内必须确认deleted_at为空。幂等。
      */
     void delete(long mediaId, boolean force);
 }
@@ -3693,6 +3725,10 @@ public record ImageSources(long mediaId, ImagePreset preset, int width, int heig
 }
 
 public record DownloadTicket(URI url, Instant expiresAt) {}
+
+/** 只由form在ACCEPT且非测试的原提交事务调用；expiresAt固定为提交创建时刻+站点配置TTL（≤7天）。 */
+public record GatedDownloadCommand(long submissionId, long mediaId, String formKey,
+                                   long contentId, String locale, Instant expiresAt) {}
 
 /**
  * 引用位置。
@@ -3956,7 +3992,7 @@ public final class FormErrors {
 发送邮件通知与 Webhook 事件（系统设计 18）。`send` 在调用方事务中写入发件箱（`ntf_message`），由 notification 的后台任务经 `MailTransport` / `WebhookTransport` 投递，确保“业务保存成功就一定会发通知”；事务回滚则通知不存在。
 
 - 提供方：notification。使用方：inquiry（分配通知、SLA 提醒、客户自动回复、Webhook）、form（留资文档下载链接邮件）。content（审核请求）与 translation（翻译过期、翻译失败）的员工通知由 notification 监听对应事件发送（4.2.4），不调用本接口。
-- **语言**：员工通知（`StaffUser`）固定使用 `zh-CN` 模板；客户邮件按请求的 `locale` 选择模板译文，该语言没有模板时使用 `fallbackLocale`，仍没有时消息置为 `FAILED`（错误码 `NOTIFICATION_TEMPLATE_NOT_FOUND`）并告警。是否提供 `fallbackLocale`（通常为站点默认对外语言）由调用方决定。
+- **语言**：员工通知（`StaffUser`）固定使用 `zh-CN` 模板；客户邮件在send入队时按locale/fallbackLocale确定effectiveLocale并验证模板；仍没有时抛NOTIFICATION_TEMPLATE_NOT_FOUND，不创建发件箱，调用方事务回滚。入队后的effectiveLocale固定；工作线程渲染/SMTP故障按发件箱FAILED/重试处理，不静默换语言。是否提供 `fallbackLocale`（通常为站点默认对外语言）由调用方决定。
 - **模型**：模板变量只能是 JSON 可序列化的值；模板引擎自动转义 HTML；不得放入密钥。客户邮件的模型中可以包含该客户自己的联系信息，员工通知中只放后台链接与必要摘要。
 - **幂等**：`dedupKey` 非空时，同一站点、同一模板、同一收件人、同一 `dedupKey` 只入队一次（事件监听重复投递时不重复发送）。
 
@@ -4843,7 +4879,7 @@ public record SitemapEntry(String path, @Nullable Instant lastModified, Map<Stri
 
 #### 4.5.14 SearchDocumentProvider：搜索文档
 
-根据快照构建搜索文档的类型专属字段（系统设计 8.2、19）。search 监听 `ContentPublishedEvent` 后调用，补充公共字段（`id`、`type`、`url`、`published_at`、`terms` 的名称、修订号）后按 ID + 修订号幂等 upsert 到 `s{site}_{locale}_content`。
+根据快照构建搜索文档的类型专属字段（系统设计 8.2、19）。search在4.10.4的私有代次构建中调用，补充公共字段（`id`、`type`、`url`、`published_at`、`terms`的名称、修订号）并逐任务await；活跃代次不接受事件直接upsert。
 
 - 收集方：search。实现方：product、article、page。
 - 只读快照（不读草稿表）；结果只含该语言的文本。
@@ -4920,10 +4956,10 @@ public record RelationTypeDefinition(String key, String label, boolean symmetric
 
 #### 4.5.16 MediaReferenceCollector：媒体引用收集
 
-收集草稿与站点资源中引用的媒体，用于引用追踪（`mda_usage`，系统设计 12.1、12.6）。发布态的引用由 media 用 `ReferenceSet.scan`（4.3.5）扫描快照得到，不需要实现方参与。
+M0补充方案（ADR-019，Proposed）：收集草稿与资源的完整媒体集合，供源保存事务通过ReferenceWriteApi登记；完整锁与删除协议见4.10.1。当前发布态由content直接扫描本次组装的快照。
 
-- 收集方：media。实现方：product、article、page、seo（OG 图片）、core（站点资料 Logo 等）；框架补充：navigation（菜单推荐图片）。
-- 触发：`ContentDraftChangedEvent` → `collectDraft`；`NavigationChangedEvent` → `collectResource("navigation.menu", menuId)`；`SiteSettingsChangedEvent`（站点资料变化）→ `collectResource("core.site_profile", siteId)`。media 用结果整体替换该对象的引用记录（幂等）。
+- 收集方：content（草稿）、资源拥有者/core（资源）；实现方：product、article、page、seo、core、navigation。
+- 触发：updateDraftMeta/markDraftChanged与资源保存的原事务；异步事件不覆盖权威引用。media只实现MediaReferenceSink，不回查ContentApi。
 
 ```java
 package com.b2bweb.api.media;
@@ -5079,7 +5115,7 @@ V1 模板（模板 key 按 fw 3.7 的 `{模块 ID}.{场景}.{接收方}` 规则�
 
 - 收集方：translation。实现方：product、article、page（布局中 `x-translatable` 的属性）、taxonomy（TERM_PAGE 的分类描述）、seo（源语言的覆盖值）。
 - **提取来源**：以 `ctx.content().sourceRevisionNo()` 对应的源语言**发布快照**为准（`ContentApi.findRevision`，或实现方自己的等价数据）；不读取源语言之后尚未发布的草稿修改（框架补充：系统设计 3.7 写作“源语言草稿”，发布后的草稿可能含未发布修改，从快照提取避免把它们带入译文）。
-- **回写**：只写 `ctx.content().targetLocalizationId()` 的草稿；非文本数据（图片、数值、型号、分类指派、关联、布局结构）从同一源语言快照复制（系统设计 5.5）。所属模块的实现负责调用 `ContentApi.updateDraftMeta(targetLocalizationId, expectedVersion = null, title = 译文标题, …)`；其他实现不调用 content。
+- **回写**：translation在外部引擎调用前捕获expectedTargetVersion并写入trn_job_item；同一回写事务先调用lockDraftForWrite校验该值，再让非拥有者provider（如seo）apply，拥有者provider最后apply并以ctx.expectedTargetVersion()调用一次updateDraftMeta、写入译文标题并重算所有parts的哈希。除拥有者之外的provider不递增内容version；整个事务失败全部回滚。资源上下文expectedTargetVersion为空。非文本结构来自同一源修订，不借此覆盖人工新版本。
 - **部分回写**：`translations` 可能只含部分 key（校验未通过的单元、翻译编辑器中单段修订）：缺少的 key 保留目标语言的现值；目标语言没有现值时留空（该本地化处于 `NEEDS_REVIEW`，不会自动发布）。
 - **安全**：译文是纯文本数据（系统设计 26.3）：按字段的格式写入，`RICH_INLINE` 只按编号占位标签还原行内标记，不解析其中的任何其他标记，不执行、不拼接为指令。
 - MANUAL 模式的本地化不调用 `apply`；`extract` 仍用于对比源语言两个修订的变化字段（OUTDATED 面板）。
@@ -5155,6 +5191,8 @@ public final class TranslatableResourceTypes {
     public static final String SITE_PROFILE = "core.site_profile";
     /** 前台界面文案；resourceId = 文案命名空间（如 "form"、"common"），一个命名空间一个资源 */
     public static final String UI_TEXT = "core.ui_text";
+    /** 作者职务与简介；resourceId = authorId（4.10.2，Proposed） */
+    public static final String ARTICLE_AUTHOR = "article.author";
     /** Cookie 横幅与同意设置文案；resourceId = siteId */
     public static final String CONSENT_BANNER = "tracking.consent_banner";
 }
@@ -5234,7 +5272,7 @@ public record SiteModuleContext(long siteId, String moduleId, com.b2bweb.api.com
 
 ### 4.6 领域事件
 
-本节给出 4.2.4 中全部领域事件的定义。机制见系统设计 4.1：发布方在业务事务中调用 Spring 的 `ApplicationEventPublisher.publishEvent`，Spring Modulith 的 Event Publication Registry 在同一事务中写入 `event_publication`；事务提交后，订阅方用 `@ApplicationModuleListener` 在新事务中异步处理；未完成的投递在启动时与定时任务中重新投递（至少一次，ADR-003）。
+本节给出 4.2.4 中全部领域事件的定义。机制见系统设计 4.1：发布方在业务事务中调用 Spring 的 `ApplicationEventPublisher.publishEvent`，Spring Modulith 的 Event Publication Registry 在同一事务中写入 `EVENT_PUBLICATION`；事务提交后，订阅方用 `@ApplicationModuleListener` 在新事务中异步处理；未完成的投递在启动时与定时任务中重新投递（至少一次，ADR-003）。
 
 **发布规则**（发布方遵守，PR 评审与 ArchUnit 检查）：
 
@@ -5252,7 +5290,7 @@ public record SiteModuleContext(long siteId, String moduleId, com.b2bweb.api.com
 
 | 规则 | 说明 |
 |---|---|
-| 幂等 | 至少一次投递，监听器必须幂等。三种方式任选：① **按当前状态重算**并整体替换（推荐：如 media 重新收集引用、delivery 清除缓存、search 读取当前快照 upsert）；② **业务唯一键**拒绝重复（如 inquiry 以 `submission_id` 唯一）；③ **按 `eventId` 去重**：在监听事务中写入 platform-core 的已处理事件记录（第 5 章），重复时跳过 |
+| 幂等 | 至少一次投递，监听器必须幂等。三种方式任选：① **按当前状态重算**并整体替换（推荐：如 delivery 重复清除缓存；media同步引用和search事务日志按4.10，不再异步覆盖权威集合）；② **业务唯一键**拒绝重复（如 inquiry 以 `submission_id` 唯一）；③ **按 `eventId` 去重**：在监听事务中写入 platform-core 的已处理事件记录（第 5 章），重复时跳过 |
 | 顺序 | 不保证顺序。同一本地化的发布类事件按 `(revisionNo, occurredAt)` 比较，丢弃不新于已处理值的事件；或者不信任载荷中的状态，处理时经服务接口读取当前状态（如 `ContentApi.findLocalization`、`UrlApi.pathOf`） |
 | 站点上下文 | platform-core 的监听器包装按 `siteId` 建立站点上下文（`ContextOrigin.EVENT`，4.3.1）；`siteId` 为空的系统级事件没有站点上下文，订阅方用 `SiteContextProvider` 逐站点执行 |
 | 模块停用 | 订阅方模块在事件所属站点停用时，监听器包装跳过执行并标记完成（系统设计 3.8；`deliverWhenModuleDisabled()` 为 true 的事件除外）；重新启用后由该模块的全量任务补齐（如 search 重建索引、graph 全量计算） |
@@ -5470,20 +5508,20 @@ public record ReviewCompletedEvent(EventMeta meta, long contentId, String conten
 | 事件 | 发布时机 | 订阅方与处理 | 幂等键 / 过期判断 |
 |---|---|---|---|
 | `ContentCreatedEvent` | `create` | graph：初始化该内容的关系设置（默认 AUTO 模式） | `contentId`（upsert） |
-| `ContentDraftChangedEvent` | `updateDraftMeta`、`markDraftChanged` | media：`MediaReferenceCollector.collectDraft`，整体替换该本地化的草稿引用（4.5.16） | 按当前状态重算；`(localizationId, version)` 不新于已处理值时跳过 |
-| `ContentPublishedEvent` | `publish`（含定时、译文自动发布） | delivery：清除 `c:{id}`，首次发布加 `list:{type}`，路径变化加旧路径条目（系统设计 23.3）；seo：sitemap、IndexNow、链接索引、健康检查；graph：增量重算（30 秒合并）；search：`SearchDocumentProvider` 构建并 upsert；media：扫描快照更新发布态引用；translation：`locale` 为源语言时为 `SiteApi.autoTranslateLocales()` 创建翻译任务（系统设计 5.7） | `(localizationId, revisionNo)`；translation 以 `(contentId, revisionNo, targetLocale)` 去重 |
-| `ContentUnpublishedEvent` | `unpublish`、`unpublishAll`、定时下线 | delivery：清除 `c:{id}`、`list:{type}`；seo：sitemap、IndexNow（旧 URL）；graph：从候选集与列表移除；search：删除文档；media：删除发布态引用 | `(localizationId, lastRevisionNo, occurredAt)`；之后再次发布的 `ContentPublishedEvent` 修订号更大 |
+| `ContentDraftChangedEvent` | `updateDraftMeta`、`markDraftChanged` | 媒体引用已按4.10.1在源事务登记；本事件仅作诊断/源模块修复提示，不异步覆盖引用 | 按当前状态重算；`(localizationId, version)` 不新于已处理值时跳过 |
+| `ContentPublishedEvent` | `publish`（含定时、译文自动发布） | delivery：清除 `c:{id}`，每次发布加 `list:{type}`，路径变化加旧路径条目（系统设计 23.3）；seo：sitemap、IndexNow、链接索引、健康检查；graph：增量重算（30 秒合并）；search：唤醒4.10.4构建任务，不直接改活跃索引；media引用已在发布事务同步登记；translation：`locale` 为源语言时为 `SiteApi.autoTranslateLocales()` 创建翻译任务（系统设计 5.7） | `(localizationId, revisionNo)`；translation 以 `(contentId, revisionNo, targetLocale)` 去重 |
+| `ContentUnpublishedEvent` | `unpublish`、`unpublishAll`、定时下线 | delivery：清除 `c:{id}`、`list:{type}`；seo：sitemap、IndexNow（旧 URL）；graph：从候选集与列表移除；search：按已捕获事务日志构建下一代；media发布态引用已在下线事务清除 | `(localizationId, lastRevisionNo, occurredAt)`；之后再次发布的 `ContentPublishedEvent` 修订号更大 |
 | `ContentTrashedEvent` / `ContentRestoredEvent` | `trash` / `restore` | graph：排除 / 恢复候选；search：删除文档（恢复时无操作，再次发布时重建）；delivery：清除 `c:{id}` | `(contentId, occurredAt)`；处理时读取 `ContentInfo.trashed()` 当前值 |
 | `ContentPurgedEvent` | `purge` | 所有以 `content_id` 保存数据的模块删除自己的行：所属模块删除业务表；taxonomy 删除草稿指派；graph、media、seo、search、translation 删除各自数据；inquiry 保留询盘明细中的快照（标题、型号、URL，系统设计 17.5），不处理 | `contentId`（删除天然幂等） |
 | `LocalizationCreatedEvent` | 见注释 | seo：更新 hreflang 计划；delivery：清除 `c:{id}`（语言切换器）；translation：忽略 AUTO（自己创建）；MANUAL 登记到翻译中心的“独立编辑”列表，不自动翻译 | `localizationId` |
 | `LocalizationDeletedEvent` | `deleteLocalization` | seo、delivery：同上；translation：取消该本地化的未完成任务项 | `localizationId` |
 | `TranslationModeChangedEvent` | `changeTranslationMode` | translation：MANUAL → AUTO 时以源语言当前发布修订创建翻译任务（翻译记忆中的 `HUMAN` / `REVIEWED` 优先）；AUTO → MANUAL 时取消未完成的任务项 | `(localizationId, occurredAt)`；处理时读取当前 `translationMode` |
-| `TranslationOutdatedEvent` | 源语言 `publish` 事务内 | notification：模板 `content.outdated.staff`，收件人 `UserDirectory.usersWithPermission("translation:review", locale)` | `dedupKey = "outdated:{localizationId}:{sourceRevisionNo}"` |
+| `TranslationOutdatedEvent` | 源语言 `publish` 事务内 | notification：模板 `content.outdated.staff`，收件人 `UserDirectory.usersWithPermission("translation:memory:review", locale)` | `dedupKey = "outdated:{localizationId}:{sourceRevisionNo}"` |
 | `ReviewRequestedEvent` | `submitForReview` | notification：模板 `content.review.staff`，收件人 `usersWithPermission(Permissions.forContent(type, REVIEW), locale)` | `dedupKey = "review:{localizationId}:{version}"` |
 | `ReviewCompletedEvent` | `approve` / `reject` | notification：模板 `content.reviewed.staff`，收件人 `submittedBy` | `dedupKey = "reviewed:{eventId}"` |
 
 - `ContentPurgedEvent` 的订阅方在模块设计文档“跨模块引用与清理”（模板 4.6）中逐表写明处理方式；停用的模块同样必须清理（`deliverWhenModuleDisabled() = true`，框架补充，需同步系统设计 3.8）。
-- `translation:review` 是 translation 声明的权限码（审校译文，可按语言限定数据范围，系统设计 5.8），由 translation 模块设计文档登记。
+- `translation:memory:review` 是 translation 声明的权限码（审校译文，可按语言限定数据范围，系统设计 5.8），由 translation 模块设计文档登记。
 
 #### 4.6.3 URL 事件（url 发布）
 
@@ -5627,7 +5665,7 @@ public record NavigationChangedEvent(EventMeta meta, long menuId, String menuKey
 | 订阅方 | 处理 | 幂等键 |
 |---|---|---|
 | delivery | 清除 `nav` 标签（系统设计 23.3：相当于清除整站 HTML） | 天然幂等 |
-| media | `MediaReferenceCollector.collectResource("navigation.menu", menuId)` 整体替换引用；`DELETED` 时删除该菜单的引用 | 按当前状态重算 |
+| 引用维护 | 菜单保存事务已通过ReferenceWriteApi同步登记；本事件不写mda_usage | 不适用 |
 
 菜单项标签变化时 navigation 同时发布 `TranslatableResourceChangedEvent(navigation.menu, menuId)`。
 
@@ -5730,7 +5768,7 @@ public record UserDeactivatedEvent(EventMeta meta, long userId, UserDeactivation
 | url | `LOCALES` 的 `URL_PREFIX_CHANGED`；`SITE`（尾斜杠策略） | 前缀变化：提交任务重算该语言全部路由并生成 301；尾斜杠变化：清除路由解析缓存 |
 | search | `LOCALES` 的 `ADDED` / `REMOVED`；`settingsOf("search")` | 创建 / 删除该语言的索引 `s{site}_{locale}_content`；更新同义词、停用词等索引设置 |
 | translation | `LOCALES` 的 `AUTO_TRANSLATE_ENABLED` / `AUTO_TRANSLATE_DISABLED`；`settingsOf("translation")` | 开启：为该语言创建批量任务（全部已发布内容与全部站点资源，系统设计 5.7“开放新语言”）；关闭：取消该语言未完成的任务项；引擎与预算设置即时生效 |
-| media | `PROFILE` | `collectResource("core.site_profile", siteId)` |
+| core | `PROFILE` | 资料保存事务已通过ReferenceWriteApi登记引用；事件只通知缓存/翻译，不重写引用 |
 
 其他平台事件：
 
@@ -5888,9 +5926,13 @@ public record TranslationCompletedEvent(EventMeta meta, long jobId,
                                         @Nullable TranslationSubject.Resource resource,
                                         String targetLocale, TranslationState state,
                                         boolean humanReviewRequired, boolean autoPublish,
-                                        TranslationStats stats) implements DomainEvent {
+                                        TranslationStats stats, @Nullable Integer targetVersion) implements DomainEvent {
 
     public TranslationCompletedEvent {
+        // ADR-024（M0草案）：内容事件必须带本次回写后共同版本；资源事件不带版本。
+        if ((content != null && targetVersion == null) || (resource != null && targetVersion != null)) {
+            throw new IllegalArgumentException("targetVersion只用于内容翻译且必填");
+        }
         if ((content == null) == (resource == null)) throw new IllegalArgumentException("content 与 resource 必须恰好一个非空");
         if (state != TranslationState.TRANSLATED && state != TranslationState.NEEDS_REVIEW) {
             throw new IllegalArgumentException("state 只能是 TRANSLATED 或 NEEDS_REVIEW");
@@ -5940,9 +5982,9 @@ public record TranslatableResourceChangedEvent(EventMeta meta, String resourceTy
 
 | 事件 | 发布方 | 订阅方与处理 | 幂等键 / 过期判断 |
 |---|---|---|---|
-| `TranslationCompletedEvent` | translation | content：`autoPublish` 为 true 时，在新事务中以 system 身份、`PublishTrigger.TRANSLATION` 发布目标本地化；发布前确认该本地化仍为 AUTO、`translationState = TRANSLATED`、`sourceRevisionNo` 等于源语言当前发布修订号（否则为过期事件，跳过），并再次确认 `humanReviewRequired = false`（CLAUDE.md 禁止 15）；发布校验失败时把翻译状态置为 `NEEDS_REVIEW` 并记录原因。delivery：资源翻译按下表清除缓存标签（内容翻译只改草稿，线上缓存由随后的 `ContentPublishedEvent` 清除） | 内容：`(targetLocalizationId, sourceRevisionNo)`；资源：`(resourceType, resourceId, targetLocale, occurredAt)` |
+| `TranslationCompletedEvent` | translation | content：`autoPublish` 为 true 时，在新事务中以 system 身份、`PublishTrigger.TRANSLATION` 发布目标本地化；发布前确认该本地化仍为 AUTO、`translationState = TRANSLATED`、`sourceRevisionNo` 等于源语言当前发布修订号（否则为过期事件，跳过），并确认事件targetVersion等于当前目标version、内容级审校标记和当前provider策略均不要求人工审校（CLAUDE.md禁止15）；发布校验失败时把翻译状态置为 `NEEDS_REVIEW` 并记录原因。delivery：资源翻译按下表清除缓存标签（内容翻译只改草稿，线上缓存由随后的 `ContentPublishedEvent` 清除） | 内容：`(targetLocalizationId, sourceRevisionNo)`；资源：`(resourceType, resourceId, targetLocale, occurredAt)` |
 | `TranslationFailedEvent` | translation | notification：模板 `translation.failed.staff`，收件人为拥有翻译管理权限的用户（权限码由 translation 模块设计文档登记） | `dedupKey = "trn-failed:{jobId}:{targetLocale}"` 加对象标识 |
-| `TranslatableResourceChangedEvent` | navigation（`navigation.menu`）、form（`form.form`）、media（`media.media`）、product（`product.attribute_group`、`product.attribute`）、taxonomy（`taxonomy.term`）、notification（`notification.template`，只限 CUSTOMER 受众）、core（`core.site_profile`、`core.ui_text`）、tracking（`tracking.consent_banner`） | translation：`UPSERTED` 时为 `SiteApi.autoTranslateLocales()` 的每个语言提取、翻译、回写（同一资源的连续变化合并处理）；`DELETED` 时取消未完成的任务项（翻译记忆保留） | `(resourceType, resourceId, targetLocale)`；任务执行时总是提取当前文本，重复事件只产生记忆命中 |
+| `TranslatableResourceChangedEvent` | article（`article.author`，4.10.2）、navigation（`navigation.menu`）、form（`form.form`）、media（`media.media`）、product（`product.attribute_group`、`product.attribute`）、taxonomy（`taxonomy.term`）、notification（`notification.template`，只限 CUSTOMER 受众）、core（`core.site_profile`、`core.ui_text`）、tracking（`tracking.consent_banner`） | translation：`UPSERTED` 时为 `SiteApi.autoTranslateLocales()` 的每个语言提取、翻译、回写（同一资源的连续变化合并处理）；`DELETED` 时取消未完成的任务项（翻译记忆保留） | `(resourceType, resourceId, targetLocale)`；任务执行时总是提取当前文本，重复事件只产生记忆命中 |
 
 delivery 处理资源翻译时的标签映射（`TranslationCompletedEvent.resource`）：
 
@@ -5955,6 +5997,7 @@ delivery 处理资源翻译时的标签映射（`TranslationCompletedEvent.resou
 | `core.site_profile`、`core.ui_text`、`tracking.consent_banner` | `settings` |
 | `product.attribute_group`、`product.attribute` | `s{site}`（低频；经 2 秒合并） |
 | `notification.template` | 无（只用于邮件） |
+| `article.author`（4.10.2） | `settings`；发布快照中的作者不自动改写 |
 | 其他（V2 新增类型） | `s{site}`；新增资源类型时在本表登记更细的标签 |
 
 ### 4.7 基础设施端口
@@ -6263,6 +6306,8 @@ public record WebhookResponse(int status, Duration elapsed, @Nullable String bod
 
 #### 4.7.6 SearchEngineClient：搜索引擎
 
+> M0补充方案（ADR-021，Proposed）：V1使用4.10.4的不可变物理代次和数据库指针，保留swap端口供兼容讨论，但V1调用方禁止使用，不能按下方旧重建示意实现。
+
 - 使用方：search。适配器：`MeilisearchSearchEngineClient`（HTTP 客户端，主密钥只在后端，系统设计 19）。
 - 索引名与设置由 search 决定；本端口不理解文档结构（文档字段见 4.5.14 与系统设计 19）。
 
@@ -6300,6 +6345,9 @@ public interface SearchEngineClient {
 
     /** 文档数量（每晚的数量比对，系统设计 19）。 */
     long count(String indexName);
+
+    /** M0新增草案，ADR-021：仅浏览不可变代次，游标稳定、每批≤1000；见4.10.4。 */
+    CursorPage<JsonNode> scanDocuments(String indexName, CursorRequest cursor);
 }
 
 /** 索引命名（系统设计 5.3、19）。 */
@@ -6768,8 +6816,18 @@ public interface TaggedCache {
     /** namespace 格式 {moduleId}.{名称}，如 "delivery.resolve"。 */
     <T> Optional<T> get(String namespace, String key, Class<T> type);
 
+    /** ADR-020：公开交付链必须使用带绝对新鲜度的读取，不得将命中当成新回源。 */
+    <T> Optional<CachedValue<T>> getWithFreshness(String namespace, String key, Class<T> type);
+
     /** 写入并登记标签。tags 必须属于当前站点；单条超过 CacheTag.MAX_TAGS_PER_RESPONSE 个时由调用方先合并（系统设计 23.2）。 */
     void put(String namespace, String key, Object value, Set<CacheTag> tags, Duration ttl);
+
+    /** M0新增草案，ADR-020：开始回源前取得代次；Redis不可用时为空。 */
+    Optional<CacheWriteFence> beginLoad();
+
+    /** M0新增草案：与代次比较、数据及标签登记在一个原子操作中；不匹配时不写并返回false。 */
+    boolean putIfUnchanged(String namespace, String key, Object value, Set<CacheTag> tags,
+                           Duration ttl, CacheWriteFence fence);
 
     /**
      * 读取；未命中时合并并发回源（系统设计 23.3 防击穿）：同一键只有一个调用执行 loader，其他调用最多等待 waitTimeout
@@ -6777,6 +6835,10 @@ public interface TaggedCache {
      */
     <T> Optional<T> getOrLoad(String namespace, String key, Class<T> type, Duration ttl, Duration waitTimeout,
                               Supplier<Optional<CacheEntry<T>>> loader);
+
+    /** ADR-020：与getOrLoad同样代次保护，额外返回当前结果的绝对有效时刻。 */
+    <T> Optional<CachedValue<T>> getOrLoadWithFreshness(String namespace, String key, Class<T> type,
+            Duration ttl, Duration waitTimeout, Supplier<Optional<CacheEntry<T>>> loader);
 
     /** 删除带有任一标签的全部键并清理标签索引；返回删除的键数量。标签必须属于当前站点。 */
     long invalidate(Collection<CacheTag> tags);
@@ -6788,12 +6850,14 @@ public interface TaggedCache {
 }
 
 /** 回源结果：值与它依赖的标签。 */
-public record CacheEntry<T>(T value, Set<CacheTag> tags) {
-    public CacheEntry { tags = Set.copyOf(tags); }
+public record CachedValue<T>(T value, Instant freshUntil) {}
+
+public record CacheEntry<T>(T value, Set<CacheTag> tags, Instant freshUntil) {
+    public CacheEntry { tags = Set.copyOf(tags); java.util.Objects.requireNonNull(freshUntil); }
 }
 ```
 
-Redis 不可用时：`get` 返回空、`getOrLoad` 直接执行 loader、`put` 与 `evict` 记录错误指标后返回（缓存只是加速层）；`invalidate` 与 `evictNamespace` 抛出 `ExternalServiceException`（`INFRA_REDIS_UNAVAILABLE`，retryable = true），因为失效失败会让旧内容残留——delivery 的监听器据此失败并由事件重新投递。
+Redis 不可用时：`get` 返回空、`getOrLoad` 直接执行 loader、`put` 记录错误指标后返回（缓存只是加速层）；`evict`、`invalidate` 与 `evictNamespace` 抛出 `ExternalServiceException`（`INFRA_REDIS_UNAVAILABLE`，retryable = true），因为失效失败会让旧内容残留——delivery 的监听器据此失败并由事件重新投递。
 
 #### 4.7.15 RateLimiter：限流
 
@@ -7104,13 +7168,13 @@ class InMemoryContentApiContractTest extends ContentApiContract {
 | `VirusScanner` | EICAR 测试文件判为 `INFECTED`；普通文件 `CLEAN` |
 | `MailTransport` | 收件人、主题、HTML 与纯文本、Reply-To、Message-ID 原样投递（Mailpit / 内存记录） |
 | `WebhookTransport` | 签名头可被接收方按 4.7.5 的算法验证；非 2xx 作为结果返回；内网地址被拒绝 |
-| `SearchEngineClient` | `ensureIndex` 幂等；upsert → `await` → `search` 命中；过滤、分面、排序；`delete` 与 `deleteByFilter`；`swap` 后查询指向新索引 |
+| `SearchEngineClient` | `ensureIndex` 幂等；upsert → `await` → `search` 命中；过滤、分面、排序；`delete` 与 `deleteByFilter`；不可变代次scanDocuments游标完整/稳定；任务PROCESSING不得当成功；迟到写入不能改活跃代次（4.10.4） |
 | `CdnPurger`、`IndexNowClient` | 请求格式与批次拆分（模拟服务器）；可重试错误抛出 `retryable = true` |
 | `TranslationEngine` | 结果与请求单元一一对应、顺序一致；待翻译文本只出现在 user 消息的 JSON 中；非法 JSON、ID 缺失或重复抛出 `INFRA_ENGINE_OUTPUT_INVALID`；429 / 5xx 重试最多 3 次并尊重 `Retry-After`；401 抛出 `INFRA_ENGINE_AUTH_FAILED`；`usage` 正确读取（模拟 OpenAI 兼容服务器） |
 | `CaptchaVerifier` | 成功、失败、重复令牌（模拟服务器） |
 | `GeoIpResolver`、`MxRecordChecker` | 已知地址 / 域名的结果；私有地址为空；查询失败返回 `UNKNOWN` |
 | `RemoteFileFetcher` | 白名单外主机、解析到内网的域名、重定向到内网、超限、超时分别得到约定的错误码；关闭后临时文件被删除 |
-| `TaggedCache` | 按标签失效删除全部相关键；不同站点同名键互不影响；`getOrLoad` 在并发下只执行一次 loader；loader 返回空不缓存 |
+| `TaggedCache` | 按标签失效删除全部相关键；不同站点同名键互不影响；同键正常等待窗口合并loader，超时回退允许额外loader；空结果不缓存；失效中回填/Redis重启旧token无效；多层绝对新鲜度不延长 |
 | `RateLimiter` | 达到容量后拒绝并给出 `retryAfter`；时钟前进后恢复；站点隔离 |
 | `DistributedLock` | 已持有时他人获取失败；释放只对持有者生效；租约到期后可被他人获取 |
 | `BufferStore` | `schedule` 保留较早的到期时间；`pollDue` 只返回到期成员且原子取出；`drainCounters` 取出后清零；站点隔离 |
@@ -7233,7 +7297,7 @@ CI 脚本 `tools/checks/contract-coverage` 读取 `ContractCatalogTest` 导出�
 | 澄清 | Javadoc 与本章措辞，不改变行为 | 修订号 +1（如 1.0.1） | 无 |
 
 - 4.1.8 表中标为“不兼容（主版本）”的变更，在 V1 期间按上表第二行实施（与 2.3 一致）；`platform-api` 的主版本保持 1，主版本升级只在 V2 规划中另行决定（ADR）。
-- **事件的不兼容变更**：V1 是单体内进程投递，发布方与订阅方随同一次部署变更，因此在同一个 PR 中修改事件类、全部发布方与订阅方，并覆盖 `schemaVersion()` 返回新版本；部署前确认 `event_publication` 中该事件类型没有未完成的记录（写入部署检查清单），否则旧 JSON 无法按新结构反序列化。V2 事件外部化后，按 4.1.8 在过渡期内同时发布新旧两个版本。
+- **事件的不兼容变更**：V1 是单体内进程投递，发布方与订阅方随同一次部署变更，因此在同一个 PR 中修改事件类、全部发布方与订阅方，并覆盖 `schemaVersion()` 返回新版本；部署前确认 `EVENT_PUBLICATION` 中该事件类型没有未完成的记录（写入部署检查清单），否则旧 JSON 无法按新结构反序列化。V2 事件外部化后，按 4.1.8 在过渡期内同时发布新旧两个版本。
 - **扩展点新增方法**必须提供“等价于不参与”的默认实现；**端口新增方法**必须是 `default` 方法，或在同一个 PR 中更新全部适配器与假实现（4.1.8）。
 - 模块的 `module.json` 用 `platform` 字段声明兼容的平台版本范围（如 `>=1.0.0 <2.0.0`），启动时由模块管理器校验（附录 A）；V1 期间各模块无需因次版本变化修改该字段。
 
@@ -7246,6 +7310,200 @@ CI 脚本 `tools/checks/contract-coverage` 读取 `ContractCatalogTest` 导出�
 | 契约存在安全缺陷 | 可以先合入修复再补 ADR（3 个工作日内补齐），仍需架构负责人批准；不兼容时同样提供过渡 |
 | 发现本章与系统设计不一致 | 先在 PR 或 Issue 中指出，再修改：签名与示意代码的细节以本章为准（第 4 章开头）；架构约束与原则以系统设计和状态为 Accepted 的 ADR 为准；本章的“框架补充”在合入时同步回系统设计 |
 
+### 4.10 实现前设计问题的统一补充方案（M0 契约草案）
+
+本节对应[11 项设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)，是可评审的 M0 补充草案。ADR-019～ADR-025 均为 Proposed，尚未评审通过；本节不宣称 platform-api 已冻结或测试已通过。评审前不得把这些新增签名视为现成实现。本节明确替代哪些旧草案语义；Accepted ADR 的模块边界、站点隔离和人工审校规则继续适用。
+
+#### 4.10.1 MEDIA-01 / MEDIA-02：事务内媒体引用登记
+
+采用 [ADR-019](../adr/0019-transactional-media-references.md)。media 不调用 ContentApi；废止 4.4.16 使用方表中 media 的快照读取资格。当前发布快照由 content 在组装后直接 `ReferenceSet.scan`；草稿由 content 在 `updateDraftMeta` / `markDraftChanged` 内收集 `MediaReferenceCollector`，资源由所属模块从保存后的完整对象收集。三者都在原保存事务提交前调用 core 提供的 ReferenceWriteApi。
+
+```java
+// com.b2bweb.api.common，core 提供；只允许在已有数据库事务内调用
+public interface ReferenceWriteApi {
+    void replaceMedia(MediaReferenceOwner owner, List<MediaReference> references);
+}
+// com.b2bweb.api.media；均隐式使用当前站点
+public record MediaReferenceOwner(String ownerType, long ownerId,
+                                  @Nullable String locale, ReferenceStage stage) {}
+public enum ReferenceStage { DRAFT, PUBLISHED }
+// core 收集的事务 SPI，由 media 唯一实现；不是业务模块对 media 的反向读取接口
+public interface MediaReferenceSink {
+    void replace(MediaReferenceOwner owner, List<MediaReference> references);
+}
+```
+
+- `ownerType` 为 CONTENT 或已登记资源类型；内容按 `(contentId, locale, stage)` 替换全部 part，资源只用 PUBLISHED。内容的共享字段按每个本地化分别登记，避免覆盖其他语言；owner 的行锁/共同 version 在登记前已取得。`references` 必须是完整集合，空集合明确清除。
+- core 仅协调 SPI，不读取业务表；media 仅写 mda_ 表。启动时缺少/重复 MediaReferenceSink 失败，不能退化成无保护保存。其他 L2 不新增 requires(media/content)，L2 同步调用方向表保持不变。
+- sink 对新增集合涉及的 mda_media 行按 ID 升序 `SELECT ... FOR SHARE`，确认同站点、deleted_at IS NULL且符合引用用途；对可发布内容要求 READY，草稿允许 PROCESSING，QUARANTINED 与不存在拒绝。共享锁持有到原事务结束，再按 owner 全组替换 mda_usage；保存/发布失败会同时回滚引用。
+- 删除在独立 media 事务中先对媒体行 `FOR UPDATE`，再以当前读检查 mda_usage（例如按site_id/media_id查询id并FOR UPDATE，不能用事务开始时的一致性快照或普通COUNT代替）。保存先获得共享锁时，删除等待并看到已提交引用后拒绝；软删除先提交时，保存必须根据deleted_at拒绝（行仍存在）；物理删除先提交时按不存在拒绝。删除时不回调源对象，不引入反向锁顺序。
+- `force` 仍只用于没有引用追踪、由业务模块管理的私有附件；带任何受保护引用的资产不能强制删除。普通软删除只写deleted_at、递增媒体/门控版本并失效公开访问，保留对象；恢复持同一排他锁校验对象及扫描状态并再递增版本。到期purge才在事务中重验保留期/无引用（保留期取已FOR UPDATE锁定的媒体行或同一锁定查询的到期表达式，禁止另用旧RR快照判断），创建media.purge_object持久任务并同事务写mda_media.purge_job_id；标记非空拒绝恢复，提交后幂等删对象；清理完成前不允许恢复。可使用既有sys_job保存清理义务，不能只在内存afterCommit里发起删除。私有无引用附件强制清理同样记录持久义务。
+- 下线在原事务清除 PUBLISHED，草稿仍保留；源对象物理删除清除其所有阶段。历史修订不登记，回滚恢复为草稿时重新验证与登记。源对象删除、资源删除、翻译回写及批量导入也必须经过同一保存入口。
+- 旧的 ContentDraftChanged/Published/Unpublished 事件不得异步覆盖这个权威引用集合。media 的旧“读快照→整组替换”监听器删除；补偿由源模块任务重新取得源对象锁、读取当前对象并重走 coordinator。停用模块仍保留引用，purge 清理例外继续执行。
+
+对照 4.5.16：MediaReferenceCollector 的签名保留，收集方改为 content（草稿）、资源所属模块/core（资源），media 不再负责主动读取源内容。站点资料同样由 core 保存入口调用 coordinator。当前设计库没有存量数据；后续升级必须在禁止资产删除的维护窗口重建引用，完成一致性核对后才开放删除。
+
+#### 4.10.2 ARTICLE-01 / TRACKING-01：独立资源生命周期
+
+采用 [ADR-025](../adr/0025-site-resource-lifecycle.md)，补登记 `TranslatableResourceTypes.ARTICLE_AUTHOR = "article.author"`，resourceId 为 authorId。article 加入 4.2.3 TranslatableResourceProvider 实现方与 4.6.11 源资源事件发布方；中文职务/简介实际变化才触发翻译，头像、排序、开关变化不冒充翻译事件。
+
+```java
+// com.b2bweb.api.event；源资源事务内登记，不含邮箱、脚本、密钥、头像 URL 等正文
+public record SiteResourceChangedEvent(EventMeta meta, String resourceType,
+                                       String resourceId, ChangeKind change) implements DomainEvent {
+    @Override public boolean deliverWhenModuleDisabled() { return true; }
+}
+```
+
+| 资源与发布方 | 必须发布的变化 | 订阅方与处理 |
+|---|---|---|
+| article.author / article | 新建、保存、删除/恢复；含头像及非文本变化 | delivery 清除 settings；作者快照已固化在文章中，不擅自改历史发布稿；media 引用已在源事务由 4.10.1 登记，不异步重写 |
+| tracking.setting / tracking | trk_setting、统计开关及同意策略保存 | delivery 清除 settings；运行时从当前配置重新组装 |
+| tracking.script / tracking | 脚本新建、保存、删除、启停与类别变化 | delivery 清除 settings；不把脚本正文放入事件 |
+| url.pattern / url | 模式新建、修改、删除 | content请求全部配置语言的当前树重算；delivery清整站；url源事务先持有route_tree锁并advance |
+
+同一事务同时存在可翻译文本变化时，另发 TranslatableResourceChangedEvent；translation 回写发 TranslationCompletedEvent，禁止递归发源语言翻译事件。资源翻译标签表补 `article.author → settings`。SiteResourceChangedEvent覆盖deliverWhenModuleDisabled()返回true，保持停用时的缓存清除义务；已提交事件仍须处理。所有失效按 4.10.3 重试；重复事件重新失效安全，不凭 occurredAt 丢弃失效。原 core SiteSettingsChangedEvent 保持 core 发布，不由 tracking 冒充 core。模块停用后仍投递本事件进行失效。
+
+#### 4.10.3 DELIVERY-02：缓存回填保护与可靠失效
+
+采用 [ADR-020](../adr/0020-cache-invalidation-fences.md)。保留 TaggedCache.getOrLoad；补充其强语义：回源前原子获取站点缓存代次 `(incarnation UUID, counter)`，任何 invalidate / evict / evictNamespace 都先推进 counter，再删除相关键。回源结束后的写入与代次比较在同一 Lua 操作中完成；代次变化时丢弃回填，不能把旧结果登记成新缓存。缓存命中也验证代次，标签仅用于物理清理。V1 接受一次失效逻辑上使整站缓存过期的额外回源成本，以换取无遗漏保护。
+
+```java
+// com.b2bweb.api.port；补入 TaggedCache；没有 Redis 可用代次时不允许缓存写入
+public record CacheWriteFence(String incarnation, long counter) {}
+// TaggedCache 的两个新增方法已登记在4.7.14完整接口。
+```
+
+新增方法的签名见4.7.14。公开缓存链使用getWithFreshness/getOrLoadWithFreshness；CacheEntry/CachedValue携带freshUntil，父结果取全部依赖的最早freshUntil，loader不得以当前时间重置来自下层命中的时刻。putIfUnchanged的ttl由调用者截断为freshUntil的剩余寿命，过期不写；原get/getOrLoad包装方法只用于无需继续缓存的内部消费。`getOrLoad` 内部自动执行相同步骤。原无 fence 的 put 不能用于数据库/远端回源结果；V1 使用方全部迁移，不能以该方法绕过保护。Redis 重启或状态被清空必须产生新的 incarnation，旧进程 token 永不重新有效。代次与条目写入原子操作，不能使用会在条目存活时先过期的代次键。
+
+可靠性采用已有 Event Publication Registry：事件监听器直接 invalidate 并 purgeTags，二者都成功后才正常返回；任一步失败就抛出，保留未完成投递。V1 暂不在可靠路径去抖；BufferStore 只作可丢失的优化提示，pollDue 的结果不等于业务完成。若后续引入合并任务，必须在同一数据库事务中先提交带 eventId 幂等键的 JobApi 任务，监听器才可完成；任务失败、告警、人工重试与保留期不可丢弃未完成义务。
+
+- 发布、更新、下线始终清除 content、list(type) 及受影响 form/term/settings 标签，不只首次发布清 list；路径变化同时处理旧/新路径。
+- Redis 不可用时读绕过缓存，失效抛错重试；本地缓存 Pub/Sub 只加速，保留硬 TTL。恢复后先轮换 incarnation 并完成待失效项，再允许缓存写入。
+- 60 秒是正常依赖可用时的端到端新鲜度预算，不能承诺故障期间瞬时一致。后端Delivery/API及site引导响应通过服务端生成的X-Content-Fresh-Until传递最早依赖时刻，Nuxt只信任自身后端头；CDN-Cache-Control以该时刻的剩余秒数向下取整，<=0返回no-store。公开响应从回源开始计龄，回源上限 5 秒、各层共享绝对过期时刻且余寿命至多 55 秒；CDN 转发 Age、不重新给命中响应完整 TTL，禁止 stale-if-error / stale-while-revalidate 突破上限。超时回源不缓存；积压/清除失败告警，隐私和权限变化不靠长 TTL 掩盖。
+- 检查时序：loader 读旧值→事件提交→invalidate→loader 结束；重启后旧 token；Redis 成功/CDN 失败；pollDue 后宕机；列表中已有内容改标题和分类。
+
+#### 4.10.4 SEARCH-01：事务变更日志与不可变索引代次
+
+采用 [ADR-021](../adr/0021-immutable-search-generations.md)。V1 保留 Meilisearch，新增 search 自有的 sch_ 控制表，DDL 只在 search 文档。正式查询从 sch_index_state.active_index 取得物理索引名，不再假定固定别名 + swap。原 SearchIndexNames.content 只表示逻辑索引标识；物理名 `{逻辑名}_g_{buildId}`，每次尝试使用全新 buildId，V1 不调用 swap。
+
+```java
+// com.b2bweb.api.common，core 提供，事务内协调可选的 search 变更捕获 SPI
+public interface ProjectionChangeApi {
+    void searchChanged(Set<String> locales, Set<Long> localizationIds, boolean fullRefresh);
+}
+// com.b2bweb.api.extension，由 search 实现；缺失/站点停用时不阻塞事实保存
+public interface SearchChangeCapture {
+    void append(Set<String> locales, Set<Long> localizationIds, boolean fullRefresh);
+}
+// SearchEngineClient.scanDocuments 已登记在4.7.6，用于复制只读活跃代次。
+```
+
+`fullRefresh=true` 时 ID 集合必须为空；有限对象变化用完整 ID 集合。site 隐式来自上下文，locale 为站点配置语言（包括待关闭语言），单批≤500；大范围配置/模块/分类变化用 fullRefresh。core 不查询业务表，只调用 SPI。源模块的本地写事务在提交前经 ProjectionChangeApi 登记；append 按语言排序锁住 sch_index_state 行，递增 change_seq 并写 sch_change，锁持有到源事务结束，序号顺序因此也是提交顺序。source 回滚时日志也回滚，不能在异步事件监听后才建立这条日志。searchChanged先在当前事务收集意图，合并重复ID并注册beforeCommit回调，所有源行修改完成后再一次调用append；超过500个ID升级为fullRefresh。回调失败必须回滚源事务，不允许afterCommit补日志。
+
+| 必须接入的事实写入口 | 捕获范围 |
+|---|---|
+| content 发布/下线/回收/恢复/物理删除/删除本地化 | 受影响本地化；purge 必须先取得 IDs 再删除，源语言跟随下线一起登记 |
+| url.applyRoute / retireRoute、子树重算 | 实际变更的本地化；与路由事务一起捕获 |
+| 分类名/搜索字段语义变化、索引设置与语言公开状态、模块启停 | fullRefresh；core 设置与模块事务也调用 coordinator |
+| 新语言/模块重新启用 | 同事务 fullRefresh；站点停用搜索时保留指针但不查询，重新启用强制全量重建 |
+
+事务顺序：先锁源聚合，再按 locale 排序锁索引状态；捕获后不再获取其他源聚合锁，联动写应收集完成后一次登记。构建任务不在持有索引状态锁时读取源对象，避免与源事务反向死锁。序号、指针和构建认领都由数据库保护，Redis 租约仅减少重复工作。
+
+构建/增量流程：
+
+1. 在短事务中记录 `(expectedActiveVersion, buildFence, H0=change_seq)` 并分配唯一 generation。完整重建从ContentApi.scanPublished开始，日志起点为H0；增量批次可用新增scanDocuments从不再变化的active generation复制，此时日志起点必须为该活跃代次的applied_seq（记为C），不能从当前change_seq=H0开始而漏掉(C,H0]。同一短事务把base_index及start_seq写入sch_build，GC保护被存活构建引用的基础代次。复制成本为 O(N)，按站点/语言短窗口合并变更；这是 V1 明确的正确性取舍，必须用 1 万产品/5 千文章基线评估吞吐与延迟。
+2. 私有 generation 应用设置、写全部文档，每次保存 taskId 并 await 到 SUCCEEDED；PROCESSING 继续观察，FAILED/CANCELED 不发布。若写入/设置请求超时或断联导致是否被引擎受理无法确认，必须废弃整个私有代次，不得重试后继续发布同代次；迟到请求只能落入废弃索引。每个build仅一个本地执行流发送写入，失联恢复不接管同一 generation，而是创建新 generation、提高数据库 buildFence；迟到的旧 worker 只会写其私有废弃代次。
+3. 从sch_change重放`(start_seq,H]`（全量start_seq=H0，复制start_seq=C）。对象变更重读当前发布态：存在且公开则构建，否则删除；fullRefresh 使本次增量复制失效，重新走完整扫描。扫描期间的新建、删除、改路径均有同事务日志，不依赖 eventId、时间戳或一次扫描充当屏障。日志重放后再次取 H，持续追平。
+4. 所有引擎任务成功后，短事务锁 sch_index_state；仅当 `change_seq==已追平 H`、activeVersion 和 buildFence 均匹配时 CAS 更新 active_index、active_version、applied_seq，标记 build ACTIVE。变化则继续追平，已被新 attempt 接管则废弃。切换与最后源变更的捕获争用同一行锁，不能绕过屏障。
+5. 切换后 generation 永远不可写；后续事件只调度下一代构建；事件丢失唤醒时定时扫描change_seq>applied_seq的状态行兜底。源事实可能继续变更，搜索仍是最终一致读模型；公开查询批量核对当前发布/模块/语言/路径，不复活已下线内容，total 为估算。
+6. 切换事务前宕机，旧指针继续服务；提交后响应丢失，读取指针和 build 状态即可确认，不执行第二次 swap。旧索引保留到在途查询最大超时之后（至少 5 分钟），GC必须排除active、BUILDING/READY目标、所有存活构建的base_index与未过保留期的代次；按 buildFence 取消的旧 worker 无发布资格。未完成构建使用的日志不清理，重建失败不能把当前指针切成空。
+
+新增持久控制信息必须正常备份；Meilisearch 文档仍可重建。sch_change 只存 ID、locale、序号和 fullRefresh，不存正文/个人信息。持续写入导致追不平时保留旧代次、报告积压，重新调度；不能强制越过 CAS。测试需覆盖捕获事务回滚、扫描边界写入、并发发布/下线、租约过期旧 worker、切换前后 kill、日志保留与 GC，包含所有适配器与替身。
+
+#### 4.10.5 URL-02：由内容内核编排当前路由重算
+
+采用 [ADR-022](../adr/0022-current-route-recalculation.md)。重算任务归 content（JobHandler `content.recalculate_routes`），url 只按已有 reservePath/applyRoute 更新自己的表，不反向调用 page/content/taxonomy。
+
+```java
+// ContentApi.requestRouteRecalculation 已登记在4.4.16。
+// core 提供数据库事务互斥服务（platform-api/common），不是租约锁
+public interface TransactionMutexApi {
+    long lock(String name);       // 加锁并返回当前 generation，锁随本事务提交/回滚释放
+    long advance(String name);    // 同一事务加锁并递增 generation
+}
+```
+
+锁由 core 的 sys_transaction_mutex 表实现，唯一 `(site_id,name)`；INSERT IGNORE 建行后 SELECT FOR UPDATE；不设自动过期。`name` 仅允许 `{moduleId}.{用途}` 白名单，禁止用户传任意键。提交前释放连接或失联导致事务回滚，不能继续写。所有页面层级、影响 routeHints 的字段、slug 发布、URL 模式、语言前缀保存入口，**在任何源对象行锁之前**取得 `content.route_tree` 互斥锁；有效拓扑/路径输入变化 advance，统一锁顺序避免 page→content 与 job→page 死锁。多站点批处理逐站执行。
+
+requestRouteRecalculation 以最新 generation 与 locales 提交 JobApi 任务，幂等键含 generation。content 对 SiteSettingsChangedEvent 的 URL_PREFIX_CHANGED 以及 SiteResourceChangedEvent(url.pattern)订阅补交同类任务；事件只作调度，执行时不把 payload 当成当前事实。
+
+相关路由源写入及重算批次显式采用READ_COMMITTED，且先取得事务互斥锁再读取业务输入，禁止复用等待前建立的旧快照。每次恢复/批次在该事务互斥锁内，content 从自己的 cnt_ 表取得当前可路由本地化，经 ContentTypeProvider.routeHints 获取当前业务树与参数，建立父先于子的候选顺序，再调用 reservePath/applyRoute。父路径来自本批已更新或先前已提交的当前 url 路由。批次最多100项，遇路径冲突该批回滚、记录冲突并暂停，不改 slug、不覆盖第三方路由。
+
+任务记录起始 generation 与稳定内容 ID 游标；generation 变化则放弃旧游标，从当前树重新排序重算，新任务取代旧目标。每批发布对应 ContentPathChangedEvent，search 的捕获在同一路由事务内完成。重试读取当前路由，不重复生成跳转链；取消保留已提交批次，下一任务从当前事实修复。只承诺任务最终完成后路径一致，不把多批更新描述为全站原子切换。
+
+#### 4.10.6 FORM-01 / NOTIFICATION-02：原子下载提交与通知权限
+
+ADR-023只新增`form → notification`的同步服务方向，form.requires包含notification；notification不反向读form/media。NotificationApi.send只在调用方事务内验证模板/有效语言并写ntf_message，SMTP不在事务内。原“签名失败保留已提交记录”的流程取消。
+
+| 提交结果 | 提交记录 / 询盘 | 下载票据 | 下载邮件 | 对外结果 |
+|---|---|---|---|---|
+| ACCEPT且非测试，DOWNLOAD | 同事务保存；提交事件由inquiry幂等处理 | 校验当前门控与对应content/locale的PUBLISHED引用，本地签名并保存download_grant | 同事务入发件箱，dedupKey=download:{submissionId}:{mediaId} | 仅原事务提交成功后返回成功及已保存URL |
+| QUARANTINE | 保存待审；inquiry待审 | 不签发 | 不发送 | 普通成功响应，不泄露垃圾评分 |
+| REJECT | 按既有反垃圾保留策略保存；不创建询盘 | 不签发 | 不发送 | 普通成功响应 |
+| 测试提交 | 测试记录，按既有运维测试通知规则 | 不签发 | 不发客户下载邮件 | 测试成功响应 |
+| 签名、模板/有效语言或发件箱写入失败 | 整个原事务回滚，提交事件也回滚 | 不对外暴露任何签名URL | 无已提交发送义务 | 明确失败，允许相同幂等键重试 |
+
+正常提交的顺序：限流/幂等命中→验证码及业务校验→原事务写提交和关联附件→MediaApi.issueGatedDownload(GatedDownloadCommand)→把URL和固定expiresAt写入frm_submission.download_grant→NotificationApi.send→事务提交→HTTP序列化成功响应。事务内只做数据库及本地签名，禁止对象存储、SMTP等网络I/O。
+
+- 签发在已有表单事务中以媒体FOR SHARE当前读完成资格校验，持锁至调用方事务结束；门控修改/软删除持FOR UPDATE，避免用旧媒体快照签发。
+- 媒体保存`gated_form_key`与单调`download_gate_version`（media独占）；门控修改、软删除与恢复使门控版本增加。ticket只在受信任form调用方签发，签名含siteId/submissionId/mediaId/contentId/locale/formKey/gateVersion/expiresAt/keyId，不含个人信息。
+- 下载入口验签并检查期限、当前未删除/PRIVATE/READY、门控表单与版本，以及该content/locale的PUBLISHED媒体引用，再签不超过60秒且不晚于票据到期的对象URL；此前已发出的对象URL按其期限到期。取消门控、移除发布引用或软删除立即阻止新访问；media不回查form表。签名密钥轮换按keyId验证，旧钥至少保留到仍合法票据最长到期时间。
+- 无状态签名没有数据库回滚能力。保证是：提交前不向HTTP、日志或外部邮件暴露票据，rollback的download_grant和发件箱都不存在；不声称能撤销已外泄签名。提交后门控版本及访问时校验承担撤销条件。
+- 幂等重放直接返回首次已提交的download_grant，不重新签名、延长expiresAt或再次消耗验证码；过期/已撤销票据仍是首次结果，客户端应发起新的下载请求，而非用旧幂等键申请新授权。无提交记录表示此前事务未提交，可以重试。并发首次请求由唯一键决定唯一提交，失败方回滚且不留下第二个事件/发件箱。唯一键冲突后的重放必须在失败事务回滚后使用新事务读取首个已提交结果；同一RR事务里的旧快照可能仍看不到赢家。先按既有规范化请求核对幂等键复用，内容不同时409，不可把任何唯一键冲突都当成合法重放。
+- 模板/有效语言缺失在NotificationApi.send入队时抛NOTIFICATION_TEMPLATE_NOT_FOUND，使原DOWNLOAD提交失败；已入队后发生SMTP故障才进入可观察重试/FAILED。故障不能被表述为邮件恰好一次送达。
+
+NOTIFICATION-02使用已有`translation:memory:review`，按站点、目标locale、localeScoped及有效用户筛选；翻译失败/过期通知同规则。无合法接收人记录审计/指标并告警，不广播扩大权限，不新增两段权限码。
+
+#### 4.10.7 content #1：内容级人工审校策略与版本化回写
+
+ADR-024采用唯一权威字段`cnt_content.translation_review_required`，不在cnt_localization复制该字段。ContentInfo返回内容version与该策略；LocalizationInfo.translationReviewRequired只是内容字段的读取投影。setter完整签名在4.4.16，按contentId与expectedContentVersion写入。
+
+1. page等可信内容拥有者在模板/法律身份保存的同一事务调用setter；不能从公共表单或任意HTTP布尔字段直接赋值。新建legal内容在create后、事务提交前写入true。目标语言本地化只关联同一内容策略，不异步复制一个可能过期的false。
+2. 所有已有内容的保存入口在业务表写入前调用lockDraftForWrite：先锁cnt_content再锁目标本地化，并验证共同version。发布/回滚/模式变更等内核写操作同样遵守父先子后；批量内容按contentId排序。路由输入事务的content.route_tree锁在这些锁之前。父锁持有期间不能调用外部引擎。
+3. setter先对父内容行FOR UPDATE并比较expectedContentVersion，再锁该内容全部本地化。策略实际变化时递增cnt_content.version及各本地化共同version，取消其PENDING审核，APPROVED/IN_REVIEW退回EDITING；旧审批与旧完成事件失效。值未变化且版本匹配为无副作用返回；版本过期仍报CONTENT_VERSION_CONFLICT。策略本身不制造新发布修订、不改已发布正文快照。
+4. translation在引擎调用/记忆匹配之前读取目标version并写入trn_job_item.expected_target_version，带入TranslationContext.expectedTargetVersion；重试恢复不能把旧输出绑定到重新读取的新version。捕获入口必须在任务项锁内判断已有值；已有值原样保留，不得因恢复/再次进入初始化逻辑而覆盖。只读预估extract可没有该值，实际内容apply必填。
+5. 回写事务先校验任务租约，再lockDraftForWrite(expectedTargetVersion)与当前源修订/模式；不匹配时标记该项SUPERSEDED并不调用任何apply。先apply非拥有者provider，最后apply拥有者provider；后者仅一次用非空expectedVersion调用updateDraftMeta，从而哈希覆盖全部贡献并递增一次共同版本。任一步失败，全部业务行、引用与状态回滚。禁止翻译用null expectedVersion。
+6. 内容TranslationCompletedEvent.targetVersion为上述回写后的新共同版本。content消费事件时取得父/子锁，重新检查AUTO、源修订、目标version、当前内容策略以及provider.requiresHumanReview。任何不符都不自动发布；合法但要求人工审校的译文进入待审。MANUAL不允许apply，资源翻译的targetVersion为空。
+7. legal的自动发布始终拒绝；人工发布同时要求合法审核/发布权限及当前草稿的审核。模板合法移出legal时，拥有者根据当前元数据决定策略；不能仅凭旧事件中的humanReviewRequired=false解除要求。清除再开启策略也单调推进version，不能发生旧事件ABA复活。
+
+只读接口与事件不会引入第二个策略真值。ContentApi、page/translation流程、DDL归属、testkit和ADR-024必须遵守以上同一语义；没有已发布1.0.0二进制，当前属于M0草案修正。
+
+#### 4.10.8 GRAPH-01：人工关系集合的持久版本
+
+不修改已有 grh_relation 行结构，新增 graph 自有 grh_relation_set（DDL 见模块 4.3.6），唯一 `(site_id,source_content_id)`，version 从0起永久单调增长，集合为空也保留状态行，彻底 purge 才删除。GET在显式REPEATABLE_READ只读事务的同一快照中读取集合及version，返回 ETag `"v{version}"`；PUT 必须 If-Match，缺失428，过期412。
+
+写入先 INSERT IGNORE 初始化状态行，按 sourceContentId 升序锁定全部受影响集合（含反向关系的两端）；在事务内比较 expectedVersion，再替换人工/排除关系、递增全部受影响集合 version、登记 RelationChangedEvent。多个源行锁必须一次排序后取得，不能先持有A再发现B<A补锁；冲突整体回滚，不允许部分反向行成功。AUTO 重算、pinned、模式修改、清理目标等只要改变 GET 返回集合也遵守相同锁与 version 协议；高成本算分在事务外，写回前检查计算所依据版本，过期丢弃/重排。
+
+不能复用内容草稿 version，不能用 Redis 租约保证原子性，不能用 JSON 摘要伪造平台 vN 协议。图谱集合版本由模块内部实现，不新增跨模块 API。
+
+#### 4.10.9 登记、数据模型与实施门槛
+
+| 新增/调整项 | 提供方 / 收集方 → 使用方 / 实现方 | 实施要求 |
+|---|---|---|
+| ReferenceWriteApi、ProjectionChangeApi、TransactionMutexApi（common） | core → 业务保存入口 | 同事务、站点上下文、失败回滚；不得在 core 依赖业务模块 |
+| MediaReferenceSink（media SPI） | core 收集 → media 唯一实现 | mda_usage 权威引用；进程内事务调用 |
+| SearchChangeCapture（extension SPI） | core 收集 → search 可选实现 | 模块未装/停用时 no-op；重新启用 fullRefresh |
+| SiteResourceChangedEvent | article、tracking、url → delivery；url.pattern另给content | 事务登记，停用也失效，只有 ID 不含正文 |
+| TranslatableResourceTypes.ARTICLE_AUTHOR | article → translation | 同步 4.2.3、4.6.11、testkit 资源清单 |
+| CacheWriteFence、CachedValue/CacheEntry.freshUntil及四个方法；scanDocuments；ContentApi 两方法/读取字段 | 端口/content → 原使用方 | 适配器、替身、契约测试同批实现 |
+| sys_transaction_mutex | core 独占 | 6 章追加 DDL；数据只经 TransactionMutexApi 访问 |
+| sch_index_state / sch_change / sch_build | search 独占 | search 第4章；sch_ 登记模块前缀；控制表需要备份 |
+| grh_relation_set | graph 独占 | graph 第4章；新迁移追加，不改旧迁移 |
+
+新增ContentApi/TaggedCache/SearchEngineClient签名已并入原完整接口；正式冻结前把其余新增SPI/协调器并入4.2逐项目录，移除已被替代的旧草案路径，生成代码骨架、OpenAPI/Schema 与 testkit；当前文档阶段在 4.2 加统一登记入口，避免把 Proposed 方案伪装成已发布契约。新接口的事务要求采用 MANDATORY，批量限额、不可变集合、错误映射沿用 4.1；并发/故障测试矩阵见处理说明。本节所有示意省略 import；新协调器/SPI的完整签名在本节，已有接口的增量签名在其原小节，行为以本节为补充。
+
+
 ---
 
 ## 5. 后端框架：platform-core 与基础设施
@@ -7253,7 +7511,7 @@ CI 脚本 `tools/checks/contract-coverage` 读取 `ContractCatalogTest` 导出�
 本章说明 platform-core（L0）与 infrastructure 如何实现第 4 章的契约与系统设计的运行机制（系统设计 3.6–3.8、4.1、5.2、5.3、23–27）。每节先说明“框架提供什么”，再说明“模块如何使用”。
 
 - 本章的类名、配置键、锁名与指标名是 M0 的实现约定；代码与配置为示意（见本文开头的阅读提示）。与第 4 章的签名或语义不一致时，以第 4 章为准。
-- platform-core 的表结构见第 6 章；框架表（`event_publication`、`flyway_{模块 ID}_history` 等）与数据库通用约定见第 7 章；测试替身与测试切片的用法见第 9 章。
+- platform-core 的表结构见第 6 章；框架表（`EVENT_PUBLICATION`、`flyway_{模块 ID}_history` 等）与数据库通用约定见第 7 章；测试替身与测试切片的用法见第 9 章。
 - 标注“框架补充”的内容是对系统设计的细化，评审确认后同步修订系统设计（1.2）。
 
 ### 5.1 能力总览
@@ -7925,7 +8183,7 @@ public PageResult<InquiryListItem> list(InquiryQuery query, PageRequest page) {
 }
 ```
 
-语言范围：按语言操作的方法用 `permissions.canAccessLocale("translation:review", locale)` 校验（系统设计 5.8）。
+语言范围：按语言操作的方法用 `permissions.canAccessLocale("translation:memory:review", locale)` 校验（系统设计 5.8）。
 
 #### 5.6.4 限流
 
@@ -8001,7 +8259,7 @@ final class SiteLineHandler implements TenantLineHandler {
 | 来源 | 表 |
 |---|---|
 | core 的全局表（第 6 章） | `sys_site`、`sys_module`、`sys_user`、`sys_user_mfa`、`sys_role`、`sys_permission`、`sys_role_permission`、`sys_menu`、`sys_dict_type`、`sys_dict_item`、`sys_lock`、`sys_dsr_request`、`sys_audit_log`（`site_id` 可空，查询显式带条件）、`sys_processed_event`（5.8） |
-| 框架表（第 7 章） | `event_publication`、`flyway_{模块 ID}_history` |
+| 框架表（第 7 章） | `EVENT_PUBLICATION`、`flyway_{模块 ID}_history` |
 | 模块的全局表 | PO 类标注 `@GlobalTable`（`support.persistence`）；模块设计文档“站点过滤”一节（模板 4.5）写明理由；新增需架构负责人审核（`CLAUDE.md` 禁止 10） |
 
 - `SiteIsolationIT`（5.1.3）对比 `information_schema` 中没有 `site_id` 列的表与豁免清单，两边必须一致。
@@ -8122,7 +8380,7 @@ OptimisticUpdates.updateById(ruleMapper, po, expectedVersion,
 
 | 项 | 规定 |
 |---|---|
-| 登记表 | Spring Modulith JDBC 事件发布登记（Event Publication Registry），表 `event_publication` 由 core 的迁移脚本创建（第 7 章）：`spring.modulith.events.jdbc.schema-initialization.enabled = false` |
+| 登记表 | Spring Modulith JDBC 事件发布登记（Event Publication Registry），表 `EVENT_PUBLICATION` 由 core 的迁移脚本创建（第 7 章）：`spring.modulith.events.jdbc.schema-initialization.enabled = false` |
 | 序列化 | `platformJsonMapper`（ID 为字符串，5.5.4） |
 | 完成方式 | 完成的记录保留（`spring.modulith.events.completion-mode = update`），由清理任务删除（5.8.4） |
 | 启动时重新投递 | 关闭 Modulith 的自动重投（`spring.modulith.events.republish-outstanding-events-on-restart = false`），改在启动步骤 8、扩展点注册表就绪之后执行（5.2.2） |
@@ -8838,8 +9096,9 @@ erDiagram
 | `sys_job` | 通用异步任务 | 是（`site_id = 0` 为系统级） | 否（默认保留 180 天） | ≈ 1 千 / 月 |
 | `sys_lock` | 跨实例互斥锁 | 否（全局） | 否 | ≈ 50（全局） |
 | `sys_dsr_request` | 数据主体请求 | 否（全局） | 否 | < 100 / 年（全局） |
+| `sys_transaction_mutex`（Proposed） | 事务互斥与generation，详见6.7 | 是 | 否（正常任务不删除行） | 每站每注册技术名称1行 |
 
-`event_publication`（Spring Modulith 事件发布登记）与 `flyway_core_history` 属于框架表，见第 20 章。
+`EVENT_PUBLICATION`（Spring Modulith 事件发布登记）与 `flyway_core_history` 属于框架表，见第 20 章。
 
 **站点过滤**（行级拦截器 `TenantLineInnerInterceptor`，列名 `site_id`，系统设计 25.7）：
 
@@ -8851,6 +9110,7 @@ erDiagram
 | `sys_site_domain` | 不豁免 | 例外：`SiteResolver` 按域名解析站点发生在站点上下文建立之前，使用专用豁免查询 `WHERE domain = ?`（结果缓存） |
 | `sys_user_site_role` | 不豁免 | 例外：登录后列出“我可访问的站点”需要跨站点，使用专用豁免查询 `WHERE user_id = 当前用户` |
 | 其余站点级表 | 不豁免 | — |
+
 
 ### 6.4 表结构
 
@@ -10081,6 +10341,28 @@ CREATE TABLE sys_dsr_request (
 | `sys_site_profile_localization`、`sys_ui_text` | translation（经 core 实现的 `TranslatableResourceProvider` 回写，资源类型 `SITE_PROFILE`、`UI_TEXT`；translation 不直接写 `sys_` 表） | 源语言文本或主题默认文案变化时发布事件，translation 重新翻译变化的单元 | `TranslatableResourceChangedEvent` |
 | `sys_job.id` | 各模块通过 core 的任务服务创建任务（如 product 导入导出、url 重定向导入、inquiry 导出） | 任务记录到期物理删除；模块只保存 `job_id` 用于展示时须容忍其不存在 | — |
 
+### 6.7 事务互斥技术表（ADR-022，Proposed）
+
+sys_transaction_mutex 仅由 core 的 TransactionMutexApi 使用。它是事务互斥与 generation 存储，不是有租约的工作认领表；name 必须来自注册的技术命名空间，业务模块不得直接访问本表。站点删除由 core 清理，正常任务完成不删除行。
+
+```sql
+CREATE TABLE sys_transaction_mutex (
+  id          BIGINT       NOT NULL COMMENT 'TSID',
+  site_id     BIGINT       NOT NULL COMMENT '站点ID',
+  name        VARCHAR(100) COLLATE utf8mb4_0900_bin NOT NULL COMMENT '注册的事务互斥名称',
+  generation  BIGINT       NOT NULL DEFAULT 0 COMMENT '当前事务代次，不自动归零',
+  created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  created_by  BIGINT       NOT NULL DEFAULT 0,
+  updated_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  updated_by  BIGINT       NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_tx_mutex (site_id, name),
+  CONSTRAINT ck_tx_mutex_generation CHECK (generation >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='事务互斥技术状态';
+```
+
+在 M0 core 初始化迁移之后追加独立迁移，不改写已有迁移。空库执行、并发首次建行、死锁回滚、连接丢失、A/B站隔离均待 MySQL 8.4 集成验证。
+
 ---
 
 ## 7. 数据库通用约定与框架表
@@ -10218,14 +10500,14 @@ UNIQUE KEY uk_form_key (site_id, form_key, alive)
 
 | 表 | 来源 | 建表方式 | 说明 |
 |---|---|---|---|
-| `event_publication` | Spring Modulith 事件发布登记表（JDBC） | 框架自动建表（`spring.modulith.events.jdbc.schema-initialization.enabled=true`），结构以所选版本自带的 MySQL 脚本为准 | 事务内登记待投递事件，监听器成功后标记完成；未完成的事件在启动时与定时任务中重新投递（系统设计 4.1、ADR-003）。已完成记录由定时任务按保留期清理（本文 5.8） |
+| `EVENT_PUBLICATION` | Spring Modulith 事件发布登记表（JDBC） | 框架自动建表（`spring.modulith.events.jdbc.schema-initialization.enabled=true`），结构以所选版本自带的 MySQL 脚本为准 | 事务内登记待投递事件，监听器成功后标记完成；未完成的事件在启动时与定时任务中重新投递（系统设计 4.1、ADR-003）。已完成记录由定时任务按保留期清理（本文 5.8） |
 | `flyway_{module}_history` | Flyway | Flyway 自动创建 | 每个模块一张迁移历史表（7.10、本文 5.2） |
 | `sys_lock` | ShedLock（JDBC 布局） | platform-core 的迁移脚本 | 定时任务与带过期时间的业务锁共用，定义见 6.4；模块迁移锁使用 MySQL 命名锁 `GET_LOCK('platform:migrate', …)`，不依赖本表 |
 
-`event_publication` 的参考结构（以框架版本自带脚本为准，不纳入本项目的迁移脚本）：
+`EVENT_PUBLICATION` 的参考结构（以框架版本自带脚本为准，不纳入本项目的迁移脚本）：
 
 ```text
-event_publication
+EVENT_PUBLICATION
   id                VARCHAR(36)   主键（UUID）
   listener_id       VARCHAR(512)  监听器标识
   event_type        VARCHAR(512)  事件类型
@@ -10442,7 +10724,7 @@ const { data } = await api.GET('/api/admin/v1/inquiry/inquiries', {
 const perm = usePermission()
 perm.has('inquiry:inquiry:view')
 perm.dataScope('inquiry:inquiry:view')          // 'ALL' | 'GROUP' | 'OWN' | null（4.4.7）
-perm.canAccessLocale('translation:review', 'de') // 语言范围（系统设计 5.8）
+perm.canAccessLocale('translation:memory:review', 'de') // 语言范围（系统设计 5.8）
 ```
 
 - 前端权限判断只用于界面体验，后端 `@RequiresPermission` 才是授权依据（系统设计 26.2）。
@@ -10756,7 +11038,7 @@ GET https://www.example.com/de/produkte/li-ion-pack-x200
  2. useContentRoute()（只在服务端取数）
     a. GET {API_BASE}/api/public/v1/delivery/resolve?path=<原始路径>
          请求头：X-Site-Host（请求 Host，去掉端口）、X-Internal-Token、X-Client-IP（访客 IP）、traceparent
-         超时 NUXT_B2BWEB_RESOLVE_TIMEOUT；不重试（CDN 的 stale-if-error 兜底）
+         超时 NUXT_B2BWEB_RESOLVE_TIMEOUT；不自动重试；期限内缓存可用，过期无可用结果时返回503
     b. useSite(resolve.locale)：站点引导数据 GET …/delivery/site?locale=…（进程内缓存，键 = 站点 Host + 语言）
     c. 按 kind 分支（下表）
  3. 渲染：TemplateResolver → 模板 → TemplateRegion / LayoutRenderer → SectionRenderer
@@ -10962,21 +11244,15 @@ f.number(spec.value, { maximumFractionDigits: 2 })
 
 #### 8.3.11 缓存响应头
 
-系统设计 21.3 规定 CDN 使用 `s-maxage` 与 `stale-*`、浏览器使用 `max-age=0, must-revalidate`。两者写在同一个 `Cache-Control` 中会互相矛盾（`must-revalidate` 同样禁止共享缓存使用过期副本，`stale-if-error` 失效），因此按 RFC 9213 拆为两个头（细化，不改变 21.3 的缓存时长）：
+动态响应统一服从4.10.3的绝对新鲜度预算，浏览器不持久复用动态页面；CDN使用独立CDN-Cache-Control（RFC9213）。剩余秒数为floor(min(55, freshUntil-now))；<=0或缺少可信freshUntil时no-store。严禁命中后重新计时，所有动态响应不启用stale扩展。
 
-| 响应 | `Cache-Control`（浏览器） | `CDN-Cache-Control`（CDN） | `Cache-Tag` |
+| 响应 | Cache-Control（浏览器） | CDN-Cache-Control | Cache-Tag |
 |---|---|---|---|
-| 内容页（`CONTENT`，含带筛选参数的分类页） | `public, max-age=0, must-revalidate` | `max-age={cache.maxAge}, stale-while-revalidate=604800, stale-if-error=604800`（`maxAge` 默认 86400） | `cache.tags`，逗号分隔 |
-| 站内搜索外壳 | 同上 | `max-age=60` | `s{site}` |
-| `REDIRECT`、`GONE` | 同上 | 按 resolve 的 `cache` 字段（时长与标签由 delivery 模块设计文档规定）；缺省 `max-age=3600` | `cache.tags` |
-| 404 | 同上 | `max-age=60` | `s{site}` |
-| 预览、编辑器 | `no-store` | `no-store` | — |
-| 503 与其他 5xx | `no-store` | `no-store`；503 另加 `Retry-After: 120` | — |
-| sitemap、robots（服务端路由） | `public, max-age=0, must-revalidate` | `max-age=3600` | `s{site}:sitemap` 等（系统设计 21.3） |
-| 带哈希的静态资源（`/_nuxt/**`） | `public, max-age=31536000, immutable` | 同左 | — |
+| CONTENT、分类、搜索外壳、REDIRECT、GONE、404、sitemap、robots | public, max-age=0, must-revalidate | max-age={剩余秒数}；无可信期限则no-store | 当前响应依赖的标签 |
+| 预览、编辑器、503/其他5xx、已授权私有下载 | no-store | no-store；503另带Retry-After:120 | 无 |
+| 带哈希静态资源（/_nuxt/**） | public, max-age=31536000, immutable | 同左 | 无 |
 
-- CDN 适配：Cloudflare 支持 `CDN-Cache-Control`；其他 CDN 由部署配置映射到其等价设置（部署由业主负责，1.4）。
-- 只有 `website-kit/src/http/` 可以设置这些响应头；页面与主题组件不得自行设置。
+后端以X-Content-Fresh-Until传递最早依赖期限；Nuxt只信任自有后端生成的头，不能采信浏览器同名请求头。CDN需转发Age并尊重剩余寿命。只有website-kit/src/http可设置页面响应头；组件不能覆盖缓存规则。部署由业主负责，其他CDN按等价语义配置。
 
 #### 8.3.12 503、404、410 与错误页
 
@@ -11348,6 +11624,16 @@ frontend/packages/themes/industrial/
 | 文案 | 固定文字一律文案键；新键在 `texts/zh-CN.json` 中提供默认中文（只有中文，其他语言由翻译流程生成，`CLAUDE.md` 语言规则 4） |
 | 无障碍 | 语义化标签与地标、可见焦点、跳到主内容链接、表单标签与错误提示、图片 alt、尊重 `prefers-reduced-motion`（系统设计 11.5）；画廊的 axe 检查覆盖每个变体（9.6.2） |
 | 一致性检查 | `pnpm check:theme`：组件类型与变体存在于 `component-schemas`；变体文件命名与目录符合 3.6；`texts/zh-CN.json` 覆盖主题与 `website-kit` 中使用的全部文案键；每个变体有画廊截图基线 |
+
+#### 8.6.3 V1 主题视觉基线
+
+V1 的 `industrial` 主题按系统设计 11.7 和[前台视觉设计方向与 UI 基线](../design/visual-direction.md)细化：参考 Tesla 的影像主导、黑白灰、留白、简洁导航与清晰 CTA，面向企业产品参数、资料下载和询盘场景。
+
+视觉参数先在 design-tokens 中完成 primitive/semantic/component 映射，再由主题变体消费。Header 的 `overlay` / `solid` 为建议的呈现变体，后续通过既有主题设置声明；Header/Footer 仍是固定区域。不得通过自由样式、布局硬编码颜色或新增重复组件来实现该方向。
+
+编辑器标准预览沿用 1440/768/390，补测 360px、短屏、长文案及 200% 文字缩放。画廊、axe、截图和性能验收仍依第 9、10 章执行。Admin 继续使用 Element Plus 独立主题变量，iframe 使用真实前台主题。
+
+本节确认方向与交付要求；高保真稿和组件实现尚未交付，不改变第 4 章契约、DTO、路由或组件类型清单。
 
 ---
 
@@ -12475,7 +12761,7 @@ tools/mock-openai/
 | 文档版本 | V1.0 |
 | 状态 | 草案 / 已评审 / 已实现（M?） |
 | 更新日期 | YYYY-MM-DD |
-| 依据 | 系统设计 V1.4 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
+| 依据 | 系统设计 V1.7 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -12909,7 +13195,7 @@ M0 结束、模块全面并行开工的条件（同时作为 M0 的验收清单�
 | 7 | CI 全部门禁上线；“违反边界的示例模块”使 CI 失败 | 系统设计 30（M0 验收）；第 10 章 |
 | 8 | 脚手架可用，按模板新建一个模块并接入 ≤ 1 小时；17 个业务模块的骨架已由脚手架生成并合入主干（3.8） | 计时演练；主干构建通过 |
 | 9 | 本地开发环境一键启动（第 11 章） | 新成员按 README 在半天内跑通 |
-| 10 | 本文 V1.0 评审通过；M1 切片涉及的模块设计文档评审通过（DoR） | 文档状态 |
+| 10 | 本文当前冻结候选版评审通过；M1 切片涉及的模块设计文档评审通过（DoR） | 文档状态 |
 | 11 | ADR-011 的版本表填写完成并通过评审 | ADR-011 状态改为 Accepted |
 
 M0 的内部顺序建议：先完成第 4 章契约草案并做一次走查（以发布流程 4.4、询盘流程 17.2、翻译流程 5.7 三条链路检查契约是否完整），再并行实现 platform-core、testkit、infrastructure 与前端框架；契约草案走查通过后，模块负责人即可开始编写模块设计文档（2.2）。
@@ -13002,7 +13288,7 @@ flowchart BT
 | delivery | `TemplateProvider`、`DeliveryContributor`、`DataSourceProvider` | page；seo；content、graph、taxonomy、article、search | 开发期用示例模板与示例数据源；M1 用 `product-detail` 模板端到端验证 |
 | seo | `SchemaOrgProvider`、`SeoVariableProvider`、`BreadcrumbProvider` | product、article、page、core；product、article、taxonomy | M1 验证 Product、BreadcrumbList、Organization JSON-LD |
 | translation | `TranslatableContentProvider`、`TranslatableResourceProvider` | 见系统设计 3.7（十余个模块） | 开发期用示例实现；M3 逐个模块端到端验证 |
-| media | `MediaReferenceCollector` | product、article、page、seo、core | 引用追踪与“有引用不可删除” |
+| content、资源拥有者/core | `MediaReferenceCollector` → `ReferenceWriteApi` → media的`MediaReferenceSink` | product、article、page、seo、core、navigation | 同事务引用登记、软删与新引用竞争 |
 
 ### 13.3 并行开工与提前开工
 
@@ -13125,7 +13411,7 @@ flowchart BT
 | `requires` | object | 必需依赖：模块 ID → 版本范围 | 不含 `core` 与自身；可以为 `{}` | 启动校验与拓扑排序；站点启用 / 停用校验（A.3） |
 | `optional` | object | 可选依赖：存在时增强，缺失时降级（系统设计 3.5） | 同上；与 `requires` 不重叠 | 拓扑排序；服务接口经 `ObjectProvider` 注入（4.1.3） |
 | `disableable` | boolean | 站点能否停用本模块 | 与系统设计 3.2 一致 | `sys_site_module`；停用流程（系统设计 3.8） |
-| `tablePrefix` | string \| null | 表前缀 | `^[a-z]{2,4}_$`；没有表的模块（delivery、search）为 `null` | 表前缀扫描（第 10 章）；`onPurge` 的范围 |
+| `tablePrefix` | string \| null | 表前缀 | `^[a-z]{2,4}_$`；没有表的delivery为 `null`；search按ADR-021提案为sch_ | 表前缀扫描（第 10 章）；`onPurge` 的范围 |
 | `apiPrefix` | string \| null | REST 路径中的模块段、权限码第一段、Admin 路由前缀与目录名（3.6） | 非 core 等于 `id`，core 为 `system`；没有任何 HTTP 接口时为 `null` | 停用时该前缀下的接口不可用（系统设计 3.8）；菜单路由校验 |
 | `permissions` | array | 权限声明 | 见下表 | 启动时幂等同步到 `sys_permission`（系统设计 3.6 第 6 步） |
 | `menus` | array | 后台菜单 | 见下表 | 同步到 `sys_menu`；`/api/admin/v1/system/bootstrap` 按权限与启用状态过滤后返回（系统设计 22.2） |
@@ -13345,7 +13631,7 @@ flowchart BT
 | 1 | 全局唯一 | `id`、`apiPrefix`、非空的 `tablePrefix`、权限码、菜单 key、组件类型在全部描述符中唯一 | CI、启动 |
 | 2 | 身份一致 | `id` 等于 `backend/modules/<id>/` 目录名、根包 `com.b2bweb.<id>`、Flyway 位置 `db/migration/<id>/`（3.4、3.7）；core 的描述符位于 platform-core | CI |
 | 3 | API 前缀 | 非 core 模块的 `apiPrefix` 等于 `id`，core 为 `system`（3.6、3.7）；`apiPrefix` 为 `null` 的模块不得有控制器 | CI |
-| 4 | 与模块清单一致 | `layer`、`tablePrefix`、`disableable` 与系统设计 3.2 一致（清单以常量形式保存在 testkit 的架构规则中）；delivery、search 的 `tablePrefix` 为 `null`；新增模块先写 ADR 并更新清单（系统设计 29.5） | CI |
+| 4 | 与模块清单一致 | `layer`、`tablePrefix`、`disableable` 与系统设计 3.2 一致（清单以常量形式保存在 testkit 的架构规则中）；delivery 的 `tablePrefix` 为 `null`；search按ADR-021提案为 `sch_`；新增模块先写 ADR 并更新清单（系统设计 29.5） | CI |
 | 5 | 依赖方向 | `requires` 只能指向 L2 模块：L2 模块的 `requires` 只能是 4.1.3 登记的 L2 → L2 方向，L3 / L4 可以 `requires` 任何 L2 模块（系统设计 3.3 R2）。`optional` 不得指向更高层的模块；指向同层模块时只表示通过扩展点或事件获得增强，不调用其服务（如 inquiry → product，系统设计 3.5） | CI、启动 |
 | 6 | 依赖不自指、不重叠 | `requires`、`optional` 不含自身，两者不重叠（`core` 已由 Schema 排除，所有模块隐含依赖 core） | CI、启动 |
 | 7 | 无环 | `requires` ∪ `optional` 构成有向无环图；模块管理器按拓扑序执行迁移与 `onInstall` / `onUpgrade`（系统设计 3.6） | CI、启动 |
