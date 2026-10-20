@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.6 |
+| 文档版本 | V1.7 |
 | 状态 | 草案（Draft），待评审 |
 | 更新日期 | 2026-10-20 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.8（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-018（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.9（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-029（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -134,7 +134,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 - 模块用**模块 ID** 指称（`content`、`inquiry` 等，见系统设计 3.2）；platform-core 在 `module.json` 与数据库中的模块 ID 为 `core`，platform-api 只有契约，没有模块 ID。
 - Java 基础包名为 `com.b2bweb`，Maven groupId 为 `com.b2bweb`，前端包作用域为 `@b2bweb/*`（M0 开工前可以统一替换为正式名称，替换时同步修改本文）。
 - 文中的 GitHub 账号与团队（如 `@arch-lead`）是占位符，M0 时替换为真实账号。
-- 表格中的“系统设计 N.M”指《系统设计说明书》V1.8 的章节。
+- 表格中的“系统设计 N.M”指《系统设计说明书》V1.9 的章节。
 
 ### 1.6 术语
 
@@ -183,6 +183,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | V1.4 | 2026-10-20 | M0-07原型反馈：明确RR当前读、锁内保留期判断、下载唯一冲突后新事务重放及恢复保留已捕获版本；业务服务验收仍待实现 |
 | V1.5 | 2026-10-20 | M0-07B反馈：排他初始化互斥行、事务要求、租约复核、拓扑检查点与语言范围去重；65项原型回归，正式服务门禁保留 |
 | V1.6 | 2026-10-20 | M0-07C反馈：恢复门闩覆盖读写与旧RDB代次，可靠失效不经BufferStore去抖，统一freshUntil示例；保持既有DDL和跨模块签名 |
+| V1.7 | 2026-10-20 | 正式工程RC：完整契约编译、设置对象与启动回调统一、模块停用策略读取、Core技术表V002/V003、实际任务/调度与事务协调器；ADR-026～029待评审。保留G0完整门槛，不以目录覆盖代替全部契约语义验收 |
 
 ---
 
@@ -594,7 +595,7 @@ platform-api ─────▶ （无内部依赖）
 2. **模块对 platform-core 的编译依赖只限开发支撑包**（持久化基类、Web 基础设施、配置属性等，清单见第 5 章）；core 的其他包是内部实现，模块不得引用（ArchUnit 检查）。对 core 业务能力的调用一律通过 `platform-api` 中的服务接口。
 3. **testkit 不依赖 platform-core**：platform-core 自己的测试也要使用 testkit（契约测试、端口假实现），若 testkit 依赖 platform-core 会形成 Maven 反应堆循环。需要 platform-core 运行时的测试支撑（如带站点行级拦截的持久化测试切片）由 platform-core 自己提供，见第 5、9 章。
 4. **端口的位置**：系统设计 3.3 R1 中“infrastructure 定义的端口接口”在本框架中统一放在 `com.b2bweb.api.port`，由 infrastructure 实现。业务模块因此不依赖 infrastructure 构件。
-5. **Spring Modulith 的模块识别**：启动类位于 `com.b2bweb`，其直接子包被识别为应用模块：`api`、`core`、`infrastructure`、`app` 与 17 个业务模块（`content`、`product` …）。`api` 声明为开放模块，供所有模块引用；业务模块的 `allowedDependencies` 只包含 `api` 与 `core`（3.4）。具体配置见第 5、10 章。
+5. **Spring Modulith 的模块识别**：启动类位于 `com.b2bweb`，其直接子包被识别为应用模块：`api`、`core`、`infrastructure`、`app` 与 17 个业务模块（`content`、`product` …）。`api` 声明为开放模块，供所有模块引用；业务模块的 `allowedDependencies` 为 `api` 与 `core :: *`（仅命名技术支撑接口，3.4）。具体配置见第 5、10 章。
 
 > 评审确认事项：说明 1 的 Maven 依赖方向（platform-core → platform-api）是对系统设计 3.3 图示（“L1 platform-api ──▶ L0 platform-core”）的细化，评审确认后在系统设计 3.3 中补充说明。
 
@@ -643,7 +644,7 @@ backend/modules/inquiry/
  */
 @org.springframework.modulith.ApplicationModule(
         displayName = "询盘",
-        allowedDependencies = { "api", "core" })   // 只允许依赖 platform-api 与 platform-core 的开发支撑包
+        allowedDependencies = { "api", "core :: *" })   // 只允许依赖 platform-api 与 platform-core 的开发支撑包
 package com.b2bweb.inquiry;
 ```
 
@@ -963,6 +964,21 @@ modules/*（compile：platform-api、platform-core；test：platform-testkit）
 - 按 ID 批量查询的方法接收 `Collection<Long>`，单次最多 500 个 ID，返回 `Map<Long, T>`（不存在的 ID 不出现在结果中）；调用方不得在循环中逐个调用单条查询（避免 N+1）。
 - Delivery 路径上的读方法（标注“Delivery 热路径”）P95 ≤ 20 ms（缓存未命中），实现方负责缓存与失效。
 
+提供方模块启用检查注解（M0 RC补齐，ADR-026）：
+
+```java
+package com.b2bweb.api.common;
+
+/** 提供方的写方法与公开读取入口必须检查当前站点的模块启用状态；系统级读取不标注。 */
+@java.lang.annotation.Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD})
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Inherited
+@java.lang.annotation.Documented
+public @interface RequiresModuleEnabled {
+    String value();
+}
+```
+
 #### 4.1.4 空值约定
 
 - 每个包的 `package-info.java` 标注 `@org.jspecify.annotations.NullMarked`：未标注的参数、返回值、record 组件一律非空。
@@ -1130,6 +1146,7 @@ public final class CoreErrors {
     public static final ErrorCode FORBIDDEN             = ErrorCode.of("CORE_FORBIDDEN", 403, "没有权限");
     public static final ErrorCode NOT_AUTHENTICATED     = ErrorCode.of("CORE_NOT_AUTHENTICATED", 401, "未登录");
     public static final ErrorCode SETTING_NOT_DECLARED  = ErrorCode.of("CORE_SETTING_NOT_DECLARED", 500, "设置键未声明");
+    public static final ErrorCode SETTING_VERSION_CONFLICT = ErrorCode.of("CORE_SETTING_VERSION_CONFLICT", 409, "设置已被他人修改");
     public static final ErrorCode SETTING_INVALID       = ErrorCode.of("CORE_SETTING_INVALID", 422, "设置值不符合 Schema");
     public static final ErrorCode JOB_NOT_FOUND         = ErrorCode.of("CORE_JOB_NOT_FOUND", 404, "任务不存在");
     public static final ErrorCode JOB_TYPE_UNKNOWN      = ErrorCode.of("CORE_JOB_TYPE_UNKNOWN", 500, "未注册的任务类型");
@@ -1571,7 +1588,12 @@ public record ReferenceSet(java.util.Set<Long> contentIds, java.util.Set<Long> m
         return new ReferenceSet(java.util.Set.of(), java.util.Set.of(), java.util.Set.of());
     }
 
-    public ReferenceSet merge(ReferenceSet other) { /* 并集 */ throw new UnsupportedOperationException("示意"); }
+    public ReferenceSet merge(ReferenceSet other) {
+        var c = new java.util.HashSet<>(contentIds); c.addAll(other.contentIds);
+        var m = new java.util.HashSet<>(mediaIds); m.addAll(other.mediaIds);
+        var t = new java.util.HashSet<>(termIds); t.addAll(other.termIds);
+        return new ReferenceSet(c, m, t);
+    }
 
     public boolean isEmpty() { return contentIds.isEmpty() && mediaIds.isEmpty() && termIds.isEmpty(); }
 
@@ -1580,7 +1602,31 @@ public record ReferenceSet(java.util.Set<Long> contentIds, java.util.Set<Long> m
      * 对象键 "$content" / "$media" / "$term" 的值；任意字符串值或 ProseMirror link 标记的 href 中以 content:// 开头的值。
      * 纯函数，所有模块使用同一实现，保证引用识别规则一致。
      */
-    public static ReferenceSet scan(tools.jackson.databind.JsonNode json) { throw new UnsupportedOperationException("示意"); }
+    public static ReferenceSet scan(tools.jackson.databind.JsonNode json) {
+        var content = new java.util.HashSet<Long>(); var media = new java.util.HashSet<Long>();
+        var terms = new java.util.HashSet<Long>();
+        var pending = new java.util.ArrayDeque<tools.jackson.databind.JsonNode>(); pending.push(json);
+        while (!pending.isEmpty()) {
+            var node = pending.pop();
+            if (node.isObject()) {
+                for (var entry : node.properties()) {
+                    var target = switch (entry.getKey()) {
+                        case "$content" -> content; case "$media" -> media; case "$term" -> terms;
+                        default -> null;
+                    };
+                    var value = entry.getValue();
+                    if (target != null && (value.isString() || value.isIntegralNumber())) {
+                        try { long id = Long.parseLong(value.asString()); if (id > 0) target.add(id); }
+                        catch (NumberFormatException ignored) { /* malformed refs are validated by the owner */ }
+                    }
+                    pending.push(value);
+                }
+            } else if (node.isArray()) node.forEach(pending::push);
+            else if (node.isString()) ContentRef.fromUri(node.asString()).filter(ref -> ref.contentId() > 0)
+                    .ifPresent(ref -> content.add(ref.contentId()));
+        }
+        return new ReferenceSet(content, media, terms);
+    }
 }
 ```
 
@@ -1715,11 +1761,14 @@ public record ValidationIssue(Severity severity, String code, String message,
 
 /** 校验收集器。非线程安全：每次校验创建一个实例。 */
 public final class ValidationResult {
-    private final java.util.List<ValidationIssue> issues = new java.util.ArrayList<>();
+    private final java.util.List<ValidationIssue> issues;
     private final @org.jspecify.annotations.Nullable String source;
 
     public ValidationResult() { this(null); }
-    public ValidationResult(@org.jspecify.annotations.Nullable String source) { this.source = source; }
+    public ValidationResult(@org.jspecify.annotations.Nullable String source) { this(source, new java.util.ArrayList<>()); }
+    private ValidationResult(@org.jspecify.annotations.Nullable String source, java.util.List<ValidationIssue> issues) {
+        this.source = source; this.issues = issues;
+    }
 
     public ValidationResult error(String code, String message) { return add(Severity.ERROR, code, null, message); }
     public ValidationResult error(String code, String field, String message) { return add(Severity.ERROR, code, field, message); }
@@ -1736,7 +1785,7 @@ public final class ValidationResult {
     public ValidationResult addAll(java.util.Collection<ValidationIssue> more) { issues.addAll(more); return this; }
 
     /** 返回一个写入同一列表、但 source 为指定模块的视图（收集方为每个扩展点实现创建）。 */
-    public ValidationResult forSource(String moduleId) { throw new UnsupportedOperationException("示意"); }
+    public ValidationResult forSource(String moduleId) { return new ValidationResult(moduleId, issues); }
 
     public boolean hasErrors() { return issues.stream().anyMatch(i -> i.severity() == Severity.ERROR); }
     public java.util.List<ValidationIssue> issues() { return java.util.List.copyOf(issues); }
@@ -1973,10 +2022,31 @@ public record SemVer(int major, int minor, int patch,
                      @org.jspecify.annotations.Nullable String preRelease) implements Comparable<SemVer> {
 
     /** 解析 "1.2.3" 或 "1.2.3-rc.1"；格式错误抛出 IllegalArgumentException。 */
-    public static SemVer parse(String text) { throw new UnsupportedOperationException("示意"); }
+    public static SemVer parse(String text) {
+        var match = java.util.regex.Pattern.compile("^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*))?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$").matcher(text);
+        if (!match.matches()) throw new IllegalArgumentException("非法语义版本: " + text);
+        String pre = match.group(4);
+        if (pre != null) for (String id : pre.split("\\."))
+            if (id.matches("[0-9]+") && id.length() > 1 && id.startsWith("0")) throw new IllegalArgumentException("版本数字不得有前导零");
+        return new SemVer(Integer.parseInt(match.group(1)), Integer.parseInt(match.group(2)), Integer.parseInt(match.group(3)), pre);
+    }
 
     @Override
-    public int compareTo(SemVer o) { throw new UnsupportedOperationException("示意：按 SemVer 2.0.0 规则比较"); }
+    public int compareTo(SemVer o) {
+        int result = Integer.compare(major, o.major); if (result != 0) return result;
+        result = Integer.compare(minor, o.minor); if (result != 0) return result;
+        result = Integer.compare(patch, o.patch); if (result != 0) return result;
+        if (preRelease == null) return o.preRelease == null ? 0 : 1;
+        if (o.preRelease == null) return -1;
+        String[] left = preRelease.split("\\."), right = o.preRelease.split("\\.");
+        for (int i = 0; i < Math.min(left.length, right.length); i++) {
+            boolean a = left[i].matches("[0-9]+"), b = right[i].matches("[0-9]+");
+            result = a && b ? new java.math.BigInteger(left[i]).compareTo(new java.math.BigInteger(right[i]))
+                    : a != b ? (a ? -1 : 1) : left[i].compareTo(right[i]);
+            if (result != 0) return result;
+        }
+        return Integer.compare(left.length, right.length);
+    }
 
     @Override
     public String toString() {
@@ -2040,6 +2110,9 @@ public interface SiteApi {
     /** 模块在指定站点是否启用（系统级任务使用）。 */
     boolean isModuleEnabled(long siteId, String moduleId);
 
+    /** 当前站点某已安装模块的停用路由策略；空配置按NOT_FOUND。供url/delivery读取，不访问sys_表。 */
+    ModuleDisablePolicy moduleDisablePolicy(String moduleId);
+
     /** 当前站点启用的模块 ID。 */
     java.util.Set<String> enabledModules();
 
@@ -2052,6 +2125,20 @@ public interface SiteApi {
     /** 构建中全部模块的平台级信息。 */
     java.util.List<ModuleInfo> modules();
 }
+
+public enum ModuleDisableAction { NOT_FOUND, REDIRECT }
+
+public record ModuleDisablePolicy(ModuleDisableAction action,
+                                  @org.jspecify.annotations.Nullable Long redirectContentId) {
+    public ModuleDisablePolicy {
+        java.util.Objects.requireNonNull(action);
+        if (action == ModuleDisableAction.REDIRECT && (redirectContentId == null || redirectContentId <= 0)
+            || action == ModuleDisableAction.NOT_FOUND && redirectContentId != null)
+            throw new IllegalArgumentException("模块停用路由策略不合法");
+    }
+    public static ModuleDisablePolicy notFound() { return new ModuleDisablePolicy(ModuleDisableAction.NOT_FOUND, null); }
+}
+
 ```
 
 ```java
@@ -2201,7 +2288,7 @@ public interface SettingsApi {
  * @param version      保存值的版本号；默认值为 0
  */
 public record SettingMeta(String key, String moduleId, boolean defaultValue, int version,
-                          @org.jspecify.annotations.Nullable java.time.Instant updatedAt) {}
+                          java.time.@org.jspecify.annotations.Nullable Instant updatedAt) {}
 ```
 
 `CoreErrors` 中补充：`CORE_SETTING_VERSION_CONFLICT`（409，“设置已被他人修改”）。
@@ -2365,7 +2452,7 @@ public interface PermissionChecker {
      */
     java.util.Optional<DataScope> dataScope(String permission);
 
-    /** 语言范围：权限声明了 localeScoped 时按用户角色的语言范围返回；否则返回 LocaleScope.unrestricted()。 */
+    /** 语言范围：权限声明了 localeScoped 时按用户角色的语言范围返回；否则返回 LocaleScope.all()。 */
     LocaleScope localeScope(String permission);
 
     /** 当前用户是否可以对该语言执行该权限（翻译审校人员限定语言，系统设计 5.8）。 */
@@ -2382,7 +2469,7 @@ public enum DataScope { ALL, GROUP, OWN }
 public record LocaleScope(boolean unrestricted, java.util.Set<String> locales) {
     public LocaleScope { locales = java.util.Set.copyOf(locales); }
 
-    public static LocaleScope unrestricted() { return new LocaleScope(true, java.util.Set.of()); }
+    public static LocaleScope all() { return new LocaleScope(true, java.util.Set.of()); }
 
     public static LocaleScope of(java.util.Set<String> locales) { return new LocaleScope(false, locales); }
 
@@ -2610,10 +2697,10 @@ public interface JobApi {
  * @param maxAttempts 最多执行次数（默认 1，即不自动重试）
  */
 public record JobRequest(String moduleId, String jobType, String title,
-                         @org.jspecify.annotations.Nullable tools.jackson.databind.JsonNode params,
+                         tools.jackson.databind.@org.jspecify.annotations.Nullable JsonNode params,
                          @org.jspecify.annotations.Nullable String idempotencyKey,
                          @org.jspecify.annotations.Nullable Long parentJobId,
-                         @org.jspecify.annotations.Nullable java.time.Instant scheduledAt,
+                         java.time.@org.jspecify.annotations.Nullable Instant scheduledAt,
                          int maxAttempts) {
     public static JobRequest of(String moduleId, String jobType, String title, tools.jackson.databind.JsonNode params) {
         return new JobRequest(moduleId, jobType, title, params, null, null, null, 1);
@@ -2631,14 +2718,14 @@ public record JobFile(String fileName, long size, java.time.Instant expiresAt) {
 public record JobInfo(long jobId, String moduleId, String jobType, String title, JobStatus status,
                       @org.jspecify.annotations.Nullable Long parentJobId,
                       JobProgress progress,
-                      @org.jspecify.annotations.Nullable tools.jackson.databind.JsonNode result,
+                      tools.jackson.databind.@org.jspecify.annotations.Nullable JsonNode result,
                       @org.jspecify.annotations.Nullable JobFile resultFile,
                       @org.jspecify.annotations.Nullable String errorCode,
                       @org.jspecify.annotations.Nullable String errorMessage,
                       int attempts, int maxAttempts, boolean cancelRequested,
                       long createdBy, java.time.Instant createdAt,
-                      @org.jspecify.annotations.Nullable java.time.Instant startedAt,
-                      @org.jspecify.annotations.Nullable java.time.Instant finishedAt) {}
+                      java.time.@org.jspecify.annotations.Nullable Instant startedAt,
+                      java.time.@org.jspecify.annotations.Nullable Instant finishedAt) {}
 
 public record JobQuery(@org.jspecify.annotations.Nullable String moduleId,
                        @org.jspecify.annotations.Nullable String jobType,
@@ -2711,7 +2798,7 @@ public interface JobExecutionContext {
 }
 
 /** 执行结果；result 为结果摘要（如 {"created":120,"updated":30,"errors":2}）。 */
-public record JobOutcome(@org.jspecify.annotations.Nullable tools.jackson.databind.JsonNode result) {
+public record JobOutcome(tools.jackson.databind.@org.jspecify.annotations.Nullable JsonNode result) {
     public static JobOutcome empty() { return new JobOutcome(null); }
 }
 
@@ -2789,7 +2876,7 @@ public interface DictApi {
 
 /** @param extra 扩展属性（如标签颜色） */
 public record DictItem(String value, String label, int sortOrder, boolean enabled, boolean builtin,
-                       @org.jspecify.annotations.Nullable tools.jackson.databind.JsonNode extra) {}
+                       tools.jackson.databind.@org.jspecify.annotations.Nullable JsonNode extra) {}
 
 /**
  * @param typeCode      {moduleId}.{名称}，如 "inquiry.close_reason"
@@ -5218,6 +5305,9 @@ public interface PlatformModule {
     /** 版本升级：数据修正（结构迁移由 Flyway 完成）。必须幂等。 */
     default void onUpgrade(ModuleContext ctx, com.b2bweb.api.common.SemVer fromVersion) {}
 
+    /** 每次启动：安装/升级后按依赖拓扑顺序同步声明资源；必须幂等，不使用站点过滤。 */
+    default void onStartup(ModuleContext ctx) {}
+
     /** 站点启用：初始化该站点的默认数据（首次启用时）。在站点上下文中调用。 */
     default void onEnable(SiteModuleContext ctx) {}
 
@@ -5924,8 +6014,8 @@ public record TranslationStats(int unitCount, int memoryHits, int machineCount, 
  *                            且站点开启了译文自动发布（默认开启，系统设计 5.7 第 7 步、6.7）
  */
 public record TranslationCompletedEvent(EventMeta meta, long jobId,
-                                        @Nullable TranslationSubject.Content content,
-                                        @Nullable TranslationSubject.Resource resource,
+                                        TranslationSubject.@Nullable Content content,
+                                        TranslationSubject.@Nullable Resource resource,
                                         String targetLocale, TranslationState state,
                                         boolean humanReviewRequired, boolean autoPublish,
                                         TranslationStats stats, @Nullable Integer targetVersion) implements DomainEvent {
@@ -5956,8 +6046,8 @@ public record TranslationCompletedEvent(EventMeta meta, long jobId,
  * @param attempts     已尝试次数
  */
 public record TranslationFailedEvent(EventMeta meta, long jobId,
-                                     @Nullable TranslationSubject.Content content,
-                                     @Nullable TranslationSubject.Resource resource,
+                                     TranslationSubject.@Nullable Content content,
+                                     TranslationSubject.@Nullable Resource resource,
                                      String targetLocale, String subjectTitle, String errorCode,
                                      String errorMessage, int attempts) implements DomainEvent {
 
@@ -6336,7 +6426,7 @@ public interface SearchEngineClient {
     /** 按过滤表达式删除（如模块停用时删除某类型的全部文档）。返回任务 ID。 */
     long deleteByFilter(String indexName, String filter);
 
-    /** 原子交换两个索引（全量重建：写入 SearchIndexNames.rebuilding(name) 后与正式索引交换，再删除旧索引）。返回任务 ID。 */
+    /** 底层引擎的交换能力；ADR-021的V1搜索重建禁止调用，必须发布私有不可变代次并CAS数据库指针。返回任务 ID。 */
     long swap(String indexName, String otherIndexName);
 
     /** 等待任务结束；超过 timeout 时返回当前状态。 */
@@ -7485,7 +7575,7 @@ ADR-024采用唯一权威字段`cnt_content.translation_review_required`，不�
 
 不修改已有 grh_relation 行结构，新增 graph 自有 grh_relation_set（DDL 见模块 4.3.6），唯一 `(site_id,source_content_id)`，version 从0起永久单调增长，集合为空也保留状态行，彻底 purge 才删除。GET在显式REPEATABLE_READ只读事务的同一快照中读取集合及version，返回 ETag `"v{version}"`；PUT 必须 If-Match，缺失428，过期412。
 
-写入先 INSERT IGNORE 初始化状态行，按 sourceContentId 升序锁定全部受影响集合（含反向关系的两端）；在事务内比较 expectedVersion，再替换人工/排除关系、递增全部受影响集合 version、登记 RelationChangedEvent。多个源行锁必须一次排序后取得，不能先持有A再发现B<A补锁；冲突整体回滚，不允许部分反向行成功。AUTO 重算、pinned、模式修改、清理目标等只要改变 GET 返回集合也遵守相同锁与 version 协议；高成本算分在事务外，写回前检查计算所依据版本，过期丢弃/重排。
+写入按sourceContentId升序，对全部受影响集合逐个执行排他INSERT ... ON DUPLICATE KEY UPDATE id=id初始化及SELECT FOR UPDATE当前读；不先INSERT IGNORE取得共享锁再升级。按同一顺序锁定全部受影响集合（含反向关系的两端）；在事务内比较 expectedVersion，再替换人工/排除关系、递增全部受影响集合 version、登记 RelationChangedEvent。多个源行锁必须一次排序后取得，不能先持有A再发现B<A补锁；冲突整体回滚，不允许部分反向行成功。AUTO 重算、pinned、模式修改、清理目标等只要改变 GET 返回集合也遵守相同锁与 version 协议；高成本算分在事务外，写回前检查计算所依据版本，过期丢弃/重排。
 
 不能复用内容草稿 version，不能用 Redis 租约保证原子性，不能用 JSON 摘要伪造平台 vN 协议。图谱集合版本由模块内部实现，不新增跨模块 API。
 
@@ -7575,7 +7665,7 @@ backend/platform/platform-core/src/main/java/com/b2bweb/core/
 
 1. 业务模块只能引用 `com.b2bweb.core.support..`；core 的其他包是内部实现（ArchUnit 规则 `modules_only_depend_on_core_support`，第 10 章）。对 core 业务能力的调用一律通过 `platform-api` 的接口（4.1.2）。
 2. 支撑包只放技术基类、注解与无业务语义的工具；新增类型由框架组评审。支撑包中的 Spring 组件由 core 的自动配置装配，模块不需要 `@Import`。
-3. Spring Modulith 中，`support` 的各子包在 `package-info.java` 上标注 `@NamedInterface`（如 `support.web`）。业务模块 `package-info.java` 中 `allowedDependencies` 对 core 的写法（3.4 示例为 `"core"`）在 M0 按 Spring Modulith 2.x 的命名接口语法验证后统一（如 `"core :: *"`），并同步修订 3.4。
+3. Spring Modulith中，support子包声明命名接口（如support.event）；业务模块统一使用已由Modulith 2.0.8验证的`allowedDependencies={"api","core :: *"}`。ArchUnit另行限制只能引用core.support，不能利用命名接口绕过内部实现边界。
 
 **测试支撑**：需要 platform-core 运行时的测试切片放在 platform-core 的 test-jar（包 `com.b2bweb.core.testsupport`）中，而不放在 testkit（3.3 说明 3）：
 
@@ -7722,7 +7812,7 @@ Flyway.configure()
 | 组件清单 | `components` | `sys_module.descriptor` | 后台启动数据与编辑器按模块启用状态过滤（3.6） |
 | 内容类型、关系类型、通知模板、模板与组件元数据 | 扩展点（`ContentTypeProvider`、`RelationTypeProvider`、`NotificationTemplateProvider`、`TemplateProvider`）与 `component-schemas` | 收集方模块自己的表（content、graph、notification、page） | 由收集方模块同步：模块管理器在本步骤按拓扑序调用各模块的启动同步回调，收集方经 `ExtensionRegistry.allRegardlessOfSite` 读取定义（4.4.15） |
 
-> **契约待补充**：第 4 章没有“每次启动都调用”的模块回调（`onInstall` / `onUpgrade` 只在版本变化时调用，而内容类型等定义会随其他模块的版本变化）。建议在 4.5.22 的 `PlatformModule` 增加 `default void onStartup(ModuleContext ctx) {}`（每次启动在步骤 6 按拓扑序调用、必须幂等、不得依赖扩展点的站点过滤），由 content、graph、notification、page 实现。补充前不得以 Spring 启动事件等方式自行实现，以免顺序不确定。
+> RC补齐（ADR-027，待评审）：4.5.22的`PlatformModule.onStartup`每次启动在步骤6按拓扑序调用，必须幂等，不依赖扩展点的站点过滤；不得另用顺序不确定的Spring启动事件代替。
 
 #### 5.2.5 站点级启用与停用
 
@@ -7733,7 +7823,7 @@ Flyway.configure()
   1. 校验：模块 disableable = true；该站点没有已启用的模块 requires 它（附录 A.3 第 10 条）
   2. 影响分析：在站点上下文中调用 PlatformModule.analyzeDisableImpact → 返回 ImpactReport 给后台展示
   3. 用户确认（请求带 confirm = true 与停用后路由处理 onDisable = NOT_FOUND / REDIRECT）
-  4. 事务内（持有业务锁 sys_lock "core:module-toggle:s{siteId}"）：
+  4. 事务内（按ADR-029持有sys_site站点行的FOR UPDATE排他锁，串行化本站全部模块启停）：
        更新 sys_site_module（enabled = 0、disabled_at、config、version）
        → onDisable(SiteModuleContext) → 发布 ModuleDisabledEvent → 审计（AuditApi.record，敏感）
   5. 提交后：广播本地缓存失效（core.site_modules，5.10）
@@ -7754,7 +7844,7 @@ Flyway.configure()
 | 扩展点 | core | `ExtensionRegistry` 过滤（5.3） |
 | 定时任务 | core | `PER_SITE` 任务跳过该站点（5.9） |
 | 异步任务（`sys_job`） | core | 提交时抛出 `ModuleDisabledException`；已排队的任务在认领时置为 `CANCELED`（`CORE_MODULE_DISABLED`） |
-| 前台组件、内容类型路由 | delivery、url（按组件定义的 `module` 字段与注册表结果） | 见各模块设计文档。停用后的路由处理（`sys_site_module.config` 的 `onDisable`、`redirectContentId`）需经 `SiteApi` 读取——**契约待补充**（4.4.1 目前没有对应方法；delivery、url 不得直接读 `sys_` 表） |
+| 前台组件、内容类型路由 | delivery、url（按组件定义的 `module` 字段与注册表结果） | 见各模块设计文档。停用后的路由处理（`sys_site_module.config` 的 `onDisable`、`redirectContentId`）经 `SiteApi.moduleDisablePolicy` 读取（4.4.1、ADR-029）；delivery、url 不得直接读 `sys_` 表。M0写入口仅接受NOT_FOUND；REDIRECT写入待路由目标校验与引用追踪就绪后开放 |
 | 数据 | — | 全部保留 |
 
 **`ModuleGuardFilter`**：
@@ -8149,7 +8239,7 @@ POST login { email, password }
 | 防重放 | `sys_user_mfa.last_used_step`：不新于该步长的验证码拒绝 |
 | 密钥 | 160 位随机数；以 `SecretCipher` 信封保存（第 6 章） |
 | 绑定 | `mfa/setup` 返回 `otpauth://` URI，二维码由 Admin 在浏览器中生成（密钥不经过第三方服务）；`mfa/activate` 验证通过后启用，并返回 10 个恢复码（只显示一次） |
-| 恢复码 | 每个 10 个字符，Argon2id 哈希保存，单次有效 |
+| 恢复码 | 每个128位随机数，以32位十六进制显示；独立环境密钥B2BWEB_RECOVERY_CODE_KEY作HMAC-SHA256哈希保存，行锁内单次消费；不随SecretCipher密钥轮换 |
 | 实现 | core 基于 JDK `javax.crypto.Mac` 自行实现，不引入额外依赖 |
 
 **二次验证**：`@RequiresPermission(reauthenticate = true)`（4.4.7）的方法要求会话中最近一次二次验证在 `b2bweb.core.security.reauth-window`（默认 10 分钟）之内，否则返回 403（`CORE_REAUTH_REQUIRED`）；Admin 的 HTTP 层弹出验证框，调用 `reauthenticate` 后自动重试原请求。没有登录用户的执行（任务、事件）不适用。
@@ -8471,7 +8561,7 @@ void onReviewRequested(ReviewRequestedEvent event) {
 ```
 
 - 实现：`INSERT IGNORE INTO sys_processed_event (consumer, event_id, site_id, processed_at)`，影响 1 行为首次。
-- `sys_processed_event`（框架补充，core 的全局表，列入豁免清单）：`consumer VARCHAR(96) bin`、`event_id VARCHAR(20) bin`、`site_id BIGINT NULL`、`processed_at DATETIME(3)`；主键 `(consumer, event_id)`，索引 `idx_pev_processed (processed_at)`；保留 30 天。表结构需补入第 6 章。
+- `sys_processed_event`（框架补充，core 的全局表，列入豁免清单）：`consumer VARCHAR(96) bin`、`event_id VARCHAR(20) bin`、`site_id BIGINT NULL`、`processed_at DATETIME(3)`；主键 `(consumer, event_id)`，索引 `idx_pev_processed (processed_at)`；保留 30 天。DDL见6.8，core V002追加。
 - 选择顺序仍按 4.6：优先“按当前状态重算”，其次业务唯一键，最后才用本助手。
 
 #### 5.8.6 模块如何使用
@@ -8496,7 +8586,7 @@ core 的实现：`JobApiImpl`（4.4.12）、`JobExecutor`、`JobExecutionContext
 |---|---|
 | 1 | 校验 `jobType` 以 `moduleId + "."` 开头，且有对应的 `JobHandler`（按 key 查找；没有时 `CORE_JOB_TYPE_UNKNOWN`） |
 | 2 | 站点级任务：所属模块在当前站点停用时抛出 `ModuleDisabledException` |
-| 3 | 插入 `PENDING` 行：`site_id` 为当前站点（没有站点上下文时为 0），`created_by` 为当前操作人。有幂等键时用 `INSERT IGNORE` 后按 `(site_id, job_type, idempotency_key)` 读出，重复提交返回已有任务（不因唯一键冲突使调用方事务回滚） |
+| 3 | 插入 `PENDING` 行：`site_id` 为当前站点（没有站点上下文时为 0），`created_by` 为当前操作人。有幂等键时用排他 `INSERT ... ON DUPLICATE KEY UPDATE id=id` 后按 `(site_id, job_type, idempotency_key)` 做 `SELECT ... FOR UPDATE` 当前读；规范化参数/父任务不同拒绝CORE_IDEMPOTENCY_KEY_REUSED，相同返回已有任务。不能用RR普通快照读；1213/1205回滚整个调用方事务，由外层限次重试 |
 | 4 | 事务提交后经 Redis Pub/Sub `sys:core:job-wakeup` 唤醒各实例的执行器（只用于加速，轮询兜底） |
 
 **执行**：
@@ -8699,10 +8789,20 @@ audit.record(new AuditEntry("inquiry", "inquiry.export", "inquiry", null,
 
 ```java
 // inquiry：与 settings.schema.json 中 retention 属性对应的 record
-public record InquiryRetention(int schemaVersion, int closedInquiryDays, boolean anonymize) {}
+public record InquiryRetention(int schemaVersion, int closedYears, int spamDays) {}
 
 InquiryRetention retention = settings.get("inquiry.retention", InquiryRetention.class);
 ```
+
+M0 RC设置文件（ADR-027，待评审）：`META-INF/b2bweb/settings.schema.json`承载以下默认对象，均带schemaVersion=1。SMTP host为空表示由notification选择部署级默认服务器，密码为x-secret；显式服务器的NONE只允许local/test。theme的空值表示使用主题默认Token/变体，不能据此把任意CSS写入页面；具体Token目录由前端校验。features.flags初始为空。DSR参数仅落实6.4.22既有规则，不表示法务审批完成。
+
+| 键 | 字段 / 默认值 |
+|---|---|
+| core.smtp | host/username/password=null，port=587，security=STARTTLS |
+| core.retention | auditDays=365，jobDays=180，jobFileDays=7；均为正整数天 |
+| core.theme | brandColor/fontFamily/radius/buttonVariant/headerVariant/footerVariant=null（选用主题默认值） |
+| core.features | flags={}；值为布尔值，键为camelCase或点分名称 |
+| core.dsr | gdprMonths=1，gdprExtensionMonths=2，ccpaAckBusinessDays=10，ccpaDays=45，ccpaExtensionDays=45，ccpaOptOutBusinessDays=15，holidays=[] |
 
 #### 5.11.3 字典（DictApi）
 
@@ -10366,6 +10466,42 @@ CREATE TABLE sys_transaction_mutex (
 在M0 core初始化迁移之后追加独立迁移，不改写已有迁移。M0-07B已以真实MySQL验证首次建行、共享锁升级死锁负对照、独立站点generation及常态行锁隔离；冷建行的唯一索引末端间隙争用已记录。正式core的断连/连接池恢复、限次重试及完整生命周期仍待集成，原型不等于生产迁移或G0验收。
 
 ---
+
+### 6.8 消费者幂等标记（M0补齐5.8.5）
+
+core全局技术表，行级拦截豁免；site_id只记录事件归属，不作为自然主键。首次落地以core/V002追加，不改写V001。保留30天，清理须排除尚有未完成持久投递的eventId。
+
+```sql
+CREATE TABLE sys_processed_event (
+  consumer VARCHAR(96) COLLATE utf8mb4_0900_bin NOT NULL,
+  event_id VARCHAR(20) COLLATE utf8mb4_0900_bin NOT NULL,
+  site_id BIGINT NULL,
+  processed_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (consumer, event_id),
+  KEY idx_pev_processed (processed_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='消费者事务幂等标记';
+```
+
+### 6.9 Event Publication Registry技术表（Modulith2.0.8 schema v2）
+
+此第三方技术表由core V003和迁移账号管理；应用DML账号关闭jdbc.schema-initialization。原厂v2结构保持字段/索引，SERIALIZED_EVENT改为MEDIUMTEXT以容纳合法事件载荷；payload上限仍由应用校验。补入迁移不改写V001。它不是新增业务模块或业务表前缀。
+
+```sql
+CREATE TABLE EVENT_PUBLICATION
+(
+  ID                     VARCHAR(36) NOT NULL,
+  LISTENER_ID            VARCHAR(512) NOT NULL,
+  EVENT_TYPE             VARCHAR(512) NOT NULL,
+  SERIALIZED_EVENT       MEDIUMTEXT NOT NULL,
+  PUBLICATION_DATE       TIMESTAMP(6) NOT NULL,
+  COMPLETION_DATE        TIMESTAMP(6) DEFAULT NULL NULL,
+  STATUS                 VARCHAR(20),
+  COMPLETION_ATTEMPTS    INT,
+  LAST_RESUBMISSION_DATE TIMESTAMP(6) DEFAULT NULL NULL,
+  PRIMARY KEY (ID),
+  INDEX EVENT_PUBLICATION_BY_COMPLETION_DATE_IDX (COMPLETION_DATE)
+);
+```
 
 ## 7. 数据库通用约定与框架表
 

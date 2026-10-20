@@ -1,0 +1,201 @@
+{
+  "id": "core",
+  "name": "平台核心",
+  "version": "1.0.0",
+  "layer": "L0",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {},
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "sys_",
+  "apiPrefix": "system",
+  "permissions": [
+    {
+      "code": "system:site:manage",
+      "name": "管理站点与语言",
+      "sensitive": true
+    },
+    {
+      "code": "system:module:manage",
+      "name": "启用与停用模块",
+      "sensitive": true
+    },
+    {
+      "code": "system:user:manage",
+      "name": "管理用户",
+      "sensitive": true
+    },
+    {
+      "code": "system:role:manage",
+      "name": "管理角色与权限",
+      "sensitive": true
+    },
+    {
+      "code": "system:setting:edit",
+      "name": "修改站点设置"
+    },
+    {
+      "code": "system:profile:edit",
+      "name": "编辑站点资料"
+    },
+    {
+      "code": "system:ui-text:edit",
+      "name": "编辑界面文案"
+    },
+    {
+      "code": "system:dict:manage",
+      "name": "管理字典"
+    },
+    {
+      "code": "system:job:view",
+      "name": "查看任务"
+    },
+    {
+      "code": "system:audit:view",
+      "name": "查看审计日志"
+    },
+    {
+      "code": "system:dsr:manage",
+      "name": "处理数据主体请求",
+      "sensitive": true
+    }
+  ],
+  "menus": [
+    {
+      "key": "editorial",
+      "name": "内容",
+      "order": 10,
+      "icon": "Document"
+    },
+    {
+      "key": "marketing",
+      "name": "营销",
+      "order": 20,
+      "icon": "Promotion"
+    },
+    {
+      "key": "sales",
+      "name": "销售",
+      "order": 30,
+      "icon": "ChatDotRound"
+    },
+    {
+      "key": "localization",
+      "name": "翻译",
+      "order": 40,
+      "icon": "Switch"
+    },
+    {
+      "key": "settings",
+      "name": "设置",
+      "order": 80,
+      "icon": "Setting"
+    },
+    {
+      "key": "system",
+      "name": "系统",
+      "order": 90,
+      "icon": "Tools"
+    },
+    {
+      "key": "system-profile",
+      "name": "站点资料",
+      "parent": "settings",
+      "route": "/system/profile",
+      "permission": "system:profile:edit",
+      "order": 10
+    },
+    {
+      "key": "system-settings",
+      "name": "站点设置",
+      "parent": "settings",
+      "route": "/system/settings",
+      "permission": "system:setting:edit",
+      "order": 20
+    },
+    {
+      "key": "system-ui-texts",
+      "name": "界面文案",
+      "parent": "settings",
+      "route": "/system/ui-texts",
+      "permission": "system:ui-text:edit",
+      "order": 30
+    },
+    {
+      "key": "system-sites",
+      "name": "站点与语言",
+      "parent": "system",
+      "route": "/system/sites",
+      "permission": "system:site:manage",
+      "order": 10
+    },
+    {
+      "key": "system-modules",
+      "name": "模块管理",
+      "parent": "system",
+      "route": "/system/modules",
+      "permission": "system:module:manage",
+      "order": 20
+    },
+    {
+      "key": "system-users",
+      "name": "用户",
+      "parent": "system",
+      "route": "/system/users",
+      "permission": "system:user:manage",
+      "order": 30
+    },
+    {
+      "key": "system-roles",
+      "name": "角色与权限",
+      "parent": "system",
+      "route": "/system/roles",
+      "permission": "system:role:manage",
+      "order": 40
+    },
+    {
+      "key": "system-dicts",
+      "name": "字典",
+      "parent": "system",
+      "route": "/system/dicts",
+      "permission": "system:dict:manage",
+      "order": 50
+    },
+    {
+      "key": "system-jobs",
+      "name": "任务",
+      "parent": "system",
+      "route": "/system/jobs",
+      "permission": "system:job:view",
+      "order": 60
+    },
+    {
+      "key": "system-audit-logs",
+      "name": "审计日志",
+      "parent": "system",
+      "route": "/system/audit-logs",
+      "permission": "system:audit:view",
+      "order": 70
+    },
+    {
+      "key": "system-dsr",
+      "name": "数据主体请求",
+      "parent": "system",
+      "route": "/system/dsr",
+      "permission": "system:dsr:manage",
+      "order": 80
+    }
+  ],
+  "settings": "settings.schema.json",
+  "components": [],
+  "events": {
+    "publishes": [
+      "SiteSettingsChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "UserDeactivatedEvent",
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": []
+  }
+}

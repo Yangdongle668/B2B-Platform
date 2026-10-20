@@ -1,0 +1,52 @@
+{
+  "id": "delivery",
+  "name": "内容交付",
+  "version": "1.0.0",
+  "layer": "L4",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": null,
+  "apiPrefix": "delivery",
+  "permissions": [
+    {
+      "code": "delivery:definition:view",
+      "name": "后台读取已启用数据源的 key、label 与 paramsSc"
+    }
+  ],
+  "menus": [],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [],
+    "subscribes": [
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentRestoredEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "ContentPathChangedEvent",
+      "RedirectChangedEvent",
+      "TermChangedEvent",
+      "MediaUploadedEvent",
+      "MediaUpdatedEvent",
+      "MediaDeletedEvent",
+      "NavigationChangedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "RelationChangedEvent",
+      "FormChangedEvent",
+      "TranslationCompletedEvent",
+      "ContentPurgedEvent",
+      "SiteResourceChangedEvent"
+    ]
+  }
+}

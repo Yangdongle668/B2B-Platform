@@ -1,0 +1,54 @@
+{
+  "id": "search",
+  "name": "站内搜索",
+  "version": "1.0.0",
+  "layer": "L4",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": true,
+  "tablePrefix": "sch_",
+  "apiPrefix": "search",
+  "permissions": [
+    {
+      "code": "search:index:view",
+      "name": "查看索引"
+    },
+    {
+      "code": "search:index:manage",
+      "name": "管理索引"
+    }
+  ],
+  "menus": [
+    {
+      "key": "search",
+      "name": "站内搜索",
+      "parent": "settings",
+      "route": "/search/indexes",
+      "permission": "search:index:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [],
+    "subscribes": [
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentRestoredEvent",
+      "TermChangedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "ContentPathChangedEvent",
+      "LocalizationDeletedEvent"
+    ]
+  }
+}

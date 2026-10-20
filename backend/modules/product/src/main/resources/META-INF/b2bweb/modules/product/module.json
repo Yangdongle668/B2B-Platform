@@ -1,0 +1,88 @@
+{
+  "id": "product",
+  "name": "产品",
+  "version": "1.0.0",
+  "layer": "L3",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {
+    "form": "^1.0"
+  },
+  "disableable": true,
+  "tablePrefix": "prd_",
+  "apiPrefix": "product",
+  "permissions": [
+    {
+      "code": "product:product:view",
+      "name": "查看产品"
+    },
+    {
+      "code": "content:product:edit",
+      "name": "编辑产品"
+    },
+    {
+      "code": "product:attribute:manage",
+      "name": "管理产品属性"
+    },
+    {
+      "code": "product:product:import",
+      "name": "导入产品"
+    },
+    {
+      "code": "product:product:export",
+      "name": "导出产品",
+      "sensitive": true
+    },
+    {
+      "code": "content:product:review",
+      "name": "审核产品"
+    },
+    {
+      "code": "content:product:publish",
+      "name": "发布产品"
+    },
+    {
+      "code": "content:product:delete",
+      "name": "删除产品"
+    }
+  ],
+  "menus": [
+    {
+      "key": "product",
+      "name": "产品",
+      "parent": "editorial",
+      "route": "/product/products",
+      "permission": "product:product:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [
+    "product-gallery",
+    "product-specification",
+    "download-list",
+    "product-model-table",
+    "product-hero",
+    "product-grid",
+    "product-category-grid"
+  ],
+  "events": {
+    "publishes": [
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": [
+      "TermChangedEvent",
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent",
+      "MediaDeletedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleDisabledEvent",
+      "ContentPublishedEvent"
+    ]
+  }
+}

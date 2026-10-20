@@ -73,3 +73,7 @@ ADR-000、ADR-005、ADR-009、ADR-017、ADR-018 为 Accepted，其余为 Propose
 | ADR-023 | 允许表单同事务写入通知发件箱 | Proposed | [0023-form-notification-direction.md](0023-form-notification-direction.md) |
 | ADR-024 | 人工审校要求由可信内容元数据持久化 | Proposed | [0024-translation-review-guard.md](0024-translation-review-guard.md) |
 | ADR-025 | 独立站点资源的生命周期事件与翻译事件分离 | Proposed | [0025-site-resource-lifecycle.md](0025-site-resource-lifecycle.md) |
+| ADR-026 | M0契约编译与基础值对象实现 | Proposed | [0026-m0-contract-compilation.md](0026-m0-contract-compilation.md) |
+| ADR-027 | M0设置值与模块启动回调统一 | Proposed | [0027-m0-settings-and-lifecycle.md](0027-m0-settings-and-lifecycle.md) |
+| ADR-028 | M0本地S3兼容服务候选 | Proposed | [0028-local-s3-provider.md](0028-local-s3-provider.md) |
+| ADR-029 | 站点模块停用策略与事务锁 | Proposed | [0029-module-disable-policy-contract.md](0029-module-disable-policy-contract.md) |

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <modelVersion>4.0.0</modelVersion>
+ <parent><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-parent</artifactId><version>4.0.8</version><relativePath/></parent>
+ <groupId>com.b2bweb</groupId><artifactId>b2b-platform</artifactId><version>0.1.0-SNAPSHOT</version><packaging>pom</packaging>
+ <properties><java.version>25</java.version><spring-modulith.version>2.0.8</spring-modulith.version><mybatis-plus.version>3.5.17</mybatis-plus.version></properties>
+ <modules><module>backend/platform/platform-api</module><module>backend/platform/platform-core</module><module>backend/platform/platform-testkit</module><module>backend/infrastructure</module><module>backend/modules/article</module><module>backend/modules/content</module><module>backend/modules/delivery</module><module>backend/modules/form</module><module>backend/modules/graph</module><module>backend/modules/inquiry</module><module>backend/modules/media</module><module>backend/modules/navigation</module><module>backend/modules/notification</module><module>backend/modules/page</module><module>backend/modules/product</module><module>backend/modules/search</module><module>backend/modules/seo</module><module>backend/modules/taxonomy</module><module>backend/modules/tracking</module><module>backend/modules/translation</module><module>backend/modules/url</module><module>backend/application</module></modules>
+ <dependencyManagement><dependencies>
+  <dependency><groupId>org.springframework.modulith</groupId><artifactId>spring-modulith-bom</artifactId><version>${spring-modulith.version}</version><type>pom</type><scope>import</scope></dependency>
+ </dependencies></dependencyManagement>
+</project>

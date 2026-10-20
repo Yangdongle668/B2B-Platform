@@ -1,0 +1,52 @@
+{
+  "id": "tracking",
+  "name": "统计追踪与隐私同意",
+  "version": "1.0.0",
+  "layer": "L4",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {},
+  "optional": {},
+  "disableable": true,
+  "tablePrefix": "trk_",
+  "apiPrefix": "tracking",
+  "permissions": [
+    {
+      "code": "tracking:setting:manage",
+      "name": "管理追踪设置"
+    },
+    {
+      "code": "tracking:script:edit",
+      "name": "管理自定义脚本",
+      "sensitive": true
+    },
+    {
+      "code": "tracking:consent:view",
+      "name": "查看同意记录"
+    }
+  ],
+  "menus": [
+    {
+      "key": "tracking",
+      "name": "统计追踪与隐私同意",
+      "parent": "settings",
+      "route": "/tracking/settings",
+      "permission": "tracking:setting:manage",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [
+      "TranslatableResourceChangedEvent",
+      "SiteResourceChangedEvent"
+    ],
+    "subscribes": [
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentPurgedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleDisabledEvent"
+    ]
+  }
+}

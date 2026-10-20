@@ -17,6 +17,7 @@ import xml.etree.ElementTree as ET
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
 MYSQL = 'mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364'
+MEILI = 'getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc'
 REDIS = 'redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85'
 MAVEN = 'maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976'
 ENV = os.environ.copy()
@@ -102,6 +103,7 @@ def verify_backend(network, mysql, maven, scratch, cache, output):
             '--mount', f'type=bind,src={settings_path},dst=/run/maven-settings.xml,readonly',
             '-e', 'PROBE_JDBC_URL=jdbc:mysql://mysql:3306/compat?allowPublicKeyRetrieval=true&useSSL=false',
             '-e', 'PROBE_REDIS_URI=redis://redis:6379/0',
+            '-e', 'PROBE_SEARCH_URL=http://meilisearch:7700',
             '-e', 'PROBE_PROTOCOL_JDBC_URL=jdbc:mysql://mysql:3306/remediation?allowPublicKeyRetrieval=true&useSSL=false',
             '-w', '/tmp']
     script = 'set -eu\nmkdir /tmp/probe\ncp -R /source/src /source/pom.xml /tmp/probe/\ncd /tmp/probe\n'
@@ -137,7 +139,7 @@ export MAVEN_OPTS="${MAVEN_OPTS:-} -Djavax.net.ssl.trustStore=/tmp/probe-cacerts
             if report.attrib['name'] == 'com.b2bplatform.compat.CompatibilityTest':
                 root = report
     assert {s['name'].rsplit('.', 1)[-1] for s in suites} == {
-        'CompatibilityTest', 'MediaProtocolTest', 'TranslationProtocolTest', 'DownloadProtocolTest', 'RouteProtocolTest', 'CacheProtocolTest', 'CacheInvalidationTest', 'FreshnessProtocolTest'
+        'CompatibilityTest', 'MediaProtocolTest', 'TranslationProtocolTest', 'DownloadProtocolTest', 'RouteProtocolTest', 'CacheProtocolTest', 'CacheInvalidationTest', 'FreshnessProtocolTest', 'InitializationProtocolTest', 'SearchProtocolTest'
     }, 'Expected all compatibility/protocol suites'
     props = {p.attrib['name']: p.attrib['value'] for p in root.find('properties')}
     jars = [Path(x).name for x in props['java.class.path'].split(':')
@@ -162,7 +164,8 @@ def main():
     stem = 'b2b-m0-' + uuid.uuid4().hex[:10]
     network, mysql, maven = stem, stem + '-mysql', stem + '-maven'
     redis = stem + '-redis'
-    result = dict(images={'mysql': MYSQL, 'maven': MAVEN, 'redis': REDIS})
+    meili = stem + '-meili'
+    result = dict(images={'mysql': MYSQL, 'maven': MAVEN, 'redis': REDIS, 'meilisearch': MEILI})
     with tempfile.TemporaryDirectory(prefix='b2b-m0-settings-') as temp:
         try:
             docker('network', 'create', network)
@@ -185,6 +188,7 @@ def main():
                     time.sleep(.25)
                 else:
                     raise TimeoutError('Redis readiness timed out')
+                docker('run', '-d', '--name', meili, '--network', network, '--network-alias', 'meilisearch', '--memory', '1536m', '-e', 'MEILI_NO_ANALYTICS=true', '-e', 'MEILI_MAX_INDEXING_MEMORY=512MiB', '-e', 'MEILI_MAX_INDEXING_THREADS=2', MEILI)
                 result['redis_version'] = docker('exec', redis, 'redis-server', '--version').stdout.strip()
             result['schema'] = verify_schema(mysql)
             print(f"DDL: {result['schema']['create_blocks']} CREATE + {result['schema']['alter_blocks']} ALTER passed", flush=True)
@@ -194,7 +198,7 @@ def main():
             (output / 'backend-schema.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
         finally:
             # Only unique resources created by this invocation; anonymous DB volumes too.
-            docker('rm', '-f', '-v', maven, mysql, redis, check=False)
+            docker('rm', '-f', '-v', maven, mysql, redis, meili, check=False)
             docker('network', 'rm', network, check=False)
 
 

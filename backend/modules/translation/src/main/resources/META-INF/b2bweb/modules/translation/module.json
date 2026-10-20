@@ -1,0 +1,82 @@
+{
+  "id": "translation",
+  "name": "AI 翻译",
+  "version": "1.0.0",
+  "layer": "L2",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0"
+  },
+  "optional": {},
+  "disableable": true,
+  "tablePrefix": "trn_",
+  "apiPrefix": "translation",
+  "permissions": [
+    {
+      "code": "translation:engine:view",
+      "name": "查看引擎"
+    },
+    {
+      "code": "translation:engine:manage",
+      "name": "管理引擎",
+      "sensitive": true
+    },
+    {
+      "code": "translation:memory:view",
+      "name": "查看翻译记忆"
+    },
+    {
+      "code": "translation:memory:review",
+      "name": "审核翻译记忆",
+      "localeScoped": true
+    },
+    {
+      "code": "translation:glossary:manage",
+      "name": "管理术语",
+      "localeScoped": true
+    },
+    {
+      "code": "translation:job:manage",
+      "name": "管理翻译任务",
+      "localeScoped": true
+    },
+    {
+      "code": "translation:job:view",
+      "name": "查看翻译任务"
+    },
+    {
+      "code": "translation:usage:view",
+      "name": "查看用量"
+    }
+  ],
+  "menus": [
+    {
+      "key": "translation",
+      "name": "AI 翻译",
+      "parent": "settings",
+      "route": "/translation/engines",
+      "permission": "translation:engine:view",
+      "order": 100
+    }
+  ],
+  "settings": "settings.schema.json",
+  "components": [],
+  "events": {
+    "publishes": [
+      "TranslationCompletedEvent",
+      "TranslationFailedEvent"
+    ],
+    "subscribes": [
+      "ContentPublishedEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "TranslationModeChangedEvent",
+      "SiteSettingsChangedEvent",
+      "TranslatableResourceChangedEvent",
+      "ContentPurgedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ModuleDisabledEvent"
+    ]
+  }
+}

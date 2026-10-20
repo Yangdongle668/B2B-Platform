@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:b2bweb:schema:module-descriptor:1",
+  "title": "模块描述符（module.json）",
+  "description": "平台框架设计附录 A；系统设计 3.5。跨文件与跨模块的规则见附录 A.3。",
+  "type": "object",
+  "required": [
+    "id", "name", "version", "layer", "platform", "requires", "optional", "disableable",
+    "tablePrefix", "apiPrefix", "permissions", "menus", "settings", "components", "events"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "$ref": "#/$defs/moduleId" },
+    "name": { "$ref": "#/$defs/chineseName" },
+    "version": { "$ref": "#/$defs/semver" },
+    "layer": { "enum": ["L0", "L2", "L3", "L4"] },
+    "platform": { "$ref": "#/$defs/versionRange" },
+    "requires": { "$ref": "#/$defs/dependencies" },
+    "optional": { "$ref": "#/$defs/dependencies" },
+    "disableable": { "type": "boolean" },
+    "tablePrefix": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z]{2,4}_$"
+    },
+    "apiPrefix": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9]{1,31}$"
+    },
+    "permissions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/permission" }
+    },
+    "menus": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/menu" }
+    },
+    "settings": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9][a-z0-9.-]*\\.schema\\.json$"
+    },
+    "components": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/kebabKey" },
+      "uniqueItems": true
+    },
+    "events": {
+      "type": "object",
+      "required": ["publishes", "subscribes"],
+      "properties": {
+        "publishes": { "$ref": "#/$defs/eventList" },
+        "subscribes": { "$ref": "#/$defs/eventList" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "layer": { "const": "L0" } } },
+      "then": {
+        "properties": {
+          "id": { "const": "core" },
+          "apiPrefix": { "const": "system" },
+          "tablePrefix": { "const": "sys_" },
+          "disableable": { "const": false },
+          "requires": { "maxProperties": 0 },
+          "optional": { "maxProperties": 0 }
+        }
+      },
+      "else": {
+        "properties": {
+          "id": { "not": { "const": "core" } },
+          "apiPrefix": { "not": { "const": "system" } },
+          "tablePrefix": { "not": { "const": "sys_" } }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]{1,31}$"
+    },
+    "chineseName": {
+      "description": "中文字符串，至少包含一个汉字；不得是按语言区分的对象",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "[一-鿿]"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "versionRange": {
+      "description": "^1.0、~1.2、1.2.3 或 >=1.0.0 <2.0.0；语义同 npm semver；不支持 ||、*、x",
+      "type": "string",
+      "pattern": "^(?:[~^]?[0-9]+(?:\\.[0-9]+){0,2}|(?:>=|>|=)[0-9]+\\.[0-9]+\\.[0-9]+(?: (?:<|<=)[0-9]+\\.[0-9]+\\.[0-9]+)?)$"
+    },
+    "dependencies": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/moduleId" },
+      "additionalProperties": { "$ref": "#/$defs/versionRange" },
+      "not": { "required": ["core"] }
+    },
+    "kebabKey": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "permissionCode": {
+      "type": "string",
+      "maxLength": 128,
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "permission": {
+      "type": "object",
+      "required": ["code", "name"],
+      "properties": {
+        "code": { "$ref": "#/$defs/permissionCode" },
+        "name": { "$ref": "#/$defs/chineseName" },
+        "description": { "type": "string", "maxLength": 200 },
+        "dataScopes": {
+          "type": "array",
+          "items": { "enum": ["ALL", "GROUP", "OWN"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "sensitive": { "type": "boolean", "default": false },
+        "localeScoped": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false
+    },
+    "menu": {
+      "type": "object",
+      "required": ["key", "name"],
+      "properties": {
+        "key": { "$ref": "#/$defs/kebabKey" },
+        "name": { "$ref": "#/$defs/chineseName" },
+        "parent": { "$ref": "#/$defs/kebabKey" },
+        "route": {
+          "type": "string",
+          "pattern": "^/[a-z][a-z0-9]*(?:/[a-z0-9]+(?:-[a-z0-9]+)*)+$"
+        },
+        "permission": { "$ref": "#/$defs/permissionCode" },
+        "order": { "type": "integer", "minimum": 0, "maximum": 9999, "default": 100 },
+        "icon": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$" }
+      },
+      "dependentRequired": { "route": ["permission"] },
+      "additionalProperties": false
+    },
+    "eventList": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*Event$" },
+      "uniqueItems": true
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "form站点设置",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "spamThresholds": {
+      "type": "object",
+      "title": "反垃圾评分阈值",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "acceptMax",
+        "quarantineMax"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "acceptMax": {
+          "type": "integer",
+          "minimum": 0,
+          "title": "直接接收最高分",
+          "maximum": 99
+        },
+        "quarantineMax": {
+          "type": "integer",
+          "minimum": 0,
+          "title": "隔离最高分",
+          "maximum": 100
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "acceptMax": 29,
+        "quarantineMax": 70
+      }
+    }
+  }
+}

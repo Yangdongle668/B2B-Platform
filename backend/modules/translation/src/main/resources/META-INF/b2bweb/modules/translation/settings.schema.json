@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "translation站点设置",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "config": {
+      "type": "object",
+      "title": "站点翻译配置",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "primaryEngineId",
+        "fallbackEngineId",
+        "autoPublish",
+        "inquiryTranslation",
+        "monthlyBudget",
+        "budgetCurrency",
+        "budgetAlertPercent",
+        "realtimeOverBudget",
+        "batchConcurrency",
+        "failedItemAlertThreshold",
+        "jobRetentionDays"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "primaryEngineId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "title": "主引擎"
+        },
+        "fallbackEngineId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[1-9][0-9]{0,18}$",
+          "title": "备用引擎"
+        },
+        "autoPublish": {
+          "type": "boolean",
+          "title": "自动发布译文"
+        },
+        "inquiryTranslation": {
+          "type": "boolean",
+          "title": "询盘翻译"
+        },
+        "monthlyBudget": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "title": "月度预算"
+        },
+        "budgetCurrency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "title": "预算币种"
+        },
+        "budgetAlertPercent": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "预算告警比例",
+          "maximum": 100
+        },
+        "realtimeOverBudget": {
+          "type": "boolean",
+          "title": "超预算继续实时翻译"
+        },
+        "batchConcurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "批量并发数"
+        },
+        "failedItemAlertThreshold": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "失败积压告警阈值"
+        },
+        "jobRetentionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "任务保留天数"
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "primaryEngineId": null,
+        "fallbackEngineId": null,
+        "autoPublish": true,
+        "inquiryTranslation": true,
+        "monthlyBudget": null,
+        "budgetCurrency": "USD",
+        "budgetAlertPercent": 80,
+        "realtimeOverBudget": true,
+        "batchConcurrency": 2,
+        "failedItemAlertThreshold": 20,
+        "jobRetentionDays": 180
+      }
+    }
+  }
+}

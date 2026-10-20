@@ -31,20 +31,28 @@
 
 3. **验证方式**：以 M0 的工程骨架为载体。M0 的验收（示例模块违反边界时 CI 失败；按模板新建一个模块并接入 ≤ 1 小时）与 CI 的全部门禁（编译、单元测试、架构测试、Testcontainers 集成测试、OpenAPI 生成、前端构建，27.3）都在锁定组合上通过，即视为验证通过（30）。
 
-4. **版本表**（M0正式冻结前填写；下列仅隔离原型候选，未完成所有锁定门禁）：
+4. **版本表**（M0正式冻结前填写；下列为正式工程及隔离验证候选，尚未完成所有锁定门禁）：
 
-| 组件 | 选型方向（2.4） | 隔离原型候选 / 冻结状态 |
+| 组件 | 选型方向（2.4） | 工程验证候选 / 冻结状态 |
 |---|---|---|
-| JDK | 25 LTS（最低 21） | 25.0.4.1（原型）；未冻结 |
-| Spring Boot | 4.x | 4.0.8（原型）；未冻结 |
-| Spring Modulith | 2.x | 2.0.8（原型）；未冻结 |
-| MyBatis-Plus | — | 3.5.17 Boot4 starter + jsqlparser（原型）；未冻结 |
-| Flyway | — | 11.14.1（Boot管理，原型）；未冻结 |
-| Nuxt / Vue | Nuxt 4 / Vue 3.5 | 4.6.2 / 3.5.44；@nuxt/image 2.2.0（原型）；未冻结 |
+| JDK | 25 LTS（最低 21） | 25.0.4.1（工程与原型）；未冻结 |
+| Spring Boot | 4.x | 4.0.8（工程与原型）；未冻结 |
+| Spring Modulith | 2.x | 2.0.8（工程与原型）；未冻结 |
+| MyBatis-Plus | — | 3.5.17 Boot4 starter + jsqlparser（工程与原型）；未冻结 |
+| Flyway | — | 11.14.1（Boot管理）；未冻结 |
+| Nuxt / Vue | Nuxt 4 / Vue 3.5 | 4.6.2 / 3.5.44；@nuxt/image 2.2.0（工程与原型）；未冻结 |
+
+| Node / pnpm | 前端构建 | 24.19.0 / 11.25.0；packageManager与CI明确固定 |
+| Element Plus / Vite / TypeScript | 后台与类型检查 | 2.14.7 / 7.3.7 / 5.9.3；未冻结 |
+| Vitest / ESLint / Stylelint | 前端门禁 | 3.2.4 / 10.13.0 / 17.16.0；未冻结 |
+| AWS SDK v2 | S3端口 | 2.57.0；真实S3Mock验证，不等于MinIO认证 |
+| JSON Schema / ShedLock | 设置校验与调度 | networknt 3.0.8 / 7.10.1；未冻结 |
+| MySQL / Redis / Meilisearch | 本地真实服务 | 8.4 / 7.4 / 1.15.2；镜像摘要见验证脚本 |
+| S3Mock / Mailpit | 本地开发候选 | 4.11.0 / 1.27.9；MinIO下载受限，ADR-028待评审 |
 
    其他组件沿用 2.4 的选型（如 MySQL 8.4 LTS、Redis 7 或兼容的 Valkey、Element Plus、Tiptap），锁定时可以一并记入此表。
 
-2026-10-20原型已覆盖与未覆盖的能力逐项见[M0复审](../reviews/m0-remediation-2026-10-20.md)及[可复现验证](../../tools/verification/m0-compatibility/README.md)。原型使用单库Flyway，不代表独立模块history、Security/Session、Scenario API、主题/变体、完整CI已通过；这些仍是正式冻结条件。
+2026-10-20原型已覆盖与未覆盖的能力逐项见[M0复审](../reviews/m0-remediation-2026-10-20.md)及[可复现验证](../../tools/verification/m0-compatibility/README.md)。正式工程已补独立模块history、Security/Session、任务/调度、testkit和本地开发栈；Scenario API、全部安全/依赖门禁及签审仍须逐项核对，见[M0工程记录](../reviews/m0-engineering-review-2026-10-20.md)。pnpm构建链两个高危通告尚无发布修复；后端漏洞数据库在当前托管环境被代理策略拒绝，不能填写“扫描通过”。
 
 5. **锁定之后的升级**：补丁与次版本通过 Renovate / Dependabot 渐进升级，必须通过全部 CI 门禁（26.3、31）；锁定组合中任一组件的主版本升级或替换，视为修改本决策：重新执行第 2、3 条的验证，并更新版本表与变更记录。
 
@@ -90,3 +98,4 @@
 |---|---|
 | 2026-10-06 | 创建 |
 | 2026-10-20 | 登记隔离验证候选，保留完整M0门禁及Proposed状态 |
+| 2026-10-20 | 补正式工程候选版本及实际门禁状态，未自动Accepted；保留依赖高危阻断与完整G0审核 |

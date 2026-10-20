@@ -1,0 +1,50 @@
+{
+  "id": "navigation",
+  "name": "导航",
+  "version": "1.0.0",
+  "layer": "L3",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "nav_",
+  "apiPrefix": "navigation",
+  "permissions": [
+    {
+      "code": "navigation:menu:view",
+      "name": "查看菜单"
+    },
+    {
+      "code": "navigation:menu:manage",
+      "name": "管理菜单"
+    }
+  ],
+  "menus": [
+    {
+      "key": "navigation",
+      "name": "导航",
+      "parent": "editorial",
+      "route": "/navigation/menus",
+      "permission": "navigation:menu:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [
+      "NavigationChangedEvent",
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": [
+      "TermChangedEvent",
+      "ContentPurgedEvent",
+      "MediaDeletedEvent"
+    ]
+  }
+}

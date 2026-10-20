@@ -1,0 +1,78 @@
+{
+  "id": "seo",
+  "name": "搜索引擎优化",
+  "version": "1.0.0",
+  "layer": "L4",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {
+    "translation": "^1.0"
+  },
+  "disableable": false,
+  "tablePrefix": "seo_",
+  "apiPrefix": "seo",
+  "permissions": [
+    {
+      "code": "seo:meta:edit",
+      "name": "编辑SEO 草稿",
+      "localeScoped": true
+    },
+    {
+      "code": "seo:template:manage",
+      "name": "管理模板"
+    },
+    {
+      "code": "seo:robots:manage",
+      "name": "管理爬虫规则"
+    },
+    {
+      "code": "seo:audit:run",
+      "name": "执行健康报告"
+    },
+    {
+      "code": "seo:audit:view",
+      "name": "查看健康报告"
+    },
+    {
+      "code": "seo:sitemap:manage",
+      "name": "管理Sitemap"
+    }
+  ],
+  "menus": [
+    {
+      "key": "seo",
+      "name": "搜索引擎优化",
+      "parent": "settings",
+      "route": "/seo/meta",
+      "permission": "seo:meta:edit",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [],
+    "subscribes": [
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "ContentPathChangedEvent",
+      "MediaUploadedEvent",
+      "MediaUpdatedEvent",
+      "MediaDeletedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "ContentPurgedEvent",
+      "NavigationChangedEvent",
+      "RelationChangedEvent",
+      "TermChangedEvent"
+    ]
+  }
+}

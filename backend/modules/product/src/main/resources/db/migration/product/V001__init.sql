@@ -1,0 +1,303 @@
+CREATE TABLE prd_attribute_group (
+  id          BIGINT       NOT NULL COMMENT '主键（TSID）',
+  site_id     BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  group_key   VARCHAR(64)  COLLATE utf8mb4_0900_bin NOT NULL COMMENT '分组 key（小写字母、数字、下划线；创建后不可修改），如 electrical',
+  sort_order  INT          NOT NULL DEFAULT 0 COMMENT '分组在规格表中的顺序',
+  deleted_at  DATETIME(3)  NULL COMMENT '删除时间（软删除）',
+  alive       TINYINT      AS (IF(deleted_at IS NULL, 1, NULL)) STORED COMMENT '未删除标记（唯一索引用）',
+  version     INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_ag_key (site_id, group_key, alive)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性分组（如电气参数、机械参数）';
+
+CREATE TABLE prd_attribute_set (
+  id           BIGINT        NOT NULL COMMENT '主键（TSID）',
+  site_id      BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  name         VARCHAR(100)  NOT NULL COMMENT '属性集名称（中文，只在后台显示），如“锂电池组”',
+  description  VARCHAR(500)  NULL COMMENT '说明（后台提示）',
+  deleted_at   DATETIME(3)   NULL COMMENT '删除时间（软删除）',
+  alive        TINYINT       AS (IF(deleted_at IS NULL, 1, NULL)) STORED COMMENT '未删除标记（唯一索引用）',
+  version      INT           NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by   BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at   DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by   BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_set_name (site_id, name, alive)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性集（一组属性及其必填、顺序；按分类绑定，生成导入模板）';
+
+CREATE TABLE prd_product (
+  content_id                BIGINT        NOT NULL COMMENT '内容 ID（cnt_content.id，类型 PRODUCT），即产品主键',
+  site_id                   BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  model_no                  VARCHAR(100)  COLLATE utf8mb4_0900_bin NULL COMMENT '产品型号（系列号或主型号；站点内唯一，导入匹配键；不翻译）',
+  brand                     VARCHAR(100)  NULL COMMENT '品牌（不翻译；Schema.org Product.brand）',
+  primary_category_term_id  BIGINT        NULL COMMENT '主分类 ID（tx_term.id，词汇表 product_category）；冗余 tx_assignment 中的主分类；发布时必填',
+  new_arrival               TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '标记：新品',
+  hot_selling               TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '标记：热销',
+  discontinued              TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '标记：停产（页面显示停产标识与替代产品链接，继续可索引）',
+  replacement_content_id    BIGINT        NULL COMMENT '替代产品的内容 ID（prd_product.content_id），停产时填写',
+  sort_order                INT           NOT NULL DEFAULT 0 COMMENT '排序值（越小越靠前，用于后台列表与 content-query 的手工排序）',
+  version                   INT           NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at                DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by                BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如导入）',
+  updated_at                DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by                BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (content_id),
+  UNIQUE KEY uk_product_model (site_id, model_no),
+  KEY idx_product_category (site_id, primary_category_term_id, sort_order),
+  KEY idx_product_replacement (replacement_content_id),
+  CONSTRAINT fk_prd_product_replacement FOREIGN KEY (replacement_content_id) REFERENCES prd_product (content_id),
+  CONSTRAINT ck_prd_product_replacement CHECK (replacement_content_id IS NULL OR replacement_content_id <> content_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品（与 cnt_content 1:1 的语言无关业务字段：型号、品牌、主分类、标记、替代产品）';
+
+CREATE TABLE prd_attribute (
+  id                        BIGINT       NOT NULL COMMENT '主键（TSID）',
+  site_id                   BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  attr_key                  VARCHAR(64)  COLLATE utf8mb4_0900_bin NOT NULL COMMENT '属性 key（小写字母、数字、下划线；创建后不可修改）；快照规格 key 与搜索分面字段 attr.{attr_key}，如 voltage',
+  group_id                  BIGINT       NULL COMMENT '属性分组 ID（prd_attribute_group.id）；空 = 归入“其他”',
+  data_type                 VARCHAR(16)  NOT NULL COMMENT '数据类型：TEXT（可翻译）/ NUMBER / RANGE / BOOLEAN / ENUM / MULTI_ENUM；有取值后不可修改',
+  unit                      VARCHAR(16)  COLLATE utf8mb4_0900_bin NULL COMMENT '标准单位（NUMBER / RANGE；单位注册表中的符号，如 mm、kg、V、Ah、°C）；数值按此单位存储',
+  decimal_places            TINYINT      NULL COMMENT '显示小数位数（0–6，NUMBER / RANGE）；空 = 按存储值去除末尾 0 显示',
+  dual_unit                 TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否双单位显示（公制 + 英制，如 100 mm (3.94 in)）；只用于 NUMBER / RANGE',
+  secondary_unit            VARCHAR(16)  COLLATE utf8mb4_0900_bin NULL COMMENT '第二单位（与 unit 同一量纲，如 in、lb、°F）；dual_unit = 1 时必填',
+  secondary_decimal_places  TINYINT      NULL COMMENT '第二单位的显示小数位数（0–6）；空 = 同 decimal_places',
+  filterable                TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否作为列表筛选分面（写入搜索索引 attr.{attr_key}）；TEXT 不可开启',
+  searchable                TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '取值是否参与站内全文搜索',
+  comparable                TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否可比较：出现在型号对比表，允许型号级取值',
+  show_on_card              TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否在产品卡片上显示（关键参数）',
+  sort_order                INT          NOT NULL DEFAULT 0 COMMENT '分组内的默认顺序（属性集中的顺序优先）',
+  deleted_at                DATETIME(3)  NULL COMMENT '删除时间（软删除）',
+  alive                     TINYINT      AS (IF(deleted_at IS NULL, 1, NULL)) STORED COMMENT '未删除标记（唯一索引用）',
+  version                   INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at                DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by                BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at                DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by                BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_attr_key (site_id, attr_key, alive),
+  KEY idx_attr_group (group_id, sort_order),
+  CONSTRAINT fk_prd_attr_group FOREIGN KEY (group_id) REFERENCES prd_attribute_group (id),
+  CONSTRAINT ck_prd_attr_unit CHECK (data_type IN ('NUMBER', 'RANGE') OR (unit IS NULL AND decimal_places IS NULL AND dual_unit = 0)),
+  CONSTRAINT ck_prd_attr_dual CHECK (dual_unit = 0 OR (unit IS NOT NULL AND secondary_unit IS NOT NULL AND secondary_unit <> unit)),
+  CONSTRAINT ck_prd_attr_decimals CHECK ((decimal_places IS NULL OR decimal_places BETWEEN 0 AND 6) AND (secondary_decimal_places IS NULL OR secondary_decimal_places BETWEEN 0 AND 6)),
+  CONSTRAINT ck_prd_attr_filter CHECK (filterable = 0 OR data_type <> 'TEXT')
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品属性定义（数据类型、标准单位、双单位显示、筛选 / 搜索 / 对比 / 卡片开关）';
+
+CREATE TABLE prd_attribute_group_localization (
+  id                  BIGINT        NOT NULL COMMENT '主键（TSID）',
+  site_id             BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  group_id            BIGINT        NOT NULL COMMENT '属性分组 ID（prd_attribute_group.id）',
+  locale              VARCHAR(16)   NOT NULL COMMENT '语言（BCP 47）',
+  name                VARCHAR(100)  NOT NULL COMMENT '分组名（站点资源：中文录入，其他语言由 translation 经 TranslatableResourceProvider 写入），如“电气参数”',
+  translation_state   VARCHAR(16)   NOT NULL DEFAULT 'NONE' COMMENT '翻译状态：NONE / QUEUED / TRANSLATED / NEEDS_REVIEW / FAILED / OUTDATED',
+  source_fingerprint  CHAR(64)      COLLATE utf8mb4_0900_bin NULL COMMENT '生成本行译文时中文行的指纹（规范化 name 的 SHA-256）；中文行为空；与当前中文指纹不同即为过期',
+  version             INT           NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_agl_group_locale (group_id, locale),
+  KEY idx_agl_state (site_id, translation_state, locale),
+  CONSTRAINT fk_prd_agl_group FOREIGN KEY (group_id) REFERENCES prd_attribute_group (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性分组本地化（分组名为站点资源，带翻译状态与源指纹）';
+
+CREATE TABLE prd_category_attribute_set (
+  term_id     BIGINT       NOT NULL COMMENT '产品分类 ID（tx_term.id，词汇表 product_category）',
+  set_id      BIGINT       NOT NULL COMMENT '属性集 ID（prd_attribute_set.id）',
+  site_id     BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  sort_order  INT          NOT NULL DEFAULT 0 COMMENT '同一分类绑定多个属性集时的合并顺序',
+  created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (term_id, set_id),
+  KEY idx_cas_set (set_id),
+  CONSTRAINT fk_prd_cas_set FOREIGN KEY (set_id) REFERENCES prd_attribute_set (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品分类绑定的属性集（子分类继承）';
+
+CREATE TABLE prd_model (
+  id          BIGINT        NOT NULL COMMENT '主键（TSID）',
+  site_id     BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  product_id  BIGINT        NOT NULL COMMENT '产品 ID（prd_product.content_id）',
+  model_no    VARCHAR(100)  COLLATE utf8mb4_0900_bin NOT NULL COMMENT '型号（产品内唯一；不翻译；Schema.org sku / mpn），如 LFP-48100',
+  sort_order  INT           NOT NULL DEFAULT 0 COMMENT '在型号表中的顺序',
+  created_at  DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by  BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如导入）',
+  updated_at  DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by  BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_model_no (product_id, model_no),
+  KEY idx_model_site_no (site_id, model_no),
+  CONSTRAINT fk_prd_model_product FOREIGN KEY (product_id) REFERENCES prd_product (content_id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品型号表的行（每行有自己的可比较属性值）';
+
+CREATE TABLE prd_product_document (
+  id              BIGINT       NOT NULL COMMENT '主键（TSID）',
+  site_id         BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  product_id      BIGINT       NOT NULL COMMENT '产品 ID（prd_product.content_id）',
+  media_id        BIGINT       NOT NULL COMMENT '媒体 ID（mda_media.id，类型 DOCUMENT / ARCHIVE）；公开文档为 PUBLIC，留资文档为 PRIVATE',
+  doc_type        VARCHAR(16)  NOT NULL COMMENT '文档类型：DATASHEET（规格书）/ MANUAL（手册）/ CERTIFICATE（证书）/ CAD（图纸模型）',
+  locale          VARCHAR(16)  NULL COMMENT '文档语言（BCP 47）；空 = 适用全部语言；非空时只在该语言页面显示',
+  gated_form_key  VARCHAR(64)  COLLATE utf8mb4_0900_bin NULL COMMENT '留资表单 key（frm_form.form_key，用途 DOWNLOAD）；空 = 公开文档，经 CDN 直接下载',
+  sort_order      INT          NOT NULL DEFAULT 0 COMMENT '文档列表顺序',
+  created_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by      BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如导入）',
+  updated_at      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by      BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_pd_media (product_id, media_id),
+  KEY idx_pd_media (media_id),
+  KEY idx_pd_form (site_id, gated_form_key),
+  CONSTRAINT fk_prd_pd_product FOREIGN KEY (product_id) REFERENCES prd_product (content_id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品文档（规格书、手册、证书、CAD；公开或下载留资）';
+
+CREATE TABLE prd_product_localization (
+  id              BIGINT         NOT NULL COMMENT '主键（TSID）',
+  site_id         BIGINT         NOT NULL COMMENT '站点 ID（sys_site.id）',
+  product_id      BIGINT         NOT NULL COMMENT '产品 ID（prd_product.content_id，即 cnt_content.id）',
+  locale          VARCHAR(16)    NOT NULL COMMENT '语言（BCP 47），与 cnt_localization.locale 一一对应',
+  name            VARCHAR(300)   NOT NULL COMMENT '产品名称（同步为 cnt_localization.draft_title；快照 card.title）',
+  subtitle        VARCHAR(300)   NULL COMMENT '副标题',
+  summary         VARCHAR(1000)  NULL COMMENT '简介（纯文本；快照 card.summary）',
+  description     JSON           NULL COMMENT '详情（ProseMirror JSON 富文本）',
+  selling_points  JSON           NOT NULL DEFAULT (JSON_ARRAY()) COMMENT '卖点列表：字符串数组，如 ["循环寿命 6000 次", "IP65 防护"]',
+  packaging       VARCHAR(1000)  NULL COMMENT '包装信息（纯文本）',
+  lead_time       VARCHAR(200)   NULL COMMENT '交期文本，如“15–30 天”',
+  moq             VARCHAR(200)   NULL COMMENT '最小起订量文本（MOQ），如“100 件”',
+  version         INT            NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at      DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by      BIGINT         NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如译文回写、导入）',
+  updated_at      DATETIME(3)    NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by      BIGINT         NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统，如译文回写）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_ploc_product_locale (product_id, locale),
+  KEY idx_ploc_name (site_id, locale, name),
+  CONSTRAINT fk_prd_ploc_product FOREIGN KEY (product_id) REFERENCES prd_product (content_id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品本地化（内容类草稿：名称、副标题、简介、详情、卖点、包装、交期、MOQ）';
+
+CREATE TABLE prd_product_media (
+  id          BIGINT       NOT NULL COMMENT '主键（TSID）',
+  site_id     BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  product_id  BIGINT       NOT NULL COMMENT '产品 ID（prd_product.content_id）',
+  media_id    BIGINT       NOT NULL COMMENT '媒体 ID（mda_media.id，类型 IMAGE / VIDEO）',
+  role        VARCHAR(16)  NOT NULL COMMENT '角色：COVER（封面）/ GALLERY（图集）/ DIAGRAM（尺寸图、结构示意图）',
+  sort_order  INT          NOT NULL DEFAULT 0 COMMENT '同一角色内的顺序',
+  cover_flag  TINYINT      AS (IF(role = 'COVER', 1, NULL)) STORED COMMENT '封面标记（唯一索引用）',
+  created_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如导入）',
+  updated_at  DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by  BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_pm_media (product_id, role, media_id),
+  UNIQUE KEY uk_pm_cover (product_id, cover_flag),
+  KEY idx_pm_media (media_id),
+  CONSTRAINT fk_prd_pm_product FOREIGN KEY (product_id) REFERENCES prd_product (content_id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品图片（封面、图集、示意图；语言无关）';
+
+CREATE TABLE prd_attribute_localization (
+  id                  BIGINT        NOT NULL COMMENT '主键（TSID）',
+  site_id             BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  attribute_id        BIGINT        NOT NULL COMMENT '属性 ID（prd_attribute.id）',
+  locale              VARCHAR(16)   NOT NULL COMMENT '语言（BCP 47）',
+  name                VARCHAR(100)  NOT NULL COMMENT '属性名（站点资源：中文录入，其他语言由 translation 经 TranslatableResourceProvider 写入），如“额定电压”；快照规格 label',
+  translation_state   VARCHAR(16)   NOT NULL DEFAULT 'NONE' COMMENT '翻译状态：NONE / QUEUED / TRANSLATED / NEEDS_REVIEW / FAILED / OUTDATED',
+  source_fingerprint  CHAR(64)      COLLATE utf8mb4_0900_bin NULL COMMENT '生成本行译文时中文行的指纹（规范化 name 的 SHA-256）；中文行为空；与当前中文指纹不同即为过期',
+  version             INT           NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_al_attr_locale (attribute_id, locale),
+  KEY idx_al_name (site_id, locale, name),
+  KEY idx_al_state (site_id, translation_state, locale),
+  CONSTRAINT fk_prd_al_attr FOREIGN KEY (attribute_id) REFERENCES prd_attribute (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性本地化（属性名为站点资源，带翻译状态与源指纹）';
+
+CREATE TABLE prd_attribute_option (
+  id            BIGINT       NOT NULL COMMENT '主键（TSID）',
+  site_id       BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  attribute_id  BIGINT       NOT NULL COMMENT '属性 ID（prd_attribute.id，类型 ENUM / MULTI_ENUM）',
+  option_key    VARCHAR(64)  COLLATE utf8mb4_0900_bin NOT NULL COMMENT '选项 key（小写字母、数字、连字符；创建后不可修改）；搜索分面值与筛选参数值，如 lifepo4',
+  sort_order    INT          NOT NULL DEFAULT 0 COMMENT '选项顺序（编辑下拉、筛选面板、规格显示）',
+  deleted_at    DATETIME(3)  NULL COMMENT '删除时间（软删除）',
+  alive         TINYINT      AS (IF(deleted_at IS NULL, 1, NULL)) STORED COMMENT '未删除标记（唯一索引用）',
+  version       INT          NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by    BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by    BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_opt_key (attribute_id, option_key, alive),
+  CONSTRAINT fk_prd_opt_attr FOREIGN KEY (attribute_id) REFERENCES prd_attribute (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性枚举选项（ENUM / MULTI_ENUM）';
+
+CREATE TABLE prd_attribute_set_item (
+  set_id        BIGINT       NOT NULL COMMENT '属性集 ID（prd_attribute_set.id）',
+  attribute_id  BIGINT       NOT NULL COMMENT '属性 ID（prd_attribute.id）',
+  site_id       BIGINT       NOT NULL COMMENT '站点 ID（sys_site.id）',
+  required      TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否必填（发布校验 ERROR）',
+  sort_order    INT          NOT NULL DEFAULT 0 COMMENT '在属性集中的顺序',
+  created_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by    BIGINT       NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at    DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by    BIGINT       NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (set_id, attribute_id),
+  KEY idx_asi_attr (attribute_id),
+  CONSTRAINT fk_prd_asi_set FOREIGN KEY (set_id) REFERENCES prd_attribute_set (id) ON DELETE CASCADE,
+  CONSTRAINT fk_prd_asi_attr FOREIGN KEY (attribute_id) REFERENCES prd_attribute (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '属性集中的属性（是否必填、顺序）';
+
+CREATE TABLE prd_attribute_value (
+  id                BIGINT          NOT NULL COMMENT '主键（TSID）',
+  site_id           BIGINT          NOT NULL COMMENT '站点 ID（sys_site.id）',
+  product_id        BIGINT          NOT NULL COMMENT '产品 ID（prd_product.content_id）',
+  attribute_id      BIGINT          NOT NULL COMMENT '属性 ID（prd_attribute.id）',
+  model_id          BIGINT          NULL COMMENT '型号 ID（prd_model.id）；空 = 产品级取值',
+  locale            VARCHAR(16)     NULL COMMENT '语言（BCP 47）；只有 TEXT 取值按语言保存，其他类型为空（所有语言共用）',
+  value_text        VARCHAR(2000)   NULL COMMENT 'TEXT 取值（纯文本，可翻译）',
+  value_number      DECIMAL(20,6)   NULL COMMENT 'NUMBER 取值，或 RANGE 的最小值（按属性标准单位）',
+  value_number_max  DECIMAL(20,6)   NULL COMMENT 'RANGE 的最大值（按属性标准单位）',
+  option_ids        JSON            NULL COMMENT 'ENUM / MULTI_ENUM 取值：选项 ID 数组（prd_attribute_option.id，字符串），ENUM 只有 1 个元素',
+  value_bool        TINYINT(1)      NULL COMMENT 'BOOLEAN 取值：0 / 1',
+  model_key         BIGINT          AS (IFNULL(model_id, 0)) VIRTUAL COMMENT '型号规范化键（产品级为 0；唯一索引用）',
+  locale_key        VARCHAR(16)     AS (IFNULL(locale, '')) VIRTUAL COMMENT '语言规范化键（与语言无关为空串；唯一索引用）',
+  created_at        DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by        BIGINT          NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统，如导入、译文回写）',
+  updated_at        DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by        BIGINT          NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_av_value (product_id, attribute_id, model_key, locale_key),
+  KEY idx_av_attr (attribute_id),
+  KEY idx_av_model (model_id),
+  CONSTRAINT fk_prd_av_product FOREIGN KEY (product_id) REFERENCES prd_product (content_id) ON DELETE CASCADE,
+  CONSTRAINT fk_prd_av_attr FOREIGN KEY (attribute_id) REFERENCES prd_attribute (id),
+  CONSTRAINT fk_prd_av_model FOREIGN KEY (model_id) REFERENCES prd_model (id) ON DELETE CASCADE,
+  CONSTRAINT ck_prd_av_kind CHECK ((value_text IS NOT NULL) + (value_number IS NOT NULL) + (option_ids IS NOT NULL) + (value_bool IS NOT NULL) = 1),
+  CONSTRAINT ck_prd_av_locale CHECK ((locale IS NOT NULL AND value_text IS NOT NULL) OR (locale IS NULL AND value_text IS NULL)),
+  CONSTRAINT ck_prd_av_range CHECK (value_number_max IS NULL OR (value_number IS NOT NULL AND value_number_max >= value_number))
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '产品属性值（EAV，草稿态；产品级或型号级；TEXT 按语言）';
+
+CREATE TABLE prd_attribute_option_localization (
+  id                  BIGINT        NOT NULL COMMENT '主键（TSID）',
+  site_id             BIGINT        NOT NULL COMMENT '站点 ID（sys_site.id）',
+  option_id           BIGINT        NOT NULL COMMENT '选项 ID（prd_attribute_option.id）',
+  locale              VARCHAR(16)   NOT NULL COMMENT '语言（BCP 47）',
+  label               VARCHAR(200)  NOT NULL COMMENT '选项名（站点资源：中文录入，其他语言由 translation 经 TranslatableResourceProvider 写入），如“磷酸铁锂”',
+  translation_state   VARCHAR(16)   NOT NULL DEFAULT 'NONE' COMMENT '翻译状态：NONE / QUEUED / TRANSLATED / NEEDS_REVIEW / FAILED / OUTDATED',
+  source_fingerprint  CHAR(64)      COLLATE utf8mb4_0900_bin NULL COMMENT '生成本行译文时中文行的指纹（规范化 label 的 SHA-256）；中文行为空；与当前中文指纹不同即为过期',
+  version             INT           NOT NULL DEFAULT 0 COMMENT '乐观锁版本号',
+  created_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间（UTC）',
+  created_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '创建人用户 ID（0 = 系统）',
+  updated_at          DATETIME(3)   NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '更新时间（UTC）',
+  updated_by          BIGINT        NOT NULL DEFAULT 0 COMMENT '更新人用户 ID（0 = 系统）',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_ol_option_locale (option_id, locale),
+  KEY idx_ol_state (site_id, translation_state, locale),
+  CONSTRAINT fk_prd_ol_option FOREIGN KEY (option_id) REFERENCES prd_attribute_option (id) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '枚举选项本地化（选项名为站点资源，带翻译状态与源指纹）';

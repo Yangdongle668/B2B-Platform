@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "平台设置",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "smtp": {
+      "title": "系统邮件服务器",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "host",
+        "port",
+        "username",
+        "password",
+        "security"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "host": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "服务器"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "title": "端口"
+        },
+        "username": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "用户名"
+        },
+        "password": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "密码",
+          "x-secret": true
+        },
+        "security": {
+          "type": "string",
+          "enum": [
+            "STARTTLS",
+            "TLS",
+            "NONE"
+          ],
+          "title": "传输安全"
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "host": null,
+        "port": 587,
+        "username": null,
+        "password": null,
+        "security": "STARTTLS"
+      }
+    },
+    "retention": {
+      "title": "平台保留期限",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "auditDays",
+        "jobDays",
+        "jobFileDays"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "auditDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "审计保留天数"
+        },
+        "jobDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "任务保留天数"
+        },
+        "jobFileDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "任务文件保留天数"
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "auditDays": 365,
+        "jobDays": 180,
+        "jobFileDays": 7
+      }
+    },
+    "theme": {
+      "title": "主题覆盖",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "brandColor",
+        "fontFamily",
+        "radius",
+        "buttonVariant",
+        "headerVariant",
+        "footerVariant"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "brandColor": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "品牌色Token"
+        },
+        "fontFamily": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "字体Token"
+        },
+        "radius": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "圆角Token"
+        },
+        "buttonVariant": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "按钮变体"
+        },
+        "headerVariant": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "页头变体"
+        },
+        "footerVariant": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "页脚变体"
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "brandColor": null,
+        "fontFamily": null,
+        "radius": null,
+        "buttonVariant": null,
+        "headerVariant": null,
+        "footerVariant": null
+      }
+    },
+    "features": {
+      "title": "功能开关",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "flags"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "flags": {
+          "type": "object",
+          "title": "功能开关表",
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "propertyNames": {
+            "pattern": "^[a-z][a-zA-Z0-9.]*$"
+          }
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "flags": {}
+      }
+    },
+    "dsr": {
+      "title": "数据主体请求期限",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "gdprMonths",
+        "gdprExtensionMonths",
+        "ccpaAckBusinessDays",
+        "ccpaDays",
+        "ccpaExtensionDays",
+        "ccpaOptOutBusinessDays",
+        "holidays"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "gdprMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "GDPR初始月数"
+        },
+        "gdprExtensionMonths": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "GDPR最多延期月数"
+        },
+        "ccpaAckBusinessDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "CCPA确认工作日"
+        },
+        "ccpaDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "CCPA处理日历日"
+        },
+        "ccpaExtensionDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "CCPA最多延期日历日"
+        },
+        "ccpaOptOutBusinessDays": {
+          "type": "integer",
+          "minimum": 1,
+          "title": "CCPA退出工作日"
+        },
+        "holidays": {
+          "type": "array",
+          "title": "非工作日",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          }
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "gdprMonths": 1,
+        "gdprExtensionMonths": 2,
+        "ccpaAckBusinessDays": 10,
+        "ccpaDays": 45,
+        "ccpaExtensionDays": 45,
+        "ccpaOptOutBusinessDays": 15,
+        "holidays": []
+      }
+    }
+  }
+}

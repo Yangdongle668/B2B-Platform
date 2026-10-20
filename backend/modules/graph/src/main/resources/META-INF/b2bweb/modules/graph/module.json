@@ -1,0 +1,59 @@
+{
+  "id": "graph",
+  "name": "内容关系图谱",
+  "version": "1.0.0",
+  "layer": "L4",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "grh_",
+  "apiPrefix": "graph",
+  "permissions": [
+    {
+      "code": "graph:relation:view",
+      "name": "查看内容关系"
+    },
+    {
+      "code": "graph:relation:manage",
+      "name": "管理内容关系"
+    },
+    {
+      "code": "graph:config:manage",
+      "name": "管理评分配置"
+    }
+  ],
+  "menus": [
+    {
+      "key": "graph",
+      "name": "内容关系图谱",
+      "parent": "settings",
+      "route": "/graph/contents",
+      "permission": "graph:relation:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [
+    "related-content"
+  ],
+  "events": {
+    "publishes": [
+      "RelationChangedEvent"
+    ],
+    "subscribes": [
+      "ContentCreatedEvent",
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentRestoredEvent",
+      "TermChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "ContentPurgedEvent"
+    ]
+  }
+}

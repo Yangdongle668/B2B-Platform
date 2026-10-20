@@ -1,0 +1,54 @@
+{
+  "id": "url",
+  "name": "URL 引擎",
+  "version": "1.0.0",
+  "layer": "L2",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {},
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "url_",
+  "apiPrefix": "url",
+  "permissions": [
+    {
+      "code": "url:redirect:view",
+      "name": "查看重定向"
+    },
+    {
+      "code": "url:redirect:manage",
+      "name": "管理重定向"
+    },
+    {
+      "code": "url:pattern:manage",
+      "name": "管理URL 规则"
+    },
+    {
+      "code": "url:redirect:import",
+      "name": "导入重定向"
+    }
+  ],
+  "menus": [
+    {
+      "key": "url",
+      "name": "URL 引擎",
+      "parent": "settings",
+      "route": "/url/redirects",
+      "permission": "url:redirect:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [
+      "ContentPathChangedEvent",
+      "RedirectChangedEvent",
+      "SiteResourceChangedEvent"
+    ],
+    "subscribes": [
+      "SiteSettingsChangedEvent",
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent"
+    ]
+  }
+}

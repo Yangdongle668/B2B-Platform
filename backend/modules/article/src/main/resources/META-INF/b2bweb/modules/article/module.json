@@ -1,0 +1,112 @@
+{
+  "id": "article",
+  "name": "文章",
+  "version": "1.0.0",
+  "layer": "L3",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": true,
+  "tablePrefix": "art_",
+  "apiPrefix": "article",
+  "permissions": [
+    {
+      "code": "article:article:view",
+      "name": "查看文章"
+    },
+    {
+      "code": "content:article:edit",
+      "name": "编辑文章"
+    },
+    {
+      "code": "article:case-study:view",
+      "name": "查看案例"
+    },
+    {
+      "code": "content:case-study:edit",
+      "name": "编辑案例"
+    },
+    {
+      "code": "article:faq:view",
+      "name": "查看FAQ"
+    },
+    {
+      "code": "content:faq:edit",
+      "name": "编辑常见问题"
+    },
+    {
+      "code": "article:author:manage",
+      "name": "管理作者"
+    },
+    {
+      "code": "content:article:review",
+      "name": "审核文章"
+    },
+    {
+      "code": "content:article:publish",
+      "name": "发布文章"
+    },
+    {
+      "code": "content:article:delete",
+      "name": "删除文章"
+    },
+    {
+      "code": "content:case-study:review",
+      "name": "审核案例"
+    },
+    {
+      "code": "content:case-study:publish",
+      "name": "发布案例"
+    },
+    {
+      "code": "content:case-study:delete",
+      "name": "删除案例"
+    },
+    {
+      "code": "content:faq:review",
+      "name": "审核常见问题"
+    },
+    {
+      "code": "content:faq:publish",
+      "name": "发布常见问题"
+    },
+    {
+      "code": "content:faq:delete",
+      "name": "删除常见问题"
+    }
+  ],
+  "menus": [
+    {
+      "key": "article",
+      "name": "文章",
+      "parent": "editorial",
+      "route": "/article/articles",
+      "permission": "article:article:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [
+    "faq",
+    "article-list",
+    "case-list"
+  ],
+  "events": {
+    "publishes": [
+      "TranslatableResourceChangedEvent",
+      "SiteResourceChangedEvent"
+    ],
+    "subscribes": [
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent",
+      "TermChangedEvent",
+      "MediaDeletedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleDisabledEvent"
+    ]
+  }
+}

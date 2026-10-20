@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：询盘创建、归因、通知；M2：—；M3：分配规则、去重、SLA、报表、询价篮、询盘翻译；M4：数据范围完善（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.3 |
+| 文档版本 | V1.4 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.8 第 17 章及 3.2、3.8、24–29 章；平台框架设计 V1.6 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.9 第 17 章及 3.2、3.8、24–29 章；平台框架设计 V1.7 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -1106,9 +1106,9 @@ inquiry:inquiry:view/edit/export 与 inquiry:report:view 的 GROUP 均为销售�
 
 | 键 | 类型 | 默认值 | 说明 | x-secret |
 |---|---|---|---|---|
-| inquiry.assignment | object | {"defaultUserId":null,"escalationUserId":null} | 无规则/有效轮询人时使用默认负责人；未配置时保持 NEW 并告警，不丢弃线索 | 否 |
-| inquiry.messageTranslation | boolean | false | 留言按需翻译功能开关；translation 不可用时隐藏按钮；旧 3.1 的 message_translation 按框架 camelCase 命名统一 | 否 |
-| inquiry.retention | object | {"closedYears":3,"spamDays":30} | 已关闭匿名化与垃圾询盘清理；法务确认后配置 | 否 |
+| inquiry.assignment | object | {"schemaVersion":1,"defaultUserId":null,"escalationUserId":null} | 无规则/有效轮询人时使用默认负责人；未配置时保持 NEW 并告警，不丢弃线索 | 否 |
+| inquiry.messageTranslation | object | {"schemaVersion":1,"enabled":false} | 留言按需翻译功能开关；translation 不可用时隐藏按钮；旧 3.1 的 message_translation 按框架 camelCase 命名统一 | 否 |
+| inquiry.retention | object | {"schemaVersion":1,"closedYears":3,"spamDays":30} | 已关闭匿名化与垃圾询盘清理；法务确认后配置 | 否 |
 
 SLA 工作小时、时区、工作日与假期仅保存在 inq_work_calendar / inq_calendar_day，不另建 inquiry.slaHours，避免两个来源。所有阈值有上下限校验。
 
@@ -1236,3 +1236,4 @@ SLA 工作小时、时区、工作日与假期仅保存在 inq_work_calendar / i
 | V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
 | V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
+| V1.4 | 2026-10-20 | 同步框架V1.7和ADR-027的schemaVersion设置对象与默认值；仍为待评审设计，完整业务提供方未实现 |

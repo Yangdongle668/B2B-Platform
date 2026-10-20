@@ -1,0 +1,88 @@
+{
+  "id": "content",
+  "name": "内容内核",
+  "version": "1.0.0",
+  "layer": "L2",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "url": "^1.0"
+  },
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "cnt_",
+  "apiPrefix": "content",
+  "permissions": [
+    {
+      "code": "content:content:view",
+      "name": "查看内容摘要",
+      "description": "内容选择器、内容类型列表与跨类型的内容摘要；不含草稿正文"
+    },
+    {
+      "code": "content:review-queue:view",
+      "name": "查看待审核内容",
+      "description": "列表只显示拥有对应类型审核权限的条目"
+    },
+    {
+      "code": "content:schedule:view",
+      "name": "查看定时发布",
+      "description": "列表只显示拥有对应类型发布权限的条目"
+    },
+    {
+      "code": "content:trash:view",
+      "name": "查看回收站",
+      "description": "列表只显示拥有对应类型删除权限的条目"
+    }
+  ],
+  "menus": [
+    {
+      "key": "content",
+      "name": "待审核",
+      "parent": "editorial",
+      "route": "/content/reviews",
+      "permission": "content:review-queue:view",
+      "order": 80
+    },
+    {
+      "key": "content-schedules",
+      "name": "定时发布",
+      "parent": "editorial",
+      "route": "/content/schedules",
+      "permission": "content:schedule:view",
+      "order": 85
+    },
+    {
+      "key": "content-trash",
+      "name": "回收站",
+      "parent": "editorial",
+      "route": "/content/trash",
+      "permission": "content:trash:view",
+      "order": 90
+    }
+  ],
+  "settings": "settings.schema.json",
+  "components": [],
+  "events": {
+    "publishes": [
+      "ContentCreatedEvent",
+      "ContentDraftChangedEvent",
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentRestoredEvent",
+      "ContentPurgedEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "TranslationModeChangedEvent",
+      "TranslationOutdatedEvent",
+      "ReviewRequestedEvent",
+      "ReviewCompletedEvent"
+    ],
+    "subscribes": [
+      "ContentPathChangedEvent",
+      "TermChangedEvent",
+      "TranslationCompletedEvent",
+      "SiteResourceChangedEvent",
+      "SiteSettingsChangedEvent"
+    ]
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "id": "notification",
+  "name": "通知",
+  "version": "1.0.0",
+  "layer": "L2",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {},
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "ntf_",
+  "apiPrefix": "notification",
+  "permissions": [
+    {
+      "code": "notification:message:view",
+      "name": "查看发送记录"
+    },
+    {
+      "code": "notification:message:retry",
+      "name": "重试发送记录"
+    },
+    {
+      "code": "notification:template:manage",
+      "name": "管理模板"
+    },
+    {
+      "code": "notification:webhook:manage",
+      "name": "管理Webhook",
+      "sensitive": true
+    }
+  ],
+  "menus": [
+    {
+      "key": "notification",
+      "name": "通知",
+      "parent": "settings",
+      "route": "/notification/messages",
+      "permission": "notification:message:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [],
+  "events": {
+    "publishes": [
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": [
+      "TranslationOutdatedEvent",
+      "ReviewRequestedEvent",
+      "ReviewCompletedEvent",
+      "TranslationFailedEvent",
+      "ModuleDisabledEvent",
+      "SiteSettingsChangedEvent"
+    ]
+  }
+}

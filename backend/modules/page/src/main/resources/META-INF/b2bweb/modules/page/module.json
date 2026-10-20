@@ -1,0 +1,106 @@
+{
+  "id": "page",
+  "name": "页面",
+  "version": "1.0.0",
+  "layer": "L3",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {},
+  "disableable": false,
+  "tablePrefix": "pg_",
+  "apiPrefix": "page",
+  "permissions": [
+    {
+      "code": "page:page:view",
+      "name": "查看页面"
+    },
+    {
+      "code": "content:page:edit",
+      "name": "编辑页面"
+    },
+    {
+      "code": "page:layout:edit",
+      "name": "编辑布局"
+    },
+    {
+      "code": "page:global-block:view",
+      "name": "查看全局区块"
+    },
+    {
+      "code": "content:global-block:edit",
+      "name": "编辑全局区块"
+    },
+    {
+      "code": "content:page:review",
+      "name": "审核页面"
+    },
+    {
+      "code": "content:page:publish",
+      "name": "发布页面"
+    },
+    {
+      "code": "content:page:delete",
+      "name": "删除页面"
+    },
+    {
+      "code": "content:global-block:review",
+      "name": "审核全局区块"
+    },
+    {
+      "code": "content:global-block:publish",
+      "name": "发布全局区块"
+    },
+    {
+      "code": "content:global-block:delete",
+      "name": "删除全局区块"
+    }
+  ],
+  "menus": [
+    {
+      "key": "page",
+      "name": "页面",
+      "parent": "editorial",
+      "route": "/page/pages",
+      "permission": "page:page:view",
+      "order": 100
+    }
+  ],
+  "settings": null,
+  "components": [
+    "hero",
+    "rich-text",
+    "global-block",
+    "columns",
+    "tabs",
+    "accordion-group",
+    "feature-list",
+    "image-text",
+    "stats",
+    "logo-wall",
+    "testimonial",
+    "process-steps",
+    "timeline",
+    "cta",
+    "video",
+    "gallery",
+    "contact-info",
+    "contact-buttons",
+    "map",
+    "breadcrumb",
+    "embed",
+    "custom-html"
+  ],
+  "events": {
+    "publishes": [],
+    "subscribes": [
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent",
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent"
+    ]
+  }
+}

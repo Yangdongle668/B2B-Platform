@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "content站点设置",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "reviewRequiredTypes": {
+      "type": "object",
+      "title": "需要审核的类型",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "types"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "const": 1,
+          "title": "结构版本"
+        },
+        "types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          },
+          "title": "内容类型"
+        }
+      },
+      "default": {
+        "schemaVersion": 1,
+        "types": []
+      }
+    }
+  }
+}

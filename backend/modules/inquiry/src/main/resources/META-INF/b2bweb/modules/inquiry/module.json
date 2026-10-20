@@ -1,0 +1,96 @@
+{
+  "id": "inquiry",
+  "name": "询盘",
+  "version": "1.0.0",
+  "layer": "L3",
+  "platform": ">=1.0.0 <2.0.0",
+  "requires": {
+    "content": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0",
+    "form": "^1.0",
+    "notification": "^1.0"
+  },
+  "optional": {
+    "translation": "^1.0",
+    "product": "^1.0"
+  },
+  "disableable": true,
+  "tablePrefix": "inq_",
+  "apiPrefix": "inquiry",
+  "permissions": [
+    {
+      "code": "inquiry:inquiry:view",
+      "name": "查看询盘",
+      "dataScopes": [
+        "ALL",
+        "GROUP",
+        "OWN"
+      ]
+    },
+    {
+      "code": "inquiry:inquiry:edit",
+      "name": "编辑询盘",
+      "dataScopes": [
+        "ALL",
+        "GROUP",
+        "OWN"
+      ]
+    },
+    {
+      "code": "inquiry:inquiry:assign",
+      "name": "分配询盘"
+    },
+    {
+      "code": "inquiry:inquiry:export",
+      "name": "导出询盘",
+      "sensitive": true,
+      "dataScopes": [
+        "ALL",
+        "GROUP",
+        "OWN"
+      ]
+    },
+    {
+      "code": "inquiry:report:view",
+      "name": "查看报表",
+      "dataScopes": [
+        "ALL",
+        "GROUP",
+        "OWN"
+      ]
+    },
+    {
+      "code": "inquiry:rule:manage",
+      "name": "管理分配规则"
+    }
+  ],
+  "menus": [
+    {
+      "key": "inquiry",
+      "name": "询盘",
+      "parent": "sales",
+      "route": "/inquiry/inquiries",
+      "permission": "inquiry:inquiry:view",
+      "order": 100
+    }
+  ],
+  "settings": "settings.schema.json",
+  "components": [
+    "inquiry-form",
+    "add-to-inquiry-button",
+    "inquiry-cart"
+  ],
+  "events": {
+    "publishes": [
+      "InquiryCreatedEvent",
+      "InquiryAssignedEvent",
+      "InquiryStatusChangedEvent"
+    ],
+    "subscribes": [
+      "UserDeactivatedEvent",
+      "FormSubmittedEvent",
+      "TermChangedEvent"
+    ]
+  }
+}
