@@ -1,0 +1,6 @@
+:root {
+ --color-bg: #fff; --color-ink: #171a20; --color-muted: #5c5e62; --color-panel: #f4f4f4; --color-line: #d0d1d2;
+ --space-1: .25rem; --space-2: .5rem; --space-3: .75rem; --space-4: 1rem; --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-20: 5rem;
+ --text-sm: .875rem; --text-body: 1rem; --text-title: clamp(2rem, 5vw, 4rem); --font-sans: Arial, 'Noto Sans SC', sans-serif;
+ --border-thin: 1px solid var(--color-line); --radius-control: .25rem; --page-width: 80rem;
+}

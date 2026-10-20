@@ -1,0 +1,3 @@
+import { defineComponent, h } from 'vue'
+export interface HeroProps { title: string; description: string; actionLabel: string; actionPath: string; headingLevel?: 1 | 2 }
+export const Hero = defineComponent({ name: 'IndustrialHero', props: { headingLevel: { type: Number, default: 1, validator: (value: number) => value === 1 || value === 2 }, title: { type: String, required: true }, description: { type: String, required: true }, actionLabel: { type: String, required: true }, actionPath: { type: String, required: true } }, setup: props => () => h('section', { class: 'industrial-hero' }, [h(props.headingLevel === 2 ? 'h2' : 'h1', props.title), h('p', props.description), h('a', { href: props.actionPath, class: 'industrial-action' }, props.actionLabel)]) })

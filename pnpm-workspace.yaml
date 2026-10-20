@@ -1,0 +1,7 @@
+packages:
+  - frontend/apps/*
+  - frontend/packages/*
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@nuxt/image@2.2.0'

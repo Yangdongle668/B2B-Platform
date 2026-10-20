@@ -1,0 +1,12 @@
+{
+  "name": "@b2bweb/component-schemas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "ajv": "8.17.1"
+  }
+}

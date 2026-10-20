@@ -1,0 +1,12 @@
+{
+  "name": "@b2bweb/website-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "vue": "3.5.44"
+  }
+}

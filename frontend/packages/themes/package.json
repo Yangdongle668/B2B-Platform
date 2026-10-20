@@ -1,0 +1,13 @@
+{
+  "name": "@b2bweb/themes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./texts/zh-CN.json": "./industrial/texts/zh-CN.json"
+  },
+  "dependencies": {
+    "vue": "3.5.44"
+  }
+}

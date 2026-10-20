@@ -1,0 +1,13 @@
+{
+  "name": "@b2bweb/admin-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./admin.css": "./src/admin.css"
+  },
+  "dependencies": {
+    "vue": "3.5.44"
+  }
+}

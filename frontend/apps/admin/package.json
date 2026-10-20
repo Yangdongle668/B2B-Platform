@@ -1,0 +1,25 @@
+{
+  "name": "@b2bweb/admin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "typecheck": "vue-tsc --noEmit",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "vue": "3.5.44",
+    "vue-router": "4.6.3",
+    "element-plus": "2.14.7",
+    "@b2bweb/admin-kit": "workspace:*",
+    "@b2bweb/api-client": "workspace:*",
+    "qrcode": "1.5.4"
+  },
+  "devDependencies": {
+    "vite": "7.3.7",
+    "@vitejs/plugin-vue": "6.0.10",
+    "typescript": "5.9.3",
+    "vue-tsc": "3.3.13",
+    "@types/qrcode": "1.5.6"
+  }
+}

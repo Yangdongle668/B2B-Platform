@@ -1,0 +1,10 @@
+/* Admin controls deliberately use their own Element Plus variables. */
+html { font-family: var(--el-font-family); color: var(--el-text-color-primary); background: var(--el-fill-color-light); }
+body { margin: 0; }
+.el-header { display: flex; align-items: center; background: var(--el-bg-color); border-bottom: var(--el-border); }
+.el-main { width: min(100%, 36rem); margin: auto; box-sizing: border-box; padding: var(--el-main-padding); }
+h1 { font-size: var(--el-font-size-extra-large); }
+.el-form, .el-main > section { padding: var(--el-main-padding); background: var(--el-bg-color); border: var(--el-border); border-radius: var(--el-border-radius-base); }
+.el-alert { margin-bottom: var(--el-main-padding); }
+code { overflow-wrap: anywhere; }
+.el-input, .el-button { max-width: 100%; }

@@ -1,0 +1,1 @@
+export default defineNuxtConfig({ compatibilityDate: '2026-10-20', modules: ['@nuxt/image'], css: ['@b2bweb/design-tokens/tokens.css','~/assets/industrial.css'], devtools: { enabled: false }, typescript: { strict: true }, runtimeConfig: { backendUrl: process.env.B2B_BACKEND_URL ?? 'http://127.0.0.1:8080' } })
