@@ -10,12 +10,12 @@
 | 可停用 | 否 |
 | 模块版本 | 1.0.0（module.json 的 version） |
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
-| 里程碑切片 | M1：<…>；M2：<…>；M3：<…>；M4：<…>（详见第 13 节） |
+| 里程碑切片 | M1：Meta 自动生成与覆盖、canonical、Product / Breadcrumb / Organization JSON-LD；M2：—；M3：Sitemap（含图片）、robots、IndexNow、链接索引、健康检查、hreflang；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.0 |
+| 文档版本 | V1.2 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-14 |
-| 依据 | 系统设计 V1.4 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
+| 更新日期 | 2026-10-20 |
+| 依据 | 系统设计 V1.4 第 14 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -23,20 +23,31 @@
 
 ### 1.1 职责
 
-> 一段概述 + 要点列表；与系统设计 3.2 的职责描述一致，并细化到本模块的功能清单。
+管理 SEO 覆盖值与模板，发布时计算 Meta，交付时组装 canonical、hreflang 和 JSON-LD；维护 sitemap、robots、链接索引、健康报告与 IndexNow。
+
+功能交付范围按第 13 章分为 M1–M4；表结构、约束与枚举以第 3、4 章为准。
 
 ### 1.2 不负责的事
 
-| 事项 | 归属模块 | 说明 |
+| 事项 | 归属模块 | 边界 |
 |---|---|---|
+| 内容生命周期与路由 | content / url | 本模块只承担自身职责；不直接修改 cnt_、url_ 表 |
+| 身份、权限、设置、任务及审计 | platform-core | 复用平台公共服务 |
+| 第三方客户端与网络传输 | infrastructure | 仅经既有端口或 L2 服务使用，不在业务模块引入客户端 |
 
 ### 1.3 协作概览
 
-> 用图或表说明本模块与哪些模块协作、通过哪种方式（服务接口 / 事件 / 扩展点）。只画契约，不画实现。
+| 协作方式 | 对象 | 本模块行为 |
+|---|---|---|
+| 服务接口 | ContentApi、UrlApi、MediaApi、TaxonomyApi、TranslationApi | 方法与事务边界见 2.2；无跨模块表访问 |
+| 扩展点 | PublishContributor、DeliveryContributor、ContentImpactProvider、MediaReferenceCollector、TranslatableContentProvider、SeoRule、SchemaOrgProvider、SeoVariableProvider、SeoRule、SitemapProvider | 实现/收集清单见 2.4、2.5 |
+| 领域事件 | 见 2.6 | 与本地事务一起登记，提交后异步投递；重复与过期处理独立验证 |
 
 ### 1.4 适用的架构约束
 
-> 列出与本模块直接相关的原则（P1–P8）、ADR 规则与 CLAUDE.md 禁止项，以及本模块如何满足。
+遵守 P2、P3 与 ADR-018：编译依赖只到 platform-core/platform-api，跨模块协作只用第 2 章登记契约；只访问自己的表，禁止跨模块 JOIN/外键。遵守 ADR-003：事务内登记、提交后投递、监听器幂等并检查过期。遵守 ADR-009：每次请求/任务明确站点上下文，站点表默认过滤。
+
+公开读取只用当前语言发布态，不跨语言回退（ADR-005）；预览与公开缓存隔离。后台中文文案与错误集中管理，前台文案经 UiTextApi，样式只用 Design Token。远程端口在数据库事务外调用，密钥经 SecretCipher，不写日志。
 
 ## 2. 依赖与契约
 
@@ -44,62 +55,169 @@
 
 ```json
 {
-  "id": "<id>",
-  "name": "<中文名称>",
+  "id": "seo",
+  "name": "搜索引擎优化",
   "version": "1.0.0",
-  "layer": "L3",
+  "layer": "L4",
   "platform": ">=1.0.0 <2.0.0",
-  "requires": {},
-  "optional": {},
-  "disableable": true,
-  "tablePrefix": "<前缀>_",
-  "apiPrefix": "<id>",
-  "permissions": [],
-  "menus": [],
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {
+    "translation": "^1.0"
+  },
+  "disableable": false,
+  "tablePrefix": "seo_",
+  "apiPrefix": "seo",
+  "permissions": [
+    {
+      "code": "seo:meta:edit",
+      "name": "编辑SEO 草稿",
+      "localeScoped": true
+    },
+    {
+      "code": "seo:template:manage",
+      "name": "管理模板"
+    },
+    {
+      "code": "seo:robots:manage",
+      "name": "管理爬虫规则"
+    },
+    {
+      "code": "seo:audit:run",
+      "name": "执行健康报告"
+    },
+    {
+      "code": "seo:audit:view",
+      "name": "查看健康报告"
+    },
+    {
+      "code": "seo:sitemap:manage",
+      "name": "管理Sitemap"
+    }
+  ],
+  "menus": [
+    {
+      "key": "seo",
+      "name": "搜索引擎优化",
+      "parent": "settings",
+      "route": "/seo/meta",
+      "permission": "seo:meta:edit",
+      "order": 100
+    }
+  ],
   "settings": null,
   "components": [],
-  "events": { "publishes": [], "subscribes": [] }
+  "events": {
+    "publishes": [],
+    "subscribes": [
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "ContentPathChangedEvent",
+      "MediaUploadedEvent",
+      "MediaUpdatedEvent",
+      "MediaDeletedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleEnabledEvent",
+      "ModuleDisabledEvent",
+      "ContentPurgedEvent",
+      "NavigationChangedEvent",
+      "RelationChangedEvent",
+      "TermChangedEvent"
+    ]
+  }
 }
 ```
 
-> 完整描述符，须通过平台框架设计附录 A 的 Schema 与 A.3 的校验规则。
+描述符为未来 M0 后的实现要求，中文名称须满足框架附录 A Schema。
 
 ### 2.2 使用的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机（事务内 / 外） | 测试替身 |
+| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
+| `ContentApi`（4.4.16） | findPublishedSnapshot、findPublishedCards、publishedVersions、scanPublished | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `UrlApi`（4.4.17） | pathsOf、absoluteUrl | 解析当前路径、生成 slug 或规范地址；不读取 url 表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryUrlApi` |
+| `MediaApi`（4.4.18） | findAll、views、imageSources | 媒体视图、图片源与授权下载；不读取媒体表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryMediaApi` |
+| `TaxonomyApi`（4.4.19） | findTerms、termViews、assignmentsOf | 词汇表、分类视图与内容指派；不读取分类表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTaxonomyApi` |
+| `TranslationApi`（4.4.22） | segmentOrigins | 事务外按需文本翻译或读取审校统计 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTranslationApi` |
+| `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
+| `SiteContextProvider`（4.4.2） | 按该契约声明的方法 | 当前站点；异步与任务由 core 恢复 | 业务事务内；站点切换由任务入口完成 | `FakeSiteContextProvider` |
+| `PermissionChecker`（4.4.7） | 按该契约声明的方法 | 后台权限与数据范围 | 业务事务内；站点切换由任务入口完成 | `FakePermissionChecker` |
+| `AuditApi`（4.4.9） | 按该契约声明的方法 | 同事务写审计，密钥与个人数据脱敏 | 业务事务内；站点切换由任务入口完成 | `InMemoryAuditApi` |
+| `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
+| `ExtensionRegistry`（4.4.15） | 按该契约声明的方法 | 按启用模块收集 2.5 的扩展点 | 业务事务内；站点切换由任务入口完成 | `InMemoryExtensionRegistry` |
+| `JobApi`（4.4.12） | 按该契约声明的方法 | 耗时任务提交、取消、进度与结果 | 业务事务内；站点切换由任务入口完成 | `InMemoryJobApi` |
+
+所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
 
 ### 2.3 提供的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 实现类 | 契约测试 | 说明（幂等、权限、性能目标） |
-|---|---|---|---|---|
+不适用：本模块不提供跨模块服务接口；其他模块通过 2.4 的既有扩展点或领域事件协作。
 
 ### 2.4 实现的扩展点
 
-| 扩展点（平台框架设计小节） | 实现类 | 适用范围（内容类型 / 资源类型） | order | 收集方 |
+| 扩展点（平台框架设计小节） | 计划实现类 | 适用范围 | order | 收集方 |
 |---|---|---|---|---|
+| `PublishContributor`（4.5.3） | `SeoPublishContributor` | parts.seo：最终值/自动值/覆盖字段；LATE=5000 | LATE=5000 | content |
+| `DeliveryContributor`（4.5.7） | `SeoDeliveryContributor` | sectionKey=seo：head、canonical、公开语言 alternates 与 @graph | DEFAULT=1000 | delivery |
+| `ContentImpactProvider`（4.5.4） | `SeoContentImpactProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | content / core |
+| `MediaReferenceCollector`（4.5.16） | `SeoMediaReferenceCollector` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | media |
+| `TranslatableContentProvider`（4.5.20） | `SeoTranslatableContentProvider` | 内容的 title/description/OG 文本覆盖；不翻译 canonical/robots | DEFAULT=1000 | translation |
+| `SeoRule`（4.5.12） | `SeoSeoRule` | 系统设计 14.9 全部 V1 健康规则 | DEFAULT=1000 | seo |
+| `PlatformModule`（4.5.22） | `SeoModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
+
+以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。本模块不可站点级停用；对可选依赖缺失/停用仍须按框架约定降级。
 
 ### 2.5 收集的扩展点
 
-| 扩展点 | 调用时机 | 过滤（站点启用状态、内容类型等） | 实现缺失或抛出异常时的行为 | 测试用示例实现 |
+| 扩展点 | 调用时机 | 过滤 | 失败行为 | 测试示例 |
 |---|---|---|---|---|
+| `SchemaOrgProvider`（4.5.10） | 见第 5 章流程 | ExtensionRegistry 按站点启用状态、内容类型或 key 过滤 | 事务内校验/发布异常则回滚；只读可选部分失败记指标并降级，核心部分失败返回 503 | `SampleSchemaOrgProvider` |
+| `SeoVariableProvider`（4.5.11） | 见第 5 章流程 | ExtensionRegistry 按站点启用状态、内容类型或 key 过滤 | 事务内校验/发布异常则回滚；只读可选部分失败记指标并降级，核心部分失败返回 503 | `SampleSeoVariableProvider` |
+| `SeoRule`（4.5.12） | 见第 5 章流程 | ExtensionRegistry 按站点启用状态、内容类型或 key 过滤 | 事务内校验/发布异常则回滚；只读可选部分失败记指标并降级，核心部分失败返回 503 | `SampleSeoRule` |
+| `SitemapProvider`（4.5.13） | 见第 5 章流程 | ExtensionRegistry 按站点启用状态、内容类型或 key 过滤 | 事务内校验/发布异常则回滚；只读可选部分失败记指标并降级，核心部分失败返回 503 | `SampleSitemapProvider` |
 
 ### 2.6 发布与订阅的事件
 
 发布：
 
-| 事件 | 触发时机（所在事务） | 关键字段 | 主要订阅方 |
-|---|---|---|---|
+不适用：没有本模块领域事件。
 
 订阅：
 
-| 事件 | 处理 | 幂等方式 | 过期判断 | 失败与重试 |
+| 事件 | 处理 | 幂等 | 过期与删除 | 失败与重试 |
 |---|---|---|---|---|
+| `ContentPublishedEvent` | 按第 4.6 节处理事件所标识的对象；副作用只发生在本模块数据范围 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ContentUnpublishedEvent` | 移除该语言的公开投影/候选/缓存依赖，人工关系及历史快照按 4.6 保留 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `LocalizationCreatedEvent` | 按第 4.6 节处理事件所标识的对象；副作用只发生在本模块数据范围 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `LocalizationDeletedEvent` | 仅清理对应语言的本模块本地化/投影，不删除其他语言或共享业务字段 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ContentPathChangedEvent` | 按第 4.6 节处理事件所标识的对象；副作用只发生在本模块数据范围 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `MediaUploadedEvent` | 仅处理被引用媒体：更新当前媒体视图或按 4.6 防御性清理；仍有有效引用的媒体不能被主动删除 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `MediaUpdatedEvent` | 仅处理被引用媒体：更新当前媒体视图或按 4.6 防御性清理；仍有有效引用的媒体不能被主动删除 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `MediaDeletedEvent` | 仅处理被引用媒体：更新当前媒体视图或按 4.6 防御性清理；仍有有效引用的媒体不能被主动删除 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `SiteSettingsChangedEvent` | 按 scopes、settingKeys、localeChanges 筛选 4.6 的相关变化；不对无关设置做全量重建 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ModuleEnabledEvent` | 检查被启用模块的当前数据，重建受影响读模型并补偿停用期间跳过的事件 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ModuleDisabledEvent` | 当前站点隐藏该模块的公开能力，保留自身数据；处理事件.moduleId 而非假定是接收方自身 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ContentPurgedEvent` | 按事件 contentId/localizationIds 清理本模块外部引用或子行；历史业务快照按 4.6 保留；不回查已不存在的父内容 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `NavigationChangedEvent` | 按菜单整体变化重建导航派生结果或缓存，menuId 是聚合 ID | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `RelationChangedEvent` | 失效该源内容的 g 标签，重读当前关系集合 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `TermChangedEvent` | 按 change/termId 更新相关草稿引用或重算候选；草稿指派不冒充发布态指派 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+
+监听器按框架 5.8 建立站点/system 上下文；`ContentPurgedEvent` 在模块停用时仍必须清理（deliverWhenModuleDisabled）。其他停用期间跳过并完成的事件，重新启用后通过扫描当前状态补偿，不能假定还会重投。数据库幂等标记与本模块数据在同一事务提交；外部发送、下载、搜索与 CDN 调用不得被数据库长事务包裹，使用已声明的任务/端口和业务幂等键。事件 payload 仅引用框架现有字段，本文不扩展签名。
 
 ### 2.7 使用的端口
 
-| 端口 | 用途 | 测试替身 |
+| 端口（平台框架小节） | 用途 | 测试替身 |
 |---|---|---|
+| `TaggedCache`（4.7.14） | 第 5 章外部能力；只通过端口调用基础设施 | `InMemoryTaggedCache` |
+| `IndexNowClient`（4.7.8） | 第 5 章外部能力；只通过端口调用基础设施 | `RecordingIndexNowClient` |
+| `CdnPurger`（4.7.7） | 第 5 章外部能力；只通过端口调用基础设施 | `RecordingCdnPurger` |
+| `BufferStore`（4.7.17） | 第 5 章外部能力；只通过端口调用基础设施 | `InMemoryBufferStore` |
 
 ## 3. 领域模型
 
@@ -182,11 +300,11 @@ robots.txt 的生成顺序：默认模板（`Disallow: /api/`、`/__preview/`、
 
 ### 3.3 状态机
 
-<<FILL: 状态与转换；没有状态机时写“不适用：<原因>”>>
+不适用：没有持久化业务状态机。
 
 ## 4. 数据模型
 
-> 遵守平台框架设计第 7 章的数据库通用约定。DDL 已在 MySQL 8.4 上执行通过；表结构以本节为准，与迁移脚本保持一致。
+> 遵守平台框架设计第 7 章的数据库通用约定。本节给出待实现 DDL；本次文档审查未重跑 MySQL，不能据此认定 DDL 已验证。M0 后按第 11 章在 MySQL 8.4 空库验证，并使实际迁移脚本与本节一致。
 
 ### 4.1 表清单
 
@@ -601,7 +719,15 @@ CREATE TABLE seo_ping_queue (
 
 ### 4.5 站点过滤
 
-<<FILL: | 表 | 行级拦截器（不豁免 / 豁免） | 访问方式与理由 |>>
+| 表 | 行级拦截器 | 访问方式与理由 |
+|---|---|---|
+| `seo_meta` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_template` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_link` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_audit` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_audit_issue` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_robots_rule` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `seo_ping_queue` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
 
 ### 4.6 跨模块引用与清理
 
@@ -629,45 +755,86 @@ CREATE TABLE seo_ping_queue (
 
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
-| `db/migration/seo/V001__init.sql` | 4.3 中的全部表（7 张：`seo_meta`、`seo_template`、`seo_link`、`seo_audit`、`seo_audit_issue`、`seo_robots_rule`、`seo_ping_queue`），按本节顺序创建 | <见第 13 节> |
+| `db/migration/seo/V001__init.sql` | 4.3 中的全部表（7 张：`seo_meta`、`seo_template`、`seo_link`、`seo_audit`、`seo_audit_issue`、`seo_robots_rule`、`seo_ping_queue`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
 
 ## 5. 业务流程
 
-### 5.1 <流程名称>
+### 5.1 核心业务流程
 
-```text
-<步骤；标出事务边界、调用的服务接口、发布的事件、异步部分>
-```
-
-| 步骤 | 说明 | 失败处理 |
+| 步骤 | 事务及行为 | 失败处理 |
 |---|---|---|
+| 1 | 保存 seo_meta 作为内容草稿的一部分，使用共同 version；PublishContributor 按人工覆盖优先计算最终值与自动值并写 seo 快照，自动值不覆盖人工。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 2 | DeliveryContributor 只读当前发布快照，经 SchemaOrgProvider 组合 @graph，并使用同内容已发布且公开的语言集合生成 hreflang；分页 canonical 指向自身，筛选 noindex 且不跨语言 canonical。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | 内容和路径事件提交后增量重建链接索引、sitemap 缓存并向 seo_ping_queue 写幂等推送；健康扫描游标遍历发布态，每条规则独立报告，远程 IndexNow 在事务外批量执行。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+
+后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
+
+### 5.2 一致性、失败与恢复约束
+
+| 场景 | 必须满足的行为 | 可验证结果 |
+|---|---|---|
+| 覆盖值与发布一致性 | 自动值永不写回覆盖人工字段；恢复自动用 null。保存 SEO 标签参与内容共同 version，失败回滚 seo_meta；最终值在 parts.seo，动态 head 只用对应发布修订。 | 同时保存正文与 SEO 的旧共同版本只成功一次；改模板后重新发布的自动值更新，但人工覆盖与上一修订保持可追溯。 |
+| canonical 与公开语言集合 | 分页/筛选 canonical 保留规则允许参数并指向当前语言自身；hreflang 来源是当前已发布且公开的同内容版本集合。语言关闭或路径变更即使修订号不变也更新。 | 关闭英语后 HTML、语言切换与 sitemap 不再含英语；page=2 canonical 保留 page=2；未发布语言不输出 alternate。 |
+| Sitemap 与结构化数据 | sitemap 排除 noindex/跨 URL canonical，按 50000 URL 和未压缩 50MB 双阈值切片；lastmod 取 content_modified_at。JSON-LD 序列化要防止文本中的 script 结束标签逃逸。 | 只重新发布未改内容时 lastmod 不变；临界文件按两个阈值正确切片；含 </script> 的业务标题不终止 JSON-LD 脚本。 |
+| 健康检查与推送恢复 | 规则失败单列为扫描执行问题，不伪造健康通过；全量扫描可取消续跑。IndexNow 合并同 URL，站点域名/目标变动后再验证，外部失败不回滚发布。 | 一条规则抛错时报告标明未执行/失败，其他规则有结果；IndexNow 失败重试只更新队列状态，已发布内容仍在线。 |
 
 ## 6. 接口
 
 ### 6.1 Admin 端点
 
-| 方法 | 路径（/api/admin/v1/<apiPrefix>/…） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
+| 方法 | 路径（相对 /api/admin/v1/seo） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
 |---|---|---|---|---|---|
+| GET | `/meta/{localizationId}` | SEO 草稿与自动值预览 | `seo:meta:edit` | 只读；不写入业务状态 | 否 |
+| PUT | `/meta/{localizationId}` | 保存覆盖或恢复自动 | `seo:meta:edit` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | seo.meta.{localizationId}.put |
+| GET | `/templates` | 按语言与内容类型的模板 | `seo:template:manage` | 只读；不写入业务状态 | 否 |
+| PUT | `/templates/{id}` | 保存已声明变量的模板 | `seo:template:manage` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | seo.templates.{id}.put |
+| GET | `/robots` | 爬虫规则 | `seo:robots:manage` | 只读；不写入业务状态 | 否 |
+| PUT | `/robots` | 保存 robots 追加规则 | `seo:robots:manage` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | seo.robots.put |
+| POST | `/audits` | 提交 SEO 健康扫描 | `seo:audit:run` | Idempotency-Key；同键同请求返回既有任务/结果 | seo.audits.post |
+| GET | `/audits/{id}` | 扫描状态与汇总 | `seo:audit:view` | 只读；不写入业务状态 | 否 |
+| GET | `/audits/{id}/issues` | 问题列表与修复链接 | `seo:audit:view` | 只读；不写入业务状态 | 否 |
+| GET | `/links` | 按内容查询入链出链 | `seo:audit:view` | 只读；不写入业务状态 | 否 |
+| POST | `/sitemap/rebuild` | 重建 sitemap 缓存 | `seo:sitemap:manage` | Idempotency-Key；同键同请求返回既有任务/结果 | seo.sitemap.rebuild.post |
+| POST | `/templates` | 创建站点、语言及内容类型作用域的 SEO 模板 | `seo:template:manage` | 更新校验聚合 version；失败整笔回滚 | seo.templates.post |
+| DELETE | `/templates/{id}` | 删除覆盖模板并恢复内置默认 | `seo:template:manage` | 更新校验聚合 version；失败整笔回滚 | seo.templates.delete |
+
+ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 100），默认 size=20，排序字段白名单。版本化资源按框架 5.5.6 使用 ETag: "v{version}" 与 If-Match，不能用任意 JSON 摘要替代平台版本协议；无 version 的集合写入方式见本节补充约束。创建返回资源及标识；耗时 POST 返回 202 与 jobId；无跨站点 ID 访问。写操作审计不包含凭据、完整个人数据或任意脚本正文。
+
+**请求与结果约束**：SEO 保存使用 localizationId 与共同 version；null 表示恢复自动，空字符串不能隐式抹掉有效自动标题。schemaExtra 只限开发者并做结构校验；canonical 仅允许已发布可访问地址，不跨语言。扫描请求含语言、内容类型、规则范围，返回 jobId/auditId；issue 给出 ruleId、severity、content/localizationId 与修复入口。
 
 ### 6.2 Public 端点
 
-| 方法 | 路径（/api/public/v1/<apiPrefix>/…） | 说明 | 限流 | 缓存 |
-|---|---|---|---|---|
+不适用：内容、菜单、媒体引用等由 delivery 返回；本模块不增加绕过发布态约束的公开读取接口。
 
 ### 6.3 Internal 端点
 
-| 方法 | 路径（/api/internal/v1/<apiPrefix>/…） | 说明 | 调用方 |
-|---|---|---|---|
+不适用：不新增 internal HTTP 端点；跨模块使用进程内 platform-api 契约。Nuxt 所需公共读取使用 6.2 的既有入口及可信代理认证。
 
 ### 6.4 权限码
 
-| 权限码 | 名称 | 数据范围 | 高危（sensitive） | 受语言范围限制（localeScoped） |
+| 权限码 | 名称 | 数据范围 | 高危 | 语言范围 |
 |---|---|---|---|---|
+| `seo:meta:edit` | 编辑SEO 草稿 | 当前站点 | 否 | 是，按角色目标语言范围校验 |
+| `seo:template:manage` | 管理模板 | 当前站点 | 否 | 否 |
+| `seo:robots:manage` | 管理爬虫规则 | 当前站点 | 否 | 否 |
+| `seo:audit:run` | 执行健康报告 | 当前站点 | 否 | 否 |
+| `seo:audit:view` | 查看健康报告 | 当前站点 | 否 | 否 |
+| `seo:sitemap:manage` | 管理Sitemap | 当前站点 | 否 | 否 |
 
 ### 6.5 错误码
 
-| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键（仅公开接口） |
+| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键 |
 |---|---|---|---|
+| `SEO_VALIDATION_FAILED` | 422 | 输入不符合本模块规则 | — |
+| `SEO_NOT_FOUND` | 404 | 请求的资源不存在 | — |
+| `CORE_MODULE_DISABLED` | 404 | 站点已停用该模块 | errors.moduleDisabled |
+| `SEO_VERSION_CONFLICT`（模块内部错误码） | 409 / 412 | 资源已被修改，请刷新后重试 | — |
+
+跨模块错误使用框架已声明常量；本模块专用 HTTP 校验错误保存在本模块错误目录，不增加 platform-api 常量。公开接口不直接展示 detail；错误文案键统一登记在 UiTextApi。
+
+**重点业务失败**：SEO_VALIDATION_FAILED（本模块内部）、CONTENT_VERSION_CONFLICT。模块内部错误不扩展 platform-api；HTTP 状态按本节与框架错误常量映射。
+
+本模块内部错误补充：`SEO_VERSION_CONFLICT` 默认 409，经 If-Match 提交为 412；幂等键复用但规范化业务请求不同为 `SEO_IDEMPOTENCY_CONFLICT`（409）；状态操作不适用为 `SEO_STATE_INVALID`（409）。只有实际存在相应端点时才注册/使用，均不新增跨模块错误常量。跨站点或数据范围外 ID 返回不泄露对象存在性的结果，日志保留 traceId 和授权判定。
 
 ## 7. 后台界面
 
@@ -675,20 +842,30 @@ CREATE TABLE seo_ping_queue (
 
 | 菜单 key | 名称 | 父菜单 | 路由 | 权限码 |
 |---|---|---|---|---|
+| seo | 搜索引擎优化 | settings | /seo/meta | seo:meta:edit |
 
 ### 7.2 页面
 
-| 页面 | 路由 | 主要功能 | 使用的 admin-kit 组件 |
+| 页面 | 路由 | 主要功能 | 共享组件 |
 |---|---|---|---|
+| 搜索引擎优化 | /seo/meta | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
 
 ### 7.3 注册到内容编辑外壳的标签
 
-| key | 适用内容类型 | 权限码 | 组件 |
+| key | 适用内容类型 | 权限码 | 计划组件 |
 |---|---|---|---|
+| seo-panel | 已注册可路由类型 | seo:meta:edit | SeoPanel |
 
 ### 7.4 界面文案
 
-> texts.ts 中的分组与关键文案；后台只用简体中文。
+| texts.ts 分组 | 中文文案 | 使用场景 |
+|---|---|---|
+| seo.title | SEO | 页面标题 |
+| seo.save | 保存成功 | 保存反馈 |
+| seo.conflict | 内容已被修改，请刷新后重试 | 并发冲突 |
+| seo.confirm | 确认执行此操作？ | 有副作用操作确认 |
+
+字段名、枚举标签、按钮、空状态、错误与任务进度统一集中在本模块 texts.ts；后台不引入 vue-i18n。无权限时隐藏操作，服务端仍再次校验。
 
 ## 8. 前台组件与模板
 
@@ -696,122 +873,155 @@ CREATE TABLE seo_ping_queue (
 
 ### 8.1 组件
 
-| 组件类型 | 名称（label） | 变体 | 分类 | allowedIn | 数据源 | 是否水合 |
-|---|---|---|---|---|---|---|
+不适用：不拥有可拖入布局的组件类型。运行时 UI 或主题固定区域见第 5、6 章。
 
 ### 8.2 属性与翻译
 
-| 组件 | 属性 | 类型 / x-editor | x-translatable | maxLength |
-|---|---|---|---|---|
+不适用：无本模块组件属性；可翻译内容及资源按第 3、4 章登记的提供方处理。
 
 ### 8.3 模板
 
-| 模板 key | 内容类型 | 固定区域与插槽 |
-|---|---|---|
+不适用：模板元数据由 page 的 TemplateProvider 提供；本模块只提供所属组件或数据。
 
 ### 8.4 数据源
 
-| key | 参数 | 返回 | 缓存标签 |
-|---|---|---|---|
+不适用：不提供 DataSourceProvider；使用发布快照或既有贡献接口。
 
 ### 8.5 文案键
 
-| 文案键 | 默认中文文案 | 使用位置 |
-|---|---|---|
+不适用：本模块不直接显示前台 UI；公开错误文案键见 6.5。
 
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
 
-| 键 | 类型 | 默认值 | 说明 | 敏感（x-secret） |
-|---|---|---|---|---|
+不新增 sys_setting 键；第 4 章业务配置表、模板或布局字段沿用各自定义及默认值，不能重复存放同一配置。没有独立站点设置 Schema 时，描述符 settings 为 null。
 
-### 9.2 部署配置（application.yml，前缀 b2bweb.<id>）
+### 9.2 部署配置（application.yml）
 
-| 属性 | 默认值 | 说明 |
-|---|---|---|
+本模块不另设连接地址或凭据前缀；数据库、Redis、对象存储及远程服务配置采用平台框架 5.12、5.14 的 `b2bweb.infra.*` 和环境变量。第 2.7 节列出的端口由 application 装配。部署地址、TLS 与密钥不写入仓库或响应。
+
+执行批量任务时使用第 10 章的处理量与取消点；这些是初始运行预算，不能覆盖接口安全上限。任何新增可调参数先在本节明确类型、默认值及边界后再实现。
 
 ## 10. 定时与异步任务
 
-> 没有时写“不适用”。定时任务实现 `ScheduledTask`，通用异步任务实现 `JobHandler`（平台框架设计 4.4.12）；锁名与任务类型按平台框架设计 3.7 命名。事件监听器已在 2.6 中列出，这里只补充耗时长、需要单独调度或重试的处理。`PER_SITE` 任务由 core 在站点上下文中逐站点执行，停用了本模块的站点自动跳过（系统设计 3.8）。外部服务（AI 引擎、邮件、CDN）只在事务提交后的异步处理中调用，失败不回滚已提交的业务数据（ADR-003、ADR-017）。
-
-| 任务 | 类型（定时 / sys_job / 事件监听） | 触发 | 锁名 | 幂等与重试 | 模块停用时 |
+| 任务 | 类型 | 触发 | 处理粒度与批量 | 锁与幂等 | 停用行为 |
 |---|---|---|---|---|---|
+| 健康检查 | sys_job | 人工触发或夜间 | 100 本地化/批；规则异常单列；可取消 | `seo.audit`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| IndexNow 推送 | 定时 | 队列到期 | 按服务上限分批；URL 去重；失败退避 | `seo.indexnow`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| 链接索引重建 | sys_job | 发布事件或管理员请求 | 100 本地化/批；按最新修订替换 | `seo.rebuild_links`；按站点和对象/版本认领，幂等完成 | 不可停用 |
 
-> 每个任务另写：执行粒度（`PER_SITE` / 系统级）、单次处理量与分批方式、超时、能否取消、失败后的可见结果（`sys_job` 的失败报告、指标 `b2bweb.<id>.*` 或告警）。
+普通任务为 PER_SITE；全局引擎或跨站点认领仅在 4.5 允许的位置执行。每批完成后更新进度与心跳，检查取消；短事务不得包裹外部调用。单次工作预算 60 秒，到预算即保存游标并续跑，外部端口超时用框架 4.7 的各端口上限。可重试失败指数退避；永久失败写 sys_job 报告或领域任务状态并输出 `b2bweb.seo.task.errors` 指标，不记录敏感载荷。
+
+上述标识为本模块任务/锁的稳定名称；定时任务仅该任务互斥，不用一个 seo.task 串行阻塞全部维护。core 已负责站点命名空间，不重复手工添加 s{siteId}。sys_job 进度写入后在安全批次边界响应取消；任务超时/租约丢失须停止提交新结果。
 
 ## 11. 测试要点
 
-> 测试层级、替身与契约测试的写法见平台框架设计第 9 章，门禁与覆盖率见第 10 章。“至少”后的用例为必测项；不适用的行写“不适用：<原因>”，不得删除。
-
-| 层级 | 覆盖内容 | 关键用例 |
+| 层级 | 覆盖内容 | 必测用例 |
 |---|---|---|
-| 单元 | <领域对象、不变量（3.2）、状态机（3.3）、扩展点实现（2.4）> | 至少：3.2 每条不变量的违反用例；3.3 每个非法状态转换被拒绝 |
-| 模块集成（Testcontainers + 替身） | <应用服务 + 本模块的表与迁移> | 至少：迁移脚本在空库（MySQL 8.4）上执行通过；6.1 中声明的并发控制与幂等；唯一约束冲突转为 6.5 的错误码 |
-| 契约（作为提供方） | <2.3 中本模块提供的服务接口> | 继承 testkit 中的 `<接口名>ContractTest`，用真实实现运行；不提供服务接口时写“不适用” |
-| 事件（Scenario API，含重复投递） | <2.6 中发布与订阅的事件> | 至少：事件在业务事务内发布、事务回滚时不发布；每个监听器重复投递只生效一次、过期事件被丢弃（ADR-003） |
-| 停用行为（可停用模块） | <系统设计 3.8 的各项> | 至少：停用后写操作与公开接口返回 `CORE_MODULE_DISABLED`；扩展点实现不再被收集；定时任务跳过；`analyzeDisableImpact` 的结果正确；重新启用后数据完整（S10） |
-| 站点隔离 | <6.1 的全部后台接口与 4.5 的全部站点级表> | 至少：站点 A 的用户不能读写站点 B 的数据（遍历全部后台端点，系统设计 28）；豁免表只在 4.5 列出的位置访问 |
-| 翻译（如有可翻译字段） | <`TranslatableContentProvider` / `TranslatableResourceProvider` 实现> | 至少：提取 → 回写往返一致；`x-translatable = false` 的字段不被提取；`HUMAN` / `REVIEWED` 段不被机器译文覆盖；资源变化时发布 `TranslatableResourceChangedEvent` |
-| 前端（组件、Admin） | <主题组件、Admin 页面> | 至少：组件 Schema 校验与画廊示例（视觉回归）；前台文字只来自文案键、后台文字只来自 `texts.ts`；无权限时操作不可见 |
-| E2E（场景） | <13.2 中验证方式为 E2E 的验收项> | Playwright 用例名包含 13.2 的验收项编号 |
+| 单元 | 第 3.2 全部不变量、3.3 状态与纯计算 | 逐条构造非法输入；合法及非法转换均断言；业务用例见 13.2 |
+| 模块集成（Testcontainers + 替身） | 第 6.1 全部端点、唯一约束和版本控制 | MySQL 8.4 空库迁移；跨站点 ID 拒绝；并发保存只成功一份；幂等重放不重复写入 |
+| 契约（提供方） | 不适用：不提供服务接口 | 扩展点实现运行框架 4.8.5 中对应 Conformance 套件 |
+| 事件（Scenario API） | 2.6 的发布与订阅 | 事务回滚无事件；重复投递不重复副作用；新修订后再投旧事件不回退 |
+| 停用行为 | 系统设计 3.8 | 不适用：不可停用；验证停用其可选依赖后仍能降级 |
+| 站点隔离 | 6.1 全部端点、4.5 全部站点表或缓存索引 | A/B 两站同构数据互不可见；全局豁免表只在显式系统权限处访问 |
+| 翻译 | 可翻译内容/资源与人工保护 | 提取回写往返一致，非文本不翻译，HUMAN/REVIEWED 不覆盖，源变化标记过期 |
+| 前端 | Admin、Schema、主题及权限 | Vitest 校验字段/权限/错误；组件画廊视觉回归、Token 及文案键检查；未授权操作不可见 |
+| E2E | 13.2 用例 | Playwright 用例名包含模块及 A 编号；不得把未实现测试写成已通过 |
+
+本章是实现后的测试要求；当前仓库没有应用或测试工程，本次只验证文档及契约引用，未执行上述应用测试。
 
 ## 12. 独立开发说明
 
 ### 12.1 依赖的测试替身
 
-> 2.2 使用的每个服务接口、2.7 使用的每个端口、2.5 收集的每个扩展点，都要在此列出 testkit 中对应的替身或示例实现（平台框架设计 2.4、第 9 章）。testkit 中缺少的替身向框架组提出需求（DoR 第 3 条，平台框架设计 2.7），不在本模块中另建一套代替其他模块的模拟实现；单元测试可以用 Mockito 模拟个别方法，但对其他模块行为的假设以替身与契约测试为准。
-
-| 替身（platform-testkit） | 代替的模块 | 用途 | 需要预置的数据 |
+| 替身或夹具（platform-testkit） | 替代能力 | 用途 | 预置数据 |
 |---|---|---|---|
+| InMemoryContentApi | ContentApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryUrlApi | UrlApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryMediaApi | MediaApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryTaxonomyApi | TaxonomyApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryTranslationApi | TranslationApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryTaggedCache | TaggedCache | 替代远程服务或共享基础设施 | 成功、超时、临时错误、永久拒绝与重复请求 |
+| RecordingIndexNowClient | IndexNowClient | 替代远程服务或共享基础设施 | 成功、超时、临时错误、永久拒绝与重复请求 |
+| RecordingCdnPurger | CdnPurger | 替代远程服务或共享基础设施 | 成功、超时、临时错误、永久拒绝与重复请求 |
+| InMemoryBufferStore | BufferStore | 替代远程服务或共享基础设施 | 成功、超时、临时错误、永久拒绝与重复请求 |
+| SampleSchemaOrgProvider | SchemaOrgProvider | 验证收集过滤及缺省行为 | sample 类型、key、空输出与抛错实现 |
+| SampleSeoVariableProvider | SeoVariableProvider | 验证收集过滤及缺省行为 | sample 类型、key、空输出与抛错实现 |
+| SampleSeoRule | SeoRule | 验证收集过滤及缺省行为 | sample 类型、key、空输出与抛错实现 |
+| SampleSitemapProvider | SitemapProvider | 验证收集过滤及缺省行为 | sample 类型、key、空输出与抛错实现 |
+| TestPlatform / TestSites / TestUsers | core 公共服务与站点身份 | 按框架 9.2 装配替身、ManualClock | A/B 站、不同角色/语言范围、停用模块 |
+| InMemorySiteApi | SiteApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeSiteContextProvider | SiteContextProvider | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakePermissionChecker | PermissionChecker | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryAuditApi | AuditApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeEventMetaFactory | EventMetaFactory | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryExtensionRegistry | ExtensionRegistry | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryJobApi | JobApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+
+类名是平台框架已定义的 testkit 交付要求，仓库尚无实现。发现缺少夹具或行为时向框架组提出 DoR 阻塞，不在模块中建立另一套跨模块模拟。
 
 ### 12.2 本模块提供的替身
 
-> 只有提供服务接口的模块填写（core、content、url、media、taxonomy、form、notification、translation，见平台框架设计 4.2）；其他模块写“不适用：不提供服务接口”。替身由框架组编写并维护，与真实实现通过同一套契约测试；本模块改变服务接口的行为时，在同一个 PR 中同步修改契约测试，并通知框架组修改替身（平台框架设计 2.3）。无法消除的差异（如不做病毒扫描、不生成真实缩略图）列入下表，并确认不影响使用方的测试结论。
-
-| 服务接口 | testkit 中的替身 | 与真实实现的差异（应为零，或已在契约测试中声明） |
-|---|---|---|
+不适用：不提供服务接口。扩展点的 Sample 实现由 testkit 统一维护。
 
 ### 12.3 本地运行
 
-> 启动方式、依赖的本地服务（平台框架设计第 11 章）、需要的配置。
+当前仅文档，尚无可运行的 `seo` 工程。M0 完成后，在仓库根目录按平台框架第 11 章启动 MySQL 8.4、Redis 及本模块 2.7 需要的本地服务；通过 application 的 dev/test profile 装配本模块及 TestPlatform，不能直接依赖其他业务模块的实现。
+
+后端执行框架规定的 Maven 模块集成/契约测试，前端执行 pnpm lint、typecheck、test；演示环境再用 dev 装配执行第 13 章 E2E。具体命令以 M0 实际建立的 wrapper、脚本和锁文件为准，本文不虚构当前可运行命令。
 
 ### 12.4 演示数据
 
-> tools/demo-data 中本模块的数据及其用途。
+计划在框架规定的 `tools/demo-data` 中提供 `seo` 的演示数据（该目录尚未建立）：两站相同业务 key、中文源内容、已发布英语与未公开语言、一个草稿/缺失语言对象、一个越权用户和一个故障服务场景。模块特有数据按 13.2 的四个输入构造；不得使用真实联系人或凭据。
+
+加载器只经已授权后台接口录入中文源数据，不直接写数据库；目标语言通过翻译流程及假引擎生成。按自然键重复加载幂等，仅补缺；不实际建立此目录直到 M0 任务要求实现。
 
 ## 13. 验收标准
 
 ### 13.1 里程碑切片
 
-> 与平台框架设计 13.5 中本模块的一行一致；调整切片按平台框架设计 12.5 处理。该里程碑没有切片时写“—”（不表示不能提前开发）。
-
 | 里程碑 | 交付功能 | 验收场景 |
 |---|---|---|
-| M1 | <…> | <S1、S2、S4 中与本模块相关的部分，或“模块自身”> |
-| M2 | <…> | <…> |
-| M3 | <…> | <…> |
-| M4 | <…> | <…> |
+| M1 | Meta 自动生成与覆盖、canonical、Product / Breadcrumb / Organization JSON-LD | S1、S2、S4（不含翻译/GA4） |
+| M2 | — | — |
+| M3 | Sitemap（含图片）、robots、IndexNow、链接索引、健康检查、hreflang | S5、S7–S9、S11–S13；S4 的同意/分配增强 |
+| M4 | — | — |
+
+切片逐字沿用平台框架 13.5；“—”表示没有该阶段集成要求，不表示不能提前实现。
 
 ### 13.2 验收项
 
-> 每条验收项写明输入、期望结果与度量（如“5 分钟内”“P95 ≤ 200 ms”）。场景验收项只写本模块负责的部分（如 S2 中 url 负责“旧 URL 301 到新 URL、不产生重定向链”），不复述整个场景；各里程碑的场景见平台框架设计 13.6。验证方式为单元 / 集成 / E2E 时写出测试类或用例名；人工检查写明检查人与方法。
-
-| # | 验收项 | 对应场景（S1–S13）或模块自身 | 验证方式（单元 / 集成 / E2E / 人工） | 里程碑 |
+| # | 输入与期望结果 | 场景 | 验证方式（计划用例名） | 里程碑 |
 |---|---|---|---|---|
-| A1 | <…> | <S? / 模块自身> | <集成：`<测试类>`> | M? |
+| A1 | 人工标题覆盖不被模板计算覆盖，恢复自动后使用当前语言模板 | S1 | 集成：`SeoA1IT`；涉及界面时 E2E：`seo-A1` | M1 |
+| A2 | hreflang 只含已发布且公开语言，HTML 与 sitemap 一致 | S11 | 集成：`SeoA2IT`；涉及界面时 E2E：`seo-A2` | M3 |
+| A3 | sitemap 排除 noindex、非自身 canonical 及停用内容，每片不超过 50000 URL/50MB | S9 | 集成：`SeoA3IT`；涉及界面时 E2E：`seo-A3` | M3 |
+| A4 | 健康报告发现断链、孤立页、缺失 alt 和未审校机器译文，能跳到对应编辑页 | S9 | 集成：`SeoA4IT`；涉及界面时 E2E：`seo-A4` | M3 |
+| A5 | ArchUnit 与 Modulith verify 通过；零业务模块编译依赖、跨表 JOIN/外键 | 模块自身 | 架构：`SeoArchitectureTest` | M1 |
+| A6 | 第 6.1 当前切片已交付后台端点覆盖 A/B 站隔离、权限拒绝；全部成功写操作有脱敏审计 | 模块自身 | 集成：`SeoIsolationIT`、`SeoAuditIT` | M1 |
+| A7 | 自身停用被拒绝，可选依赖缺失不阻塞基础功能 | 模块自身 | 集成：`SeoModuleLifecycleIT` | M2 |
+| A8 | 可翻译字段/资源登记并通过往返及人工保护测试 | S11、S12 | 集成：`SeoLocaleIT` | M3 |
+| A9 | 后台常规 API P95≤500ms（50并发用户）；标注为 Delivery 热路径的读方法 P95≤20ms；本模块公开数据变更在≤60s缓存预算内可见，记录数据规模及冷热缓存条件 | 模块自身 | 性能报告：`SeoPerformanceIT`；架构负责人核对适用指标 | M1 |
+| A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
+| A11 | 同时保存正文与 SEO 的旧共同版本只成功一次；改模板后重新发布的自动值更新，但人工覆盖与上一修订保持可追溯。 | 模块自身 / 5.2 | 集成：`SeoA11IT`；涉及界面 E2E：`seo-A11` | M1 |
+| A12 | 关闭英语后 HTML、语言切换与 sitemap 不再含英语；page=2 canonical 保留 page=2；未发布语言不输出 alternate。 | 模块自身 / 5.2 | 集成：`SeoA12IT`；涉及界面 E2E：`seo-A12` | M3 |
+| A13 | 只重新发布未改内容时 lastmod 不变；临界文件按两个阈值正确切片；含 </script> 的业务标题不终止 JSON-LD 脚本。 | 模块自身 / 5.2 | 集成：`SeoA13IT`；涉及界面 E2E：`seo-A13` | M3 |
+| A14 | 一条规则抛错时报告标明未执行/失败，其他规则有结果；IndexNow 失败重试只更新队列状态，已发布内容仍在线。 | 模块自身 / 5.2 | 集成：`SeoA14IT`；涉及界面 E2E：`seo-A14` | M3 |
 
-> 每个模块都要包含以下通用验收项（不适用时注明原因）：架构测试与 Modulith 验证通过，无跨模块 import 与表访问；站点隔离测试覆盖全部后台接口；后台写操作都有权限码与审计记录；可停用模块满足 S10；可翻译字段与资源已登记并通过往返测试（S11、S12）；系统设计 1.5 中与本模块相关的非功能指标；文档与代码一致（DoD，平台框架设计 2.8）。
+用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
 
 ## 14. 待定问题
 
-> 记录评审与开发中尚未决定的事项。“阻塞开发”的问题必须在评审通过（DoR）前关闭；需要新契约或修改上层文档的问题，写明契约变更请求或 Issue 编号。已关闭的问题保留在表中，填写结论。
-
-| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论 |
+| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
+| SEO-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
+| SEO-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 已澄清：框架 4.5.16 已用草稿事件 + collectDraft 和发布快照扫描覆盖本模块内容媒体引用；无需新增 MediaApi 引用写方法。保存必须经 updateDraftMeta 产生事件，删除竞态见 MEDIA-02。 |
 
 ## 修订记录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | V1.0 | 2026-10-14 | 初稿 |
+| V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
+| V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |

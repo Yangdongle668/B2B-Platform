@@ -10,12 +10,12 @@
 | 可停用 | 否 |
 | 模块版本 | 1.0.0（module.json 的 version） |
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
-| 里程碑切片 | M1：<…>；M2：<…>；M3：<…>；M4：<…>（详见第 13 节） |
+| 里程碑切片 | M1：词汇表、分类项、指派、分类落地页；M2：—；M3：分类名作为可翻译资源；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.0 |
+| 文档版本 | V1.2 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-14 |
-| 依据 | 系统设计 V1.4 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
+| 更新日期 | 2026-10-20 |
+| 依据 | 系统设计 V1.4 第 7 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -23,20 +23,31 @@
 
 ### 1.1 职责
 
-> 一段概述 + 要点列表；与系统设计 3.2 的职责描述一致，并细化到本模块的功能清单。
+管理词汇表、层级分类项与内容指派；为可路由分类维护 TERM_PAGE；发布分类投影，向交付、面包屑及筛选提供分类视图。
+
+功能交付范围按第 13 章分为 M1–M4；表结构、约束与枚举以第 3、4 章为准。
 
 ### 1.2 不负责的事
 
-| 事项 | 归属模块 | 说明 |
+| 事项 | 归属模块 | 边界 |
 |---|---|---|
+| 上层产品、文章、询盘业务 | 对应 L3 模块 | 不反向调用上层服务或访问其表 |
+| 身份、权限、设置、任务及审计 | platform-core | 复用平台公共服务 |
+| 第三方客户端与网络传输 | infrastructure | 仅经既有端口或 L2 服务使用，不在业务模块引入客户端 |
 
 ### 1.3 协作概览
 
-> 用图或表说明本模块与哪些模块协作、通过哪种方式（服务接口 / 事件 / 扩展点）。只画契约，不画实现。
+| 协作方式 | 对象 | 本模块行为 |
+|---|---|---|
+| 服务接口 | ContentApi | 方法与事务边界见 2.2；无跨模块表访问 |
+| 扩展点 | ContentTypeProvider、PublishContributor、DataSourceProvider、BreadcrumbProvider、TranslatableContentProvider、TranslatableResourceProvider | 实现/收集清单见 2.4、2.5 |
+| 领域事件 | 见 2.6 | 与本地事务一起登记，提交后异步投递；重复与过期处理独立验证 |
 
 ### 1.4 适用的架构约束
 
-> 列出与本模块直接相关的原则（P1–P8）、ADR 规则与 CLAUDE.md 禁止项，以及本模块如何满足。
+遵守 P2、P3 与 ADR-018：编译依赖只到 platform-core/platform-api，跨模块协作只用第 2 章登记契约；只访问自己的表，禁止跨模块 JOIN/外键。遵守 ADR-003：事务内登记、提交后投递、监听器幂等并检查过期。遵守 ADR-009：每次请求/任务明确站点上下文，站点表默认过滤。
+
+公开读取只用当前语言发布态，不跨语言回退（ADR-005）；预览与公开缓存隔离。后台中文文案与错误集中管理，前台文案经 UiTextApi，样式只用 Design Token。远程端口在数据库事务外调用，密钥经 SecretCipher，不写日志。
 
 ## 2. 依赖与契约
 
@@ -44,62 +55,145 @@
 
 ```json
 {
-  "id": "<id>",
-  "name": "<中文名称>",
+  "id": "taxonomy",
+  "name": "分类体系",
   "version": "1.0.0",
-  "layer": "L3",
+  "layer": "L2",
   "platform": ">=1.0.0 <2.0.0",
-  "requires": {},
+  "requires": {
+    "content": "^1.0"
+  },
   "optional": {},
-  "disableable": true,
-  "tablePrefix": "<前缀>_",
-  "apiPrefix": "<id>",
-  "permissions": [],
-  "menus": [],
+  "disableable": false,
+  "tablePrefix": "tx_",
+  "apiPrefix": "taxonomy",
+  "permissions": [
+    {
+      "code": "taxonomy:vocabulary:view",
+      "name": "查看词汇表"
+    },
+    {
+      "code": "taxonomy:vocabulary:manage",
+      "name": "管理词汇表"
+    },
+    {
+      "code": "taxonomy:term:view",
+      "name": "查看分类项"
+    },
+    {
+      "code": "taxonomy:term:edit",
+      "name": "编辑分类项"
+    },
+    {
+      "code": "taxonomy:term:delete",
+      "name": "删除分类项"
+    },
+    {
+      "code": "content:term-page:edit",
+      "name": "编辑分类落地页"
+    },
+    {
+      "code": "content:term-page:review",
+      "name": "审核分类落地页"
+    },
+    {
+      "code": "content:term-page:publish",
+      "name": "发布分类落地页"
+    },
+    {
+      "code": "content:term-page:delete",
+      "name": "删除分类落地页"
+    }
+  ],
+  "menus": [
+    {
+      "key": "taxonomy",
+      "name": "分类体系",
+      "parent": "editorial",
+      "route": "/taxonomy/vocabularies",
+      "permission": "taxonomy:vocabulary:view",
+      "order": 100
+    }
+  ],
   "settings": null,
   "components": [],
-  "events": { "publishes": [], "subscribes": [] }
+  "events": {
+    "publishes": [
+      "TermChangedEvent",
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": [
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent",
+      "ModuleDisabledEvent",
+      "SiteSettingsChangedEvent"
+    ]
+  }
 }
 ```
 
-> 完整描述符，须通过平台框架设计附录 A 的 Schema 与 A.3 的校验规则。
+描述符为 M0 工程建立后的实现要求；目前尚无实际控制器、Schema 或组件包。依赖只声明运行能力；Maven 仍只依赖 platform-api/core。组件清单是本模块负责的类型，运行时 UI 不登记成可拖入布局的组件。
 
 ### 2.2 使用的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机（事务内 / 外） | 测试替身 |
+| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
+| `ContentApi`（4.4.16） | create、updateDraftMeta、markDraftChanged、findPublishedSnapshot | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
+| `SiteContextProvider`（4.4.2） | 按该契约声明的方法 | 当前站点；异步与任务由 core 恢复 | 业务事务内；站点切换由任务入口完成 | `FakeSiteContextProvider` |
+| `PermissionChecker`（4.4.7） | 按该契约声明的方法 | 后台权限与数据范围 | 业务事务内；站点切换由任务入口完成 | `FakePermissionChecker` |
+| `AuditApi`（4.4.9） | 按该契约声明的方法 | 同事务写审计，密钥与个人数据脱敏 | 业务事务内；站点切换由任务入口完成 | `InMemoryAuditApi` |
+| `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
+
+所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
 
 ### 2.3 提供的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 实现类 | 契约测试 | 说明（幂等、权限、性能目标） |
+| 接口（平台框架设计小节） | 方法 | 实现类 | 契约测试 | 语义 |
 |---|---|---|---|---|
+| `TaxonomyApi`（4.4.19） | vocabulary、vocabularies、vocabulariesFor、findTerm、findTerms、termViews、ancestors、ancestorIds、children、isSameOrDescendant、findBySourceNamePath、findByLandingContent、assignments、assignmentsOf、replaceAssignments | `TaxonomyApiImpl` | `TaxonomyApiContractTest` 继承 `TaxonomyApiContract` | 完整遵守框架签名、站点隔离、事务及异常语义；远程调用按第 5 章拆分短事务；标注的交付热路径 P95 ≤ 20ms |
 
 ### 2.4 实现的扩展点
 
-| 扩展点（平台框架设计小节） | 实现类 | 适用范围（内容类型 / 资源类型） | order | 收集方 |
+| 扩展点（平台框架设计小节） | 计划实现类 | 适用范围 | order | 收集方 |
 |---|---|---|---|---|
+| `ContentTypeProvider`（4.5.2） | `TaxonomyContentTypeProvider` | TERM_PAGE；route hints 按词汇表 | OWNER=500 | content / url（经 content） |
+| `PublishContributor`（4.5.3） | `TaxonomyPublishContributor` | TERM_PAGE 的 card 与分类详情；全部适用内容类型的顶层 terms 投影 | OWNER=500 | content |
+| `DataSourceProvider`（4.5.6） | `TaxonomyDataSourceProvider` | term-children | DEFAULT=1000 | delivery |
+| `BreadcrumbProvider`（4.5.9） | `TaxonomyBreadcrumbProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | delivery / seo |
+| `TranslatableContentProvider`（4.5.20） | `TaxonomyTranslatableContentProvider` | TERM_PAGE 的内容类草稿字段 | DEFAULT=1000 | translation |
+| `TranslatableResourceProvider`（4.5.21） | `TaxonomyTranslatableResourceProvider` | 分类名称等站点资源，提取范围以 4.3 本地化字段为准 | DEFAULT=1000 | translation |
+| `PlatformModule`（4.5.22） | `TaxonomyModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
+
+以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。本模块不可站点级停用；对可选依赖缺失/停用仍须按框架约定降级。
 
 ### 2.5 收集的扩展点
 
-| 扩展点 | 调用时机 | 过滤（站点启用状态、内容类型等） | 实现缺失或抛出异常时的行为 | 测试用示例实现 |
-|---|---|---|---|---|
+不适用：不收集业务扩展点；PlatformModule 与任务 SPI 由 core 收集。
 
 ### 2.6 发布与订阅的事件
 
 发布：
 
-| 事件 | 触发时机（所在事务） | 关键字段 | 主要订阅方 |
+| 事件 | 触发事务 | 现有 payload 字段 | 订阅方 |
 |---|---|---|---|
+| `TermChangedEvent` | 词汇表内分类新建、重命名、移动、删除同事务，change 取框架枚举 | meta、termId、vocabularyKey、change、parentId、previousParentId、landingContentId、descendantTermIds | 框架 4.2.4；未登记发布方的差异在第 14 章列出 |
+| `TranslatableResourceChangedEvent` | 源语言可翻译文本实际变化时 UPSERTED，资源整体删除时 DELETED；非文本变化与目标语言 apply 不发布此事件 | meta、resourceType、resourceId、change | 框架 4.2.4；未登记发布方的差异在第 14 章列出 |
 
 订阅：
 
-| 事件 | 处理 | 幂等方式 | 过期判断 | 失败与重试 |
+| 事件 | 处理 | 幂等 | 过期与删除 | 失败与重试 |
 |---|---|---|---|---|
+| `ContentPurgedEvent` | 按事件 contentId/localizationIds 清理本模块外部引用或子行；历史业务快照按 4.6 保留；不回查已不存在的父内容 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `LocalizationDeletedEvent` | 仅清理对应语言的本模块本地化/投影，不删除其他语言或共享业务字段 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ModuleDisabledEvent` | 当前站点隐藏该模块的公开能力，保留自身数据；处理事件.moduleId 而非假定是接收方自身 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `SiteSettingsChangedEvent` | 按 scopes、settingKeys、localeChanges 筛选 4.6 的相关变化；不对无关设置做全量重建 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+
+监听器按框架 5.8 建立站点/system 上下文；`ContentPurgedEvent` 在模块停用时仍必须清理（deliverWhenModuleDisabled）。其他停用期间跳过并完成的事件，重新启用后通过扫描当前状态补偿，不能假定还会重投。数据库幂等标记与本模块数据在同一事务提交；外部发送、下载、搜索与 CDN 调用不得被数据库长事务包裹，使用已声明的任务/端口和业务幂等键。事件 payload 仅引用框架现有字段，本文不扩展签名。
 
 ### 2.7 使用的端口
 
-| 端口 | 用途 | 测试替身 |
-|---|---|---|
+不适用：不直接使用基础设施端口；媒体、通知等外部操作经相应 L2 服务编排。
 
 ## 3. 领域模型
 
@@ -118,7 +212,7 @@
 
 | 补充 | 理由 |
 |---|---|
-| `tx_vocabulary.name`、`description`、`builtin`、`sort_order`、`deleted_at` | 后台显示与排序；内置词汇表（系统设计 7.2）不可删除；配置类实体软删除（本文 2.5） |
+| `tx_vocabulary.name`、`description`、`builtin`、`sort_order`、`deleted_at` | 后台显示与排序；内置词汇表（系统设计 7.2）不可删除；配置类实体软删除（平台框架设计 7.5） |
 | `tx_term.deleted_at` | 分类项 ID 被快照、导航、图谱、URL 规则引用，软删除保留 ID，便于审计与恢复 |
 | `tx_term_localization.description` 的归属 | 系统设计 7.1 把 description 放在本表，7.3 又规定描述随 TERM_PAGE 作为内容翻译：可路由分类项的 description 是 TERM_PAGE 的草稿业务字段，经 taxonomy 的 `PublishContributor` 进入快照、经 `TranslatableContentProvider` 翻译；不可路由分类项的 description 只在后台显示，不翻译。站点资源指纹只覆盖 `name` |
 | `tx_assignment.vocabulary_id`、`primary_flag` | 用唯一索引保证“每个内容在每个词汇表最多一个主分类” |
@@ -145,11 +239,11 @@
 
 ### 3.3 状态机
 
-<<FILL: 状态与转换；没有状态机时写“不适用：<原因>”>>
+内容发布状态与草稿状态均由 ContentApi 管理，完整转换见 content 模块 3.3 和系统设计 6.3；本模块不复制状态列或自行转换。保存业务草稿只改变内容共同 version 与草稿状态，发布经 PublishContributor 参与同一事务；回收站、恢复、下线与翻译模式按内容内核执行。配置及站点资源保存即生效，不伪装成内容发布。
 
 ## 4. 数据模型
 
-> 遵守平台框架设计第 7 章的数据库通用约定。DDL 已在 MySQL 8.4 上执行通过；表结构以本节为准，与迁移脚本保持一致。
+> 遵守平台框架设计第 7 章的数据库通用约定。本节给出待实现 DDL；本次文档审查未重跑 MySQL，不能据此认定 DDL 已验证。M0 后按第 11 章在 MySQL 8.4 空库验证，并使实际迁移脚本与本节一致。
 
 ### 4.1 表清单
 
@@ -227,7 +321,7 @@ CREATE TABLE tx_vocabulary (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '词汇表（产品分类、应用、行业、文章栏目、标签、认证及站点自定义）';
 ```
 
-要点：站点创建或 taxonomy 安装时，为每个站点写入系统设计 7.2 的 6 个内置词汇表（`builtin = 1`），见第 23 章。
+要点：站点创建或 taxonomy 安装时，为每个站点写入系统设计 7.2 的 6 个内置词汇表（`builtin = 1`），见平台框架设计 5.2、11.6。
 
 #### 4.3.2 `tx_term`：分类项
 
@@ -404,7 +498,12 @@ CREATE TABLE tx_assignment (
 
 ### 4.5 站点过滤
 
-<<FILL: | 表 | 行级拦截器（不豁免 / 豁免） | 访问方式与理由 |>>
+| 表 | 行级拦截器 | 访问方式与理由 |
+|---|---|---|
+| `tx_vocabulary` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `tx_term` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `tx_term_localization` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `tx_assignment` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
 
 ### 4.6 跨模块引用与清理
 
@@ -413,56 +512,105 @@ CREATE TABLE tx_assignment (
 | `tx_term.content_id` | content.`cnt_content`（TERM_PAGE） | taxonomy 经 `ContentApi` 创建、下线、移入回收站；内容被彻底删除时置空（分类项仍存在时，下次保存中文名称时重新创建） | `ContentPurgedEvent` |
 | `tx_assignment.content_id` | content.`cnt_content` | 内容彻底删除：删除其全部指派 | `ContentPurgedEvent` |
 | `tx_vocabulary.applicable_types` | 内容类型（代码注册） | 所属模块停用或 MISSING：保留配置，指派与筛选中忽略该类型 | `ModuleDisabledEvent` |
-| `tx_term_localization.locale` | core.`sys_site_locale` | 站点删除某语言：删除该语言的分类项本地化 | `SiteSettingsChangedEvent` |
+| `tx_term_localization.locale` | core.`sys_site_locale` | V1 不提供站点语言删除；语言取消公开只影响可见性，不删除本地化。未来删除须先完成平台清理协议 | `SiteSettingsChangedEvent` |
 | `created_by`、`updated_by` | core.`sys_user` | 不清理 | — |
 
 本模块发布的事件：`TermChangedEvent`（新建、更名、移动、删除）、`TranslatableResourceChangedEvent`（资源类型 `taxonomy.term`）。订阅：`ContentPurgedEvent`。
 
-以 `term_id` 引用本模块的其他表（`cnt_published_term`、`prd_product.primary_category_term_id`、`prd_category_attribute_set`、`nav_item.link_ref`、`url_pattern.vocabulary_id` 等）在收到 `TermChangedEvent`（DELETED / MOVED）后各自处理。
+以 `term_id` 引用本模块的其他表（`cnt_published_term`、`prd_product.primary_category_term_id`、`prd_category_attribute_set`、`nav_item.link_ref`、等）在收到 `TermChangedEvent`（DELETED / MOVED）后各自处理。
+
+url_pattern.vocabulary_id 指向词汇表而非 termId；词汇表没有分类项时才能删除，不能用某个 TermChangedEvent 的 termId 当作 vocabularyId 清理 URL 规则。taxonomy 不直接查询或修改 url 表。
 
 ### 4.7 迁移脚本
 
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
-| `db/migration/taxonomy/V001__init.sql` | 4.3 中的全部表（4 张：`tx_vocabulary`、`tx_term`、`tx_term_localization`、`tx_assignment`），按本节顺序创建 | <见第 13 节> |
+| `db/migration/taxonomy/V001__init.sql` | 4.3 中的全部表（4 张：`tx_vocabulary`、`tx_term`、`tx_term_localization`、`tx_assignment`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
 
 ## 5. 业务流程
 
-### 5.1 <流程名称>
+### 5.1 核心业务流程
 
-```text
-<步骤；标出事务边界、调用的服务接口、发布的事件、异步部分>
-```
-
-| 步骤 | 说明 | 失败处理 |
+| 步骤 | 事务及行为 | 失败处理 |
 |---|---|---|
+| 1 | 创建分类项时校验词汇表、父级与同站点，在同一事务中写 tx_term 及中文本地化；可路由项经 ContentApi.create 创建 TERM_PAGE，业务字段仍由 taxonomy 保存。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 2 | 移动分类时禁止移动到自身或后代，事务内重算子树 path/depth；发布 TermChangedEvent；分类落地页按 ContentApi 生命周期发布，路径变更交由 url。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | replaceAssignments 校验词汇表适用类型、多选及唯一主分类后整组替换；草稿指派不直接改变发布投影。删除被引用项前要求转移指派，保留已发布快照直至重新发布。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+
+后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
+
+### 5.2 一致性、失败与恢复约束
+
+| 场景 | 必须满足的行为 | 可验证结果 |
+|---|---|---|
+| 分类名称与落地页描述的来源 | taxonomy.term 翻译资源只承载分类名；有 TERM_PAGE 的分类描述从该内容的源语言发布快照翻译。非可路由分类的描述不擅自加入未登记资源契约。 | 修改未发布描述后触发旧修订翻译，结果仍来自已发布修订；分类名无目标语言不回退显示中文。 |
+| 树结构与并发移动 | 移动前锁定相关根/父节点并验证整棵子树最终 depth≤10、同词汇表且无环；所有 path/depth 同事务改动。锁顺序固定，死锁按明确重试返回，不留下半树。 | 两次交叉移动试图形成环，只能有合法一方提交；任何后代超深时整次移动拒绝、所有 path 不变。 |
+| 指派与发布投影分离 | replaceAssignments 替换草稿指派，所属内容保存事务负责 updateDraftMeta 的共同版本和草稿变化事件。发布态筛选只读 ContentApi 的 publishedTerms，不读 tx_assignment 冒充线上。 | 更换主分类但不发布，线上分类筛选与面包屑仍按上一修订；发布后投影一次性切换。 |
+| 删除引用与分类生命周期 | 检查子项和草稿指派，存在时拒绝删除；已发布投影根据 TermChangedEvent(DELETED) 清理，历史修订保留不可变快照。落地页退役经 ContentApi，不直接删除 cnt_ 行。 | 删除有指派项返回冲突；转移并合法删除后事件重复执行，线上投影不残留已删除 termId，历史修订仍可对比。 |
 
 ## 6. 接口
 
 ### 6.1 Admin 端点
 
-| 方法 | 路径（/api/admin/v1/<apiPrefix>/…） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
+| 方法 | 路径（相对 /api/admin/v1/taxonomy） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
 |---|---|---|---|---|---|
+| GET | `/vocabularies` | 词汇表与适用内容类型 | `taxonomy:vocabulary:view` | 只读；不写入业务状态 | 否 |
+| POST | `/vocabularies` | 新建自定义词汇表 | `taxonomy:vocabulary:manage` | 唯一键检查；重复创建返回 409（不覆盖已有资源） | taxonomy.vocabularies.post |
+| PUT | `/vocabularies/{key}` | 修改允许配置 | `taxonomy:vocabulary:manage` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | taxonomy.vocabularies.{key}.put |
+| DELETE | `/vocabularies/{key}` | 空且非内置才可删除 | `taxonomy:vocabulary:manage` | 校验聚合 version 与引用；已不存在返回 404，不能重复副作用 | taxonomy.vocabularies.{key}.delete |
+| GET | `/vocabularies/{key}/terms` | 分类树与本地化状态 | `taxonomy:term:view` | 只读；不写入业务状态 | 否 |
+| POST | `/vocabularies/{key}/terms` | 创建分类及可选落地页 | `taxonomy:term:edit` | 校验当前状态；按业务动作幂等，不重复生成外部副作用 | taxonomy.vocabularies.{key}.terms.post |
+| PUT | `/terms/{id}` | 保存分类草稿 | `taxonomy:term:edit` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | taxonomy.terms.{id}.put |
+| POST | `/terms/{id}/move` | 移动子树 | `taxonomy:term:edit` | 校验当前状态；按业务动作幂等，不重复生成外部副作用 | taxonomy.terms.{id}.move.post |
+| DELETE | `/terms/{id}` | 检查指派后删除 | `taxonomy:term:delete` | 校验聚合 version 与引用；已不存在返回 404，不能重复副作用 | taxonomy.terms.{id}.delete |
+| GET | `/terms/{id}` | 读取分类草稿、落地页标识与 version | `taxonomy:term:view` | 只读 | 否 |
+
+ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 100），默认 size=20，排序字段白名单。版本化资源按框架 5.5.6 使用 ETag: "v{version}" 与 If-Match，不能用任意 JSON 摘要替代平台版本协议；无 version 的集合写入方式见本节补充约束。创建返回资源及标识；耗时 POST 返回 202 与 jobId；无跨站点 ID 访问。写操作审计不包含凭据、完整个人数据或任意脚本正文。
+
+审核、发布、下线、修订、回收站与预览令牌统一使用 content 模块第 6 章端点，不在本模块复制生命周期控制器。业务草稿保存与共同 version 同步。
+
+**请求与结果约束**：词汇表声明 key、hierarchical、multiple、applicableTypes、routable；分类项输入 parentId、中文名称、slug、排序及共同 version。落地页仍由 ContentApi 管理。批量指派输入 termId/primary/sort，先验证全组再替换，不允许部分失败留下多主分类。
 
 ### 6.2 Public 端点
 
-| 方法 | 路径（/api/public/v1/<apiPrefix>/…） | 说明 | 限流 | 缓存 |
-|---|---|---|---|---|
+不适用：内容、菜单、媒体引用等由 delivery 返回；本模块不增加绕过发布态约束的公开读取接口。
 
 ### 6.3 Internal 端点
 
-| 方法 | 路径（/api/internal/v1/<apiPrefix>/…） | 说明 | 调用方 |
-|---|---|---|---|
+不适用：不新增 internal HTTP 端点；跨模块使用进程内 platform-api 契约。Nuxt 所需公共读取使用 6.2 的既有入口及可信代理认证。
 
 ### 6.4 权限码
 
-| 权限码 | 名称 | 数据范围 | 高危（sensitive） | 受语言范围限制（localeScoped） |
+| 权限码 | 名称 | 数据范围 | 高危 | 语言范围 |
 |---|---|---|---|---|
+| `taxonomy:vocabulary:view` | 查看词汇表 | 当前站点 | 否 | 否 |
+| `taxonomy:vocabulary:manage` | 管理词汇表 | 当前站点 | 否 | 否 |
+| `taxonomy:term:view` | 查看分类项 | 当前站点 | 否 | 否 |
+| `taxonomy:term:edit` | 编辑分类项 | 当前站点 | 否 | 否 |
+| `taxonomy:term:delete` | 删除分类项 | 当前站点 | 否 | 否 |
+| `content:term-page:edit` | 编辑分类落地页 | 当前站点 | 否 | 否 |
+| `content:term-page:review` | 审核分类落地页 | 当前站点 | 否 | 否 |
+| `content:term-page:publish` | 发布分类落地页 | 当前站点 | 否 | 否 |
+| `content:term-page:delete` | 删除分类落地页 | 当前站点 | 否 | 否 |
 
 ### 6.5 错误码
 
-| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键（仅公开接口） |
+| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键 |
 |---|---|---|---|
+| `TAXONOMY_VOCABULARY_NOT_FOUND` | 404 | 词汇表不存在 | —（仅后台） |
+| `TAXONOMY_TERM_NOT_FOUND` | 404 | 分类项不存在 | —（仅后台） |
+| `TAXONOMY_VOCABULARY_NOT_APPLICABLE` | 422 | 该词汇表不适用于此内容类型 | —（仅后台） |
+| `TAXONOMY_MULTIPLE_NOT_ALLOWED` | 422 | 该词汇表只允许选择一项 | —（仅后台） |
+| `TAXONOMY_PRIMARY_INVALID` | 422 | 必须且只能有一个主分类 | —（仅后台） |
+| `TAXONOMY_TERM_HAS_ASSIGNMENTS` | 409 | 分类项仍有内容指派，请先转移 | —（仅后台） |
+| `CORE_MODULE_DISABLED` | 404 | 站点已停用该模块 | errors.moduleDisabled |
+| `TAXONOMY_VERSION_CONFLICT`（模块内部错误码） | 409 / 412 | 资源已被修改，请刷新后重试 | — |
+
+跨模块错误使用框架已声明常量；本模块专用 HTTP 校验错误保存在本模块错误目录，不增加 platform-api 常量。公开接口不直接展示 detail；错误文案键统一登记在 UiTextApi。
+
+**重点业务失败**：TAXONOMY_PRIMARY_INVALID、TAXONOMY_MULTIPLE_NOT_ALLOWED、TAXONOMY_TERM_HAS_ASSIGNMENTS。模块内部错误不扩展 platform-api；HTTP 状态按本节与框架错误常量映射。
+
+本模块内部错误补充：`TAXONOMY_VERSION_CONFLICT` 默认 409，经 If-Match 提交为 412；幂等键复用但规范化业务请求不同为 `TAXONOMY_IDEMPOTENCY_CONFLICT`（409）；状态操作不适用为 `TAXONOMY_STATE_INVALID`（409）。只有实际存在相应端点时才注册/使用，均不新增跨模块错误常量。跨站点或数据范围外 ID 返回不泄露对象存在性的结果，日志保留 traceId 和授权判定。
 
 ## 7. 后台界面
 
@@ -470,20 +618,31 @@ CREATE TABLE tx_assignment (
 
 | 菜单 key | 名称 | 父菜单 | 路由 | 权限码 |
 |---|---|---|---|---|
+| taxonomy | 分类体系 | editorial | /taxonomy/vocabularies | taxonomy:vocabulary:view |
 
 ### 7.2 页面
 
-| 页面 | 路由 | 主要功能 | 使用的 admin-kit 组件 |
+| 页面 | 路由 | 主要功能 | 共享组件 |
 |---|---|---|---|
+| 分类体系 | /taxonomy/vocabularies | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
+| 内容编辑页 | /taxonomy/edit/:id | 业务标签 + 内容外壳；语言、审核、预览和发布统一交外壳 | 内容编辑外壳、ContentPicker、MediaPicker、TermPicker |
 
 ### 7.3 注册到内容编辑外壳的标签
 
-| key | 适用内容类型 | 权限码 | 组件 |
+| key | 适用内容类型 | 权限码 | 计划组件 |
 |---|---|---|---|
+| taxonomy-details | TERM_PAGE | content:term-page:edit | TaxonomyEditor |
 
 ### 7.4 界面文案
 
-> texts.ts 中的分组与关键文案；后台只用简体中文。
+| texts.ts 分组 | 中文文案 | 使用场景 |
+|---|---|---|
+| taxonomy.title | 分类体系 | 页面标题 |
+| taxonomy.save | 保存成功 | 保存反馈 |
+| taxonomy.conflict | 内容已被修改，请刷新后重试 | 并发冲突 |
+| taxonomy.confirm | 确认执行此操作？ | 有副作用操作确认 |
+
+字段名、枚举标签、按钮、空状态、错误与任务进度统一集中在本模块 texts.ts；后台不引入 vue-i18n。无权限时隐藏操作，服务端仍再次校验。
 
 ## 8. 前台组件与模板
 
@@ -491,122 +650,140 @@ CREATE TABLE tx_assignment (
 
 ### 8.1 组件
 
-| 组件类型 | 名称（label） | 变体 | 分类 | allowedIn | 数据源 | 是否水合 |
-|---|---|---|---|---|---|---|
+不适用：不拥有可拖入布局的组件类型。运行时 UI 或主题固定区域见第 5、6 章。
 
 ### 8.2 属性与翻译
 
-| 组件 | 属性 | 类型 / x-editor | x-translatable | maxLength |
-|---|---|---|---|---|
+不适用：无本模块组件属性；可翻译内容及资源按第 3、4 章登记的提供方处理。
 
 ### 8.3 模板
 
-| 模板 key | 内容类型 | 固定区域与插槽 |
-|---|---|---|
+不适用：模板元数据由 page 的 TemplateProvider 提供；本模块只提供所属组件或数据。
 
 ### 8.4 数据源
 
 | key | 参数 | 返回 | 缓存标签 |
 |---|---|---|---|
+| term-children | vocabularyKey、parentId、depth | 当前语言分类树 | term 标签与 TERM_PAGE 内容标签 |
+
+参数必须按 paramsSchema 校验，批量读取避免 N+1；单个数据源预算遵守 DataSourceLimits（500ms），超时返回可诊断的空区域。
+
+布局数据源每次最多 24 条（DataSourceRequest.limit），整体页面预算与并行度遵守框架 DataSourceLimits；HTTP 列表的 size≤100 不可直接用作布局数据源上限。
 
 ### 8.5 文案键
 
-| 文案键 | 默认中文文案 | 使用位置 |
-|---|---|---|
+不适用：本模块不直接显示前台 UI；公开错误文案键见 6.5。
 
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
 
-| 键 | 类型 | 默认值 | 说明 | 敏感（x-secret） |
-|---|---|---|---|---|
+不新增 sys_setting 键；第 4 章业务配置表、模板或布局字段沿用各自定义及默认值，不能重复存放同一配置。没有独立站点设置 Schema 时，描述符 settings 为 null。
 
-### 9.2 部署配置（application.yml，前缀 b2bweb.<id>）
+### 9.2 部署配置（application.yml）
 
-| 属性 | 默认值 | 说明 |
-|---|---|---|
+本模块不另设连接地址或凭据前缀；数据库、Redis、对象存储及远程服务配置采用平台框架 5.12、5.14 的 `b2bweb.infra.*` 和环境变量。第 2.7 节列出的端口由 application 装配。部署地址、TLS 与密钥不写入仓库或响应。
+
+执行批量任务时使用第 10 章的处理量与取消点；这些是初始运行预算，不能覆盖接口安全上限。任何新增可调参数先在本节明确类型、默认值及边界后再实现。
 
 ## 10. 定时与异步任务
 
-> 没有时写“不适用”。定时任务实现 `ScheduledTask`，通用异步任务实现 `JobHandler`（平台框架设计 4.4.12）；锁名与任务类型按平台框架设计 3.7 命名。事件监听器已在 2.6 中列出，这里只补充耗时长、需要单独调度或重试的处理。`PER_SITE` 任务由 core 在站点上下文中逐站点执行，停用了本模块的站点自动跳过（系统设计 3.8）。外部服务（AI 引擎、邮件、CDN）只在事务提交后的异步处理中调用，失败不回滚已提交的业务数据（ADR-003、ADR-017）。
-
-| 任务 | 类型（定时 / sys_job / 事件监听） | 触发 | 锁名 | 幂等与重试 | 模块停用时 |
-|---|---|---|---|---|---|
-
-> 每个任务另写：执行粒度（`PER_SITE` / 系统级）、单次处理量与分批方式、超时、能否取消、失败后的可见结果（`sys_job` 的失败报告、指标 `b2bweb.<id>.*` 或告警）。
+不适用：没有独立定时或 sys_job 任务。领域事件处理在 2.6 中列出；纯本地短事务不包装成额外任务。
 
 ## 11. 测试要点
 
-> 测试层级、替身与契约测试的写法见平台框架设计第 9 章，门禁与覆盖率见第 10 章。“至少”后的用例为必测项；不适用的行写“不适用：<原因>”，不得删除。
-
-| 层级 | 覆盖内容 | 关键用例 |
+| 层级 | 覆盖内容 | 必测用例 |
 |---|---|---|
-| 单元 | <领域对象、不变量（3.2）、状态机（3.3）、扩展点实现（2.4）> | 至少：3.2 每条不变量的违反用例；3.3 每个非法状态转换被拒绝 |
-| 模块集成（Testcontainers + 替身） | <应用服务 + 本模块的表与迁移> | 至少：迁移脚本在空库（MySQL 8.4）上执行通过；6.1 中声明的并发控制与幂等；唯一约束冲突转为 6.5 的错误码 |
-| 契约（作为提供方） | <2.3 中本模块提供的服务接口> | 继承 testkit 中的 `<接口名>ContractTest`，用真实实现运行；不提供服务接口时写“不适用” |
-| 事件（Scenario API，含重复投递） | <2.6 中发布与订阅的事件> | 至少：事件在业务事务内发布、事务回滚时不发布；每个监听器重复投递只生效一次、过期事件被丢弃（ADR-003） |
-| 停用行为（可停用模块） | <系统设计 3.8 的各项> | 至少：停用后写操作与公开接口返回 `CORE_MODULE_DISABLED`；扩展点实现不再被收集；定时任务跳过；`analyzeDisableImpact` 的结果正确；重新启用后数据完整（S10） |
-| 站点隔离 | <6.1 的全部后台接口与 4.5 的全部站点级表> | 至少：站点 A 的用户不能读写站点 B 的数据（遍历全部后台端点，系统设计 28）；豁免表只在 4.5 列出的位置访问 |
-| 翻译（如有可翻译字段） | <`TranslatableContentProvider` / `TranslatableResourceProvider` 实现> | 至少：提取 → 回写往返一致；`x-translatable = false` 的字段不被提取；`HUMAN` / `REVIEWED` 段不被机器译文覆盖；资源变化时发布 `TranslatableResourceChangedEvent` |
-| 前端（组件、Admin） | <主题组件、Admin 页面> | 至少：组件 Schema 校验与画廊示例（视觉回归）；前台文字只来自文案键、后台文字只来自 `texts.ts`；无权限时操作不可见 |
-| E2E（场景） | <13.2 中验证方式为 E2E 的验收项> | Playwright 用例名包含 13.2 的验收项编号 |
+| 单元 | 第 3.2 全部不变量、3.3 状态与纯计算 | 逐条构造非法输入；合法及非法转换均断言；业务用例见 13.2 |
+| 模块集成（Testcontainers + 替身） | 第 6.1 全部端点、唯一约束和版本控制 | MySQL 8.4 空库迁移；跨站点 ID 拒绝；并发保存只成功一份；幂等重放不重复写入 |
+| 契约（提供方） | TaxonomyApi | TaxonomyApiContractTest 使用真实实现继承 TaxonomyApiContract，并与 InMemory 实现运行同一套夹具 |
+| 事件（Scenario API） | 2.6 的发布与订阅 | 事务回滚无事件；重复投递不重复副作用；新修订后再投旧事件不回退 |
+| 停用行为 | 系统设计 3.8 | 不适用：不可停用；验证停用其可选依赖后仍能降级 |
+| 站点隔离 | 6.1 全部端点、4.5 全部站点表或缓存索引 | A/B 两站同构数据互不可见；全局豁免表只在显式系统权限处访问 |
+| 翻译 | 可翻译内容/资源与人工保护 | 提取回写往返一致，非文本不翻译，HUMAN/REVIEWED 不覆盖，源变化标记过期 |
+| 前端 | Admin、Schema、主题及权限 | Vitest 校验字段/权限/错误；组件画廊视觉回归、Token 及文案键检查；未授权操作不可见 |
+| E2E | 13.2 用例 | Playwright 用例名包含模块及 A 编号；不得把未实现测试写成已通过 |
+
+本章是实现后的测试要求；当前仓库没有应用或测试工程，本次只验证文档及契约引用，未执行上述应用测试。
 
 ## 12. 独立开发说明
 
 ### 12.1 依赖的测试替身
 
-> 2.2 使用的每个服务接口、2.7 使用的每个端口、2.5 收集的每个扩展点，都要在此列出 testkit 中对应的替身或示例实现（平台框架设计 2.4、第 9 章）。testkit 中缺少的替身向框架组提出需求（DoR 第 3 条，平台框架设计 2.7），不在本模块中另建一套代替其他模块的模拟实现；单元测试可以用 Mockito 模拟个别方法，但对其他模块行为的假设以替身与契约测试为准。
-
-| 替身（platform-testkit） | 代替的模块 | 用途 | 需要预置的数据 |
+| 替身或夹具（platform-testkit） | 替代能力 | 用途 | 预置数据 |
 |---|---|---|---|
+| InMemoryContentApi | ContentApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| TestPlatform / TestSites / TestUsers | core 公共服务与站点身份 | 按框架 9.2 装配替身、ManualClock | A/B 站、不同角色/语言范围、停用模块 |
+| InMemorySiteApi | SiteApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeSiteContextProvider | SiteContextProvider | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakePermissionChecker | PermissionChecker | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryAuditApi | AuditApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeEventMetaFactory | EventMetaFactory | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+
+类名是平台框架已定义的 testkit 交付要求，仓库尚无实现。发现缺少夹具或行为时向框架组提出 DoR 阻塞，不在模块中建立另一套跨模块模拟。
 
 ### 12.2 本模块提供的替身
 
-> 只有提供服务接口的模块填写（core、content、url、media、taxonomy、form、notification、translation，见平台框架设计 4.2）；其他模块写“不适用：不提供服务接口”。替身由框架组编写并维护，与真实实现通过同一套契约测试；本模块改变服务接口的行为时，在同一个 PR 中同步修改契约测试，并通知框架组修改替身（平台框架设计 2.3）。无法消除的差异（如不做病毒扫描、不生成真实缩略图）列入下表，并确认不影响使用方的测试结论。
-
-| 服务接口 | testkit 中的替身 | 与真实实现的差异（应为零，或已在契约测试中声明） |
+| 服务接口 | 替身 | 差异与约束 |
 |---|---|---|
+| TaxonomyApi | InMemoryTaxonomyApi | 完整行为以 TaxonomyApiContract 为准；远程传输由端口假实现代替，真实端到端另测 |
 
 ### 12.3 本地运行
 
-> 启动方式、依赖的本地服务（平台框架设计第 11 章）、需要的配置。
+当前仅文档，尚无可运行的 `taxonomy` 工程。M0 完成后，在仓库根目录按平台框架第 11 章启动 MySQL 8.4、Redis 及本模块 2.7 需要的本地服务；通过 application 的 dev/test profile 装配本模块及 TestPlatform，不能直接依赖其他业务模块的实现。
+
+后端执行框架规定的 Maven 模块集成/契约测试，前端执行 pnpm lint、typecheck、test；演示环境再用 dev 装配执行第 13 章 E2E。具体命令以 M0 实际建立的 wrapper、脚本和锁文件为准，本文不虚构当前可运行命令。
 
 ### 12.4 演示数据
 
-> tools/demo-data 中本模块的数据及其用途。
+计划在框架规定的 `tools/demo-data` 中提供 `taxonomy` 的演示数据（该目录尚未建立）：两站相同业务 key、中文源内容、已发布英语与未公开语言、一个草稿/缺失语言对象、一个越权用户和一个故障服务场景。模块特有数据按 13.2 的四个输入构造；不得使用真实联系人或凭据。
+
+加载器只经已授权后台接口录入中文源数据，不直接写数据库；目标语言通过翻译流程及假引擎生成。按自然键重复加载幂等，仅补缺；不实际建立此目录直到 M0 任务要求实现。
 
 ## 13. 验收标准
 
 ### 13.1 里程碑切片
 
-> 与平台框架设计 13.5 中本模块的一行一致；调整切片按平台框架设计 12.5 处理。该里程碑没有切片时写“—”（不表示不能提前开发）。
-
 | 里程碑 | 交付功能 | 验收场景 |
 |---|---|---|
-| M1 | <…> | <S1、S2、S4 中与本模块相关的部分，或“模块自身”> |
-| M2 | <…> | <…> |
-| M3 | <…> | <…> |
-| M4 | <…> | <…> |
+| M1 | 词汇表、分类项、指派、分类落地页 | S1、S2、S4（不含翻译/GA4） |
+| M2 | — | — |
+| M3 | 分类名作为可翻译资源 | S5、S7–S9、S11–S13；S4 的同意/分配增强 |
+| M4 | — | — |
+
+切片逐字沿用平台框架 13.5；“—”表示没有该阶段集成要求，不表示不能提前实现。
 
 ### 13.2 验收项
 
-> 每条验收项写明输入、期望结果与度量（如“5 分钟内”“P95 ≤ 200 ms”）。场景验收项只写本模块负责的部分（如 S2 中 url 负责“旧 URL 301 到新 URL、不产生重定向链”），不复述整个场景；各里程碑的场景见平台框架设计 13.6。验证方式为单元 / 集成 / E2E 时写出测试类或用例名；人工检查写明检查人与方法。
-
-| # | 验收项 | 对应场景（S1–S13）或模块自身 | 验证方式（单元 / 集成 / E2E / 人工） | 里程碑 |
+| # | 输入与期望结果 | 场景 | 验证方式（计划用例名） | 里程碑 |
 |---|---|---|---|---|
-| A1 | <…> | <S? / 模块自身> | <集成：`<测试类>`> | M? |
+| A1 | 层级循环和跨词汇表父项被拒绝 | S1 | 集成：`TaxonomyA1IT`；涉及界面时 E2E：`taxonomy-A1` | M1 |
+| A2 | 单选词汇表不能保存多个指派，主分类必须唯一 | S1 | 集成：`TaxonomyA2IT`；涉及界面时 E2E：`taxonomy-A2` | M1 |
+| A3 | 分类草稿改名不改变线上已发布名称 | S12 | 集成：`TaxonomyA3IT`；涉及界面时 E2E：`taxonomy-A3` | M1 |
+| A4 | 创建可路由项后发布 TERM_PAGE，当前语言可访问，分类翻译不回退 | S11 | 集成：`TaxonomyA4IT`；涉及界面时 E2E：`taxonomy-A4` | M3 |
+| A5 | ArchUnit 与 Modulith verify 通过；零业务模块编译依赖、跨表 JOIN/外键 | 模块自身 | 架构：`TaxonomyArchitectureTest` | M1 |
+| A6 | 第 6.1 当前切片已交付后台端点覆盖 A/B 站隔离、权限拒绝；全部成功写操作有脱敏审计 | 模块自身 | 集成：`TaxonomyIsolationIT`、`TaxonomyAuditIT` | M1 |
+| A7 | 自身停用被拒绝，可选依赖缺失不阻塞基础功能 | 模块自身 | 集成：`TaxonomyModuleLifecycleIT` | M2 |
+| A8 | 可翻译字段/资源登记并通过往返及人工保护测试 | S11、S12 | 集成：`TaxonomyLocaleIT` | M3 |
+| A9 | 后台常规 API P95≤500ms（50并发用户）；标注为 Delivery 热路径的读方法 P95≤20ms；本模块公开数据变更在≤60s缓存预算内可见，记录数据规模及冷热缓存条件 | 模块自身 | 性能报告：`TaxonomyPerformanceIT`；架构负责人核对适用指标 | M1 |
+| A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
+| A11 | 修改未发布描述后触发旧修订翻译，结果仍来自已发布修订；分类名无目标语言不回退显示中文。 | 模块自身 / 5.2 | 集成：`TaxonomyA11IT`；涉及界面 E2E：`taxonomy-A11` | M3 |
+| A12 | 两次交叉移动试图形成环，只能有合法一方提交；任何后代超深时整次移动拒绝、所有 path 不变。 | 模块自身 / 5.2 | 集成：`TaxonomyA12IT`；涉及界面 E2E：`taxonomy-A12` | M1 |
+| A13 | 更换主分类但不发布，线上分类筛选与面包屑仍按上一修订；发布后投影一次性切换。 | 模块自身 / 5.2 | 集成：`TaxonomyA13IT`；涉及界面 E2E：`taxonomy-A13` | M1 |
+| A14 | 删除有指派项返回冲突；转移并合法删除后事件重复执行，线上投影不残留已删除 termId，历史修订仍可对比。 | 模块自身 / 5.2 | 集成：`TaxonomyA14IT`；涉及界面 E2E：`taxonomy-A14` | M1 |
 
-> 每个模块都要包含以下通用验收项（不适用时注明原因）：架构测试与 Modulith 验证通过，无跨模块 import 与表访问；站点隔离测试覆盖全部后台接口；后台写操作都有权限码与审计记录；可停用模块满足 S10；可翻译字段与资源已登记并通过往返测试（S11、S12）；系统设计 1.5 中与本模块相关的非功能指标；文档与代码一致（DoD，平台框架设计 2.8）。
+用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
 
 ## 14. 待定问题
 
-> 记录评审与开发中尚未决定的事项。“阻塞开发”的问题必须在评审通过（DoR）前关闭；需要新契约或修改上层文档的问题，写明契约变更请求或 Issue 编号。已关闭的问题保留在表中，填写结论。
-
-| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论 |
+| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
+| TAXONOMY-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
 
 ## 修订记录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | V1.0 | 2026-10-14 | 初稿 |
+| V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
+| V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |

@@ -10,12 +10,12 @@
 | 可停用 | 是 |
 | 模块版本 | 1.0.0（module.json 的 version） |
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
-| 里程碑切片 | M1：<…>；M2：<…>；M3：<…>；M4：<…>（详见第 13 节） |
+| 里程碑切片 | M1：基础字段与属性、媒体、文档；M2：—；M3：停产与替代（S8）；属性与选项作为可翻译资源；M4：Excel 导入导出；型号表（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.0 |
+| 文档版本 | V1.2 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-14 |
-| 依据 | 系统设计 V1.4 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
+| 更新日期 | 2026-10-20 |
+| 依据 | 系统设计 V1.4 第 8 章及 3.2、3.8、24–29 章；平台框架设计 V1.0 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -23,20 +23,31 @@
 
 ### 1.1 职责
 
-> 一段概述 + 要点列表；与系统设计 3.2 的职责描述一致，并细化到本模块的功能清单。
+管理产品草稿、属性与属性集、媒体和文档、型号表、停产替代及 Excel 导入导出；注册 PRODUCT 类型并贡献快照、搜索文档、结构化数据与可翻译字段。
+
+功能交付范围按第 13 章分为 M1–M4；表结构、约束与枚举以第 3、4 章为准。
 
 ### 1.2 不负责的事
 
-| 事项 | 归属模块 | 说明 |
+| 事项 | 归属模块 | 边界 |
 |---|---|---|
+| 内容生命周期与路由 | content / url | 本模块只承担自身职责；不直接修改 cnt_、url_ 表 |
+| 身份、权限、设置、任务及审计 | platform-core | 复用平台公共服务 |
+| 第三方客户端与网络传输 | infrastructure | 仅经既有端口或 L2 服务使用，不在业务模块引入客户端 |
 
 ### 1.3 协作概览
 
-> 用图或表说明本模块与哪些模块协作、通过哪种方式（服务接口 / 事件 / 扩展点）。只画契约，不画实现。
+| 协作方式 | 对象 | 本模块行为 |
+|---|---|---|
+| 服务接口 | ContentApi、UrlApi、MediaApi、TaxonomyApi、FormApi | 方法与事务边界见 2.2；无跨模块表访问 |
+| 扩展点 | ContentTypeProvider、PublishContributor、BreadcrumbProvider、SchemaOrgProvider、SeoVariableProvider、SeoRule、SearchDocumentProvider、RelationTypeProvider、MediaReferenceCollector、ContentVariantProvider、TranslatableContentProvider、TranslatableResourceProvider | 实现/收集清单见 2.4、2.5 |
+| 领域事件 | 见 2.6 | 与本地事务一起登记，提交后异步投递；重复与过期处理独立验证 |
 
 ### 1.4 适用的架构约束
 
-> 列出与本模块直接相关的原则（P1–P8）、ADR 规则与 CLAUDE.md 禁止项，以及本模块如何满足。
+遵守 P2、P3 与 ADR-018：编译依赖只到 platform-core/platform-api，跨模块协作只用第 2 章登记契约；只访问自己的表，禁止跨模块 JOIN/外键。遵守 ADR-003：事务内登记、提交后投递、监听器幂等并检查过期。遵守 ADR-009：每次请求/任务明确站点上下文，站点表默认过滤。
+
+公开读取只用当前语言发布态，不跨语言回退（ADR-005）；预览与公开缓存隔离。后台中文文案与错误集中管理，前台文案经 UiTextApi，样式只用 Design Token。远程端口在数据库事务外调用，密钥经 SecretCipher，不写日志。
 
 ## 2. 依赖与契约
 
@@ -44,62 +55,170 @@
 
 ```json
 {
-  "id": "<id>",
-  "name": "<中文名称>",
+  "id": "product",
+  "name": "产品",
   "version": "1.0.0",
   "layer": "L3",
   "platform": ">=1.0.0 <2.0.0",
-  "requires": {},
-  "optional": {},
+  "requires": {
+    "content": "^1.0",
+    "url": "^1.0",
+    "media": "^1.0",
+    "taxonomy": "^1.0"
+  },
+  "optional": {
+    "form": "^1.0"
+  },
   "disableable": true,
-  "tablePrefix": "<前缀>_",
-  "apiPrefix": "<id>",
-  "permissions": [],
-  "menus": [],
+  "tablePrefix": "prd_",
+  "apiPrefix": "product",
+  "permissions": [
+    {
+      "code": "product:product:view",
+      "name": "查看产品"
+    },
+    {
+      "code": "content:product:edit",
+      "name": "编辑产品"
+    },
+    {
+      "code": "product:attribute:manage",
+      "name": "管理产品属性"
+    },
+    {
+      "code": "product:product:import",
+      "name": "导入产品"
+    },
+    {
+      "code": "product:product:export",
+      "name": "导出产品",
+      "sensitive": true
+    },
+    {
+      "code": "content:product:review",
+      "name": "审核产品"
+    },
+    {
+      "code": "content:product:publish",
+      "name": "发布产品"
+    },
+    {
+      "code": "content:product:delete",
+      "name": "删除产品"
+    }
+  ],
+  "menus": [
+    {
+      "key": "product",
+      "name": "产品",
+      "parent": "editorial",
+      "route": "/product/products",
+      "permission": "product:product:view",
+      "order": 100
+    }
+  ],
   "settings": null,
-  "components": [],
-  "events": { "publishes": [], "subscribes": [] }
+  "components": [
+    "product-gallery",
+    "product-specification",
+    "download-list",
+    "product-model-table",
+    "product-hero",
+    "product-grid",
+    "product-category-grid"
+  ],
+  "events": {
+    "publishes": [
+      "TranslatableResourceChangedEvent"
+    ],
+    "subscribes": [
+      "TermChangedEvent",
+      "ContentPurgedEvent",
+      "LocalizationDeletedEvent",
+      "MediaDeletedEvent",
+      "SiteSettingsChangedEvent",
+      "ModuleDisabledEvent",
+      "ContentPublishedEvent"
+    ]
+  }
 }
 ```
 
-> 完整描述符，须通过平台框架设计附录 A 的 Schema 与 A.3 的校验规则。
+描述符为 M0 工程建立后的实现要求；目前尚无实际控制器、Schema 或组件包。依赖只声明运行能力；Maven 仍只依赖 platform-api/core。组件清单是本模块负责的类型，运行时 UI 不登记成可拖入布局的组件。
 
 ### 2.2 使用的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机（事务内 / 外） | 测试替身 |
+| 接口（平台框架设计小节） | 方法 | 用途 | 调用位置与时机 | 测试替身 |
 |---|---|---|---|---|
+| `ContentApi`（4.4.16） | create、updateDraftMeta、markDraftChanged、findPublishedSnapshot、findPublishedCards | 读当前发布快照与卡片；内容类型所属模块创建身份并标记草稿变化 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryContentApi` |
+| `UrlApi`（4.4.17） | generateSlug、validateSlug | 解析当前路径、生成 slug 或规范地址；不读取 url 表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryUrlApi` |
+| `MediaApi`（4.4.18） | findAll、views、imageSources、setDownloadGate、uploadFromUrl | 媒体视图、图片源与授权下载；不读取媒体表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryMediaApi` |
+| `TaxonomyApi`（4.4.19） | findTerms、termViews、assignmentsOf | 词汇表、分类视图与内容指派；不读取分类表 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryTaxonomyApi` |
+| `FormApi`（4.4.20） | findForm | 表单摘要与提交视图 | 读接口在查询阶段调用；写方法加入业务事务，远程文本翻译必须在事务外 | `InMemoryFormApi` |
+| `SiteApi`（4.4.1） | 按该契约声明的方法 | 语言、站点模块开关 | 业务事务内；站点切换由任务入口完成 | `InMemorySiteApi` |
+| `SiteContextProvider`（4.4.2） | 按该契约声明的方法 | 当前站点；异步与任务由 core 恢复 | 业务事务内；站点切换由任务入口完成 | `FakeSiteContextProvider` |
+| `PermissionChecker`（4.4.7） | 按该契约声明的方法 | 后台权限与数据范围 | 业务事务内；站点切换由任务入口完成 | `FakePermissionChecker` |
+| `AuditApi`（4.4.9） | 按该契约声明的方法 | 同事务写审计，密钥与个人数据脱敏 | 业务事务内；站点切换由任务入口完成 | `InMemoryAuditApi` |
+| `EventMetaFactory`（4.4.14） | 按该契约声明的方法 | 事件 ID、版本、站点与操作人 | 业务事务内；站点切换由任务入口完成 | `FakeEventMetaFactory` |
+| `JobApi`（4.4.12） | 按该契约声明的方法 | 耗时任务提交、取消、进度与结果 | 业务事务内；站点切换由任务入口完成 | `InMemoryJobApi` |
+
+所有 L2/L3/L4 读写隐式使用当前站点；按 ID 查询单批最多 500。可选服务用 ObjectProvider 注入并检查当前站点启用状态，缺失时降级，不通过业务表绕过服务。
 
 ### 2.3 提供的服务接口
 
-| 接口（平台框架设计小节） | 方法 | 实现类 | 契约测试 | 说明（幂等、权限、性能目标） |
-|---|---|---|---|---|
+不适用：本模块不提供跨模块服务接口；其他模块通过 2.4 的既有扩展点或领域事件协作。
 
 ### 2.4 实现的扩展点
 
-| 扩展点（平台框架设计小节） | 实现类 | 适用范围（内容类型 / 资源类型） | order | 收集方 |
+| 扩展点（平台框架设计小节） | 计划实现类 | 适用范围 | order | 收集方 |
 |---|---|---|---|---|
+| `ContentTypeProvider`（4.5.2） | `ProductContentTypeProvider` | PRODUCT，可路由 /products/{slug} | OWNER=500 | content / url（经 content） |
+| `PublishContributor`（4.5.3） | `ProductPublishContributor` | PRODUCT：card 与 parts.product 分别实现；OWNER=500 | OWNER=500 | content |
+| `BreadcrumbProvider`（4.5.9） | `ProductBreadcrumbProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | delivery / seo |
+| `SchemaOrgProvider`（4.5.10） | `ProductSchemaOrgProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | OWNER=500 | seo |
+| `SeoVariableProvider`（4.5.11） | `ProductSeoVariableProvider` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | seo |
+| `SeoRule`（4.5.12） | `ProductSeoRule` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | seo |
+| `SearchDocumentProvider`（4.5.14） | `ProductSearchDocumentProvider` | PRODUCT：型号、发布分类与 typed attr 分面 | DEFAULT=1000 | search |
+| `RelationTypeProvider`（4.5.15） | `ProductRelationTypeProvider` | ACCESSORY_OF / HAS_ACCESSORY / REPLACED_BY / REPLACES | DEFAULT=1000 | graph |
+| `MediaReferenceCollector`（4.5.16） | `ProductMediaReferenceCollector` | 按本模块职责及 3、4 章登记的内容/资源类型 | DEFAULT=1000 | media |
+| `ContentVariantProvider`（4.5.17） | `ProductContentVariantProvider` | PRODUCT：型号 ID、编号、标题与可用状态 | DEFAULT=1000 | inquiry |
+| `TranslatableContentProvider`（4.5.20） | `ProductTranslatableContentProvider` | PRODUCT：名称、摘要、描述、卖点、包装、交期、MOQ 及 TEXT 属性值 | DEFAULT=1000 | translation |
+| `TranslatableResourceProvider`（4.5.21） | `ProductTranslatableResourceProvider` | product.attribute_group / product.attribute（含 options） | DEFAULT=1000 | translation |
+| `PlatformModule`（4.5.22） | `ProductModule` | 本模块安装/升级；可停用模块提供影响报告与停用后保留数据规则 | DEFAULT=1000 | core |
+
+以上类名为待实现名称。PublishContributor 不调用调用方的写方法，不访问外部服务；翻译提供方只写本模块草稿/资源，先校验源指纹与共同 version。停用时 analyzeDisableImpact 返回本模块内容、组件及外部引用的影响，数据保留。
 
 ### 2.5 收集的扩展点
 
-| 扩展点 | 调用时机 | 过滤（站点启用状态、内容类型等） | 实现缺失或抛出异常时的行为 | 测试用示例实现 |
-|---|---|---|---|---|
+不适用：不收集业务扩展点；PlatformModule 与任务 SPI 由 core 收集。
 
 ### 2.6 发布与订阅的事件
 
 发布：
 
-| 事件 | 触发时机（所在事务） | 关键字段 | 主要订阅方 |
+| 事件 | 触发事务 | 现有 payload 字段 | 订阅方 |
 |---|---|---|---|
+| `TranslatableResourceChangedEvent` | 源语言可翻译文本实际变化时 UPSERTED，资源整体删除时 DELETED；非文本变化与目标语言 apply 不发布此事件 | meta、resourceType、resourceId、change | 框架 4.2.4；未登记发布方的差异在第 14 章列出 |
 
 订阅：
 
-| 事件 | 处理 | 幂等方式 | 过期判断 | 失败与重试 |
+| 事件 | 处理 | 幂等 | 过期与删除 | 失败与重试 |
 |---|---|---|---|---|
+| `TermChangedEvent` | 按 change/termId 更新相关草稿引用或重算候选；草稿指派不冒充发布态指派 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ContentPurgedEvent` | 按事件 contentId/localizationIds 清理本模块外部引用或子行；历史业务快照按 4.6 保留；不回查已不存在的父内容 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `LocalizationDeletedEvent` | 仅清理对应语言的本模块本地化/投影，不删除其他语言或共享业务字段 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `MediaDeletedEvent` | 仅处理被引用媒体：更新当前媒体视图或按 4.6 防御性清理；仍有有效引用的媒体不能被主动删除 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 清理使用事件中的 ID；查不到父对象仍须清理 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `SiteSettingsChangedEvent` | 按 scopes、settingKeys、localeChanges 筛选 4.6 的相关变化；不对无关设置做全量重建 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ModuleDisabledEvent` | 当前站点隐藏该模块的公开能力，保留自身数据；处理事件.moduleId 而非假定是接收方自身 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+| `ContentPublishedEvent` | 按第 4.6 节处理事件所标识的对象；副作用只发生在本模块数据范围 | 本模块事务内的幂等标记与数据变更一起提交；缓存重复失效安全 | 读取当前状态/指纹；只有匹配的当前结果才更新；不以 occurredAt 单独当全序 | 失败抛出保留未完成投递；业务副作用转入已有任务/队列后重试 |
+
+监听器按框架 5.8 建立站点/system 上下文；`ContentPurgedEvent` 在模块停用时仍必须清理（deliverWhenModuleDisabled）。其他停用期间跳过并完成的事件，重新启用后通过扫描当前状态补偿，不能假定还会重投。数据库幂等标记与本模块数据在同一事务提交；外部发送、下载、搜索与 CDN 调用不得被数据库长事务包裹，使用已声明的任务/端口和业务幂等键。事件 payload 仅引用框架现有字段，本文不扩展签名。
 
 ### 2.7 使用的端口
 
-| 端口 | 用途 | 测试替身 |
+| 端口（平台框架小节） | 用途 | 测试替身 |
 |---|---|---|
+| `RemoteFileFetcher`（4.7.13） | 第 5 章外部能力；只通过端口调用基础设施 | `FakeRemoteFileFetcher` |
 
 ## 3. 领域模型
 
@@ -131,9 +250,9 @@
 |---|---|
 | `prd_product.site_id` 及各子表的 `site_id` | 站点级表必须带 `site_id`，由行级拦截器过滤（系统设计 5.3） |
 | 系统设计的 `flags` 拆为 `new_arrival`、`hot_selling`、`discontinued` 三个布尔列；`sort` 改名 `sort_order` | 布尔列可直接用于筛选与 CHECK；与全库排序列命名一致 |
-| `group_key`、`attr_key`、`option_key` | 系统设计的 `key` 是 MySQL 关键字（本文 2.2）；稳定标识用于导入模板列、快照规格 `key`、搜索分面字段 `attr.{attr_key}` 与筛选参数值，不随名称或语言变化 |
+| `group_key`、`attr_key`、`option_key` | 系统设计的 `key` 是 MySQL 关键字（平台框架设计 7.2）；稳定标识用于导入模板列、快照规格 `key`、搜索分面字段 `attr.{attr_key}` 与筛选参数值，不随名称或语言变化 |
 | `prd_attribute.precision` 改名 `decimal_places`；补充 `secondary_decimal_places` | `PRECISION` 是 MySQL 保留字；第二单位的显示精度可能不同（系统设计 8.1 的示例 `100 mm (3.94 in)` 与 `5 kg (11 lb)`） |
-| 属性分组、属性、选项、属性集的 `deleted_at` | 配置类实体软删除（本文 2.5）；其 ID 被属性值与快照引用 |
+| 属性分组、属性、选项、属性集的 `deleted_at` | 配置类实体软删除（平台框架设计 7.5）；其 ID 被属性值与快照引用 |
 | `prd_attribute_set.name`、`description` | 后台显示与选择（只在后台使用，不翻译） |
 | `prd_category_attribute_set.sort_order` | 一个分类可以绑定多个属性集，编辑页按此顺序合并 |
 | `prd_attribute_value.model_key`、`locale_key`（虚拟生成列） | `model_id`、`locale` 可空，唯一索引中 NULL 互不相等；用生成列把 NULL 规范化后保证“每个产品 / 型号 / 语言的每个属性一个值” |
@@ -167,11 +286,11 @@
 
 ### 3.3 状态机
 
-<<FILL: 状态与转换；没有状态机时写“不适用：<原因>”>>
+内容发布状态与草稿状态均由 ContentApi 管理，完整转换见 content 模块 3.3 和系统设计 6.3；本模块不复制状态列或自行转换。保存业务草稿只改变内容共同 version 与草稿状态，发布经 PublishContributor 参与同一事务；回收站、恢复、下线与翻译模式按内容内核执行。配置及站点资源保存即生效，不伪装成内容发布。
 
 ## 4. 数据模型
 
-> 遵守平台框架设计第 7 章的数据库通用约定。DDL 已在 MySQL 8.4 上执行通过；表结构以本节为准，与迁移脚本保持一致。
+> 遵守平台框架设计第 7 章的数据库通用约定。本节给出待实现 DDL；本次文档审查未重跑 MySQL，不能据此认定 DDL 已验证。M0 后按第 11 章在 MySQL 8.4 空库验证，并使实际迁移脚本与本节一致。
 
 ### 4.1 表清单
 
@@ -217,7 +336,7 @@ erDiagram
 
 ### 4.3 表结构
 
-类型列中的 `bin` 表示该列排序规则为 `utf8mb4_0900_bin`（第 16 章同）。
+类型列中的 `bin` 表示该列排序规则为 `utf8mb4_0900_bin`（本模块各表同）。
 
 #### 4.3.1 `prd_product`：产品
 
@@ -334,7 +453,7 @@ CREATE TABLE prd_product_localization (
 ```
 
 要点：
-- 内容类本地化表，不带翻译状态；翻译模式与状态在 `cnt_localization`（本文 2.7）。保存草稿时经 `ContentApi.updateDraftMeta()` 同步 `draft_title`。
+- 内容类本地化表，不带翻译状态；翻译模式与状态在 `cnt_localization`（平台框架设计 7.7）。保存草稿时经 `ContentApi.updateDraftMeta()` 同步 `draft_title`。
 - 翻译：product 的 `TranslatableContentProvider` 从中文行提取 `name`、`subtitle`、`summary`、`description`（按块级节点拆分）、`selling_points[]`、`packaging`、`lead_time`、`moq` 与 `TEXT` 属性值（4.3.13）；`apply()` 写入或覆盖目标语言行（目标行不存在时创建）。`MANUAL` 模式的本地化由编辑直接修改本行。
 
 #### 4.3.3 `prd_attribute_group`：属性分组
@@ -633,7 +752,7 @@ CREATE TABLE prd_attribute_option_localization (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '枚举选项本地化（选项名为站点资源，带翻译状态与源指纹）';
 ```
 
-要点：资源类型 `product.attribute_option`，ID 为 `option_id`。导入时按（属性，中文选项名）匹配选项。
+要点：资源类型 `product.attribute`，resourceId 为所属 `attribute_id`；单元 key 使用 options.{optionId}.label。导入时按（属性，中文选项名）匹配选项。
 
 #### 4.3.9 `prd_attribute_set`：属性集
 
@@ -904,7 +1023,7 @@ CREATE TABLE prd_product_media (
 
 要点：
 - 媒体是非文本数据，所有语言沿用；alt 与标题来自媒体本地化（站点资源）。封面进入快照 `card.coverMediaId`（投影 `cnt_localization.pub_cover_media_id`）。
-- 保存时 product 经 `MediaApi` 替换本产品 `product` 部分的 `DRAFT` 引用（`locale` 为空）；发布后由 product 的 `MediaReferenceCollector` 从快照收集 `PUBLISHED` 引用（见 media 模块设计 4.3.4）。
+- 保存时 product 同事务调用 ContentApi.updateDraftMeta，media 在 ContentDraftChangedEvent 后经 collectDraft 替换本产品 product 部分的 DRAFT 引用（`locale` 为空）；发布后由 media 通过 ReferenceSet.scan 扫描发布快照维护 PUBLISHED 引用（见 media 模块设计 4.3.4）。
 
 #### 4.3.15 `prd_product_document`：产品文档
 
@@ -970,11 +1089,27 @@ CREATE TABLE prd_product_document (
 | `prd_product_media.role` | `COVER` / `GALLERY` / `DIAGRAM` | 封面（每个产品最多 1 张）/ 图集 / 尺寸图与结构示意图 |
 | `prd_product_document.doc_type` | `DATASHEET` / `MANUAL` / `CERTIFICATE` / `CAD` | 规格书 / 使用手册 / 认证证书 / CAD 图纸与模型（dwg、dxf、step 等） |
 | `prd_attribute_group_localization.translation_state`、`prd_attribute_localization.translation_state`、`prd_attribute_option_localization.translation_state` | `NONE` / `QUEUED` / `TRANSLATED` / `NEEDS_REVIEW` / `FAILED` / `OUTDATED` | 共享翻译状态枚举；中文行为 `NONE` |
-| `TranslatableResourceChangedEvent` 资源类型 | `product.attribute_group` / `product.attribute` / `product.attribute_option` | 分组名、属性名、选项名（ID 分别为 `group_id`、`attribute_id`、`option_id`） |
+| `TranslatableResourceChangedEvent` 资源类型 | `product.attribute_group` / `product.attribute`（含选项） | 分组资源以 group_id 标识；属性及选项资源以 attribute_id 标识，选项的稳定 optionId 只用于单元 key |
 
 ### 4.5 站点过滤
 
-<<FILL: | 表 | 行级拦截器（不豁免 / 豁免） | 访问方式与理由 |>>
+| 表 | 行级拦截器 | 访问方式与理由 |
+|---|---|---|
+| `prd_product` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_product_localization` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_group` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_group_localization` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_localization` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_option` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_option_localization` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_set` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_set_item` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_category_attribute_set` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_model` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_attribute_value` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_product_media` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
+| `prd_product_document` | 不豁免 | 请求和任务隐式使用当前站点；子表 site_id 与父表一致 |
 
 ### 4.6 跨模块引用与清理
 
@@ -1000,7 +1135,7 @@ CREATE TABLE prd_product_document (
 | `prd_product_document.media_id` | form.`frm_submission.download_media_id` | 历史记录，不清理 | — |
 | `prd_attribute.attr_key`、`prd_attribute_option.option_key` | search 索引的分面字段与筛选参数 | key 不可修改；属性或选项删除后，相关产品下次发布或重建索引时移除 | `ContentPublishedEvent` |
 
-本模块发布的事件：`TranslatableResourceChangedEvent`（资源类型 `product.attribute_group`、`product.attribute`、`product.attribute_option`）。订阅：`ContentPurgedEvent`、`LocalizationDeletedEvent`、`TermChangedEvent`、`MediaDeletedEvent`。本模块实现的扩展点：`ContentTypeProvider`（PRODUCT）、`PublishContributor`（快照 `product` 部分）、`TranslatableContentProvider`、`TranslatableResourceProvider`、`MediaReferenceCollector`、`SearchDocumentProvider`、`SchemaOrgProvider`（Product）、`ContentVariantProvider`（型号）。
+本模块发布的事件：`TranslatableResourceChangedEvent`（资源类型 `product.attribute_group`、`product.attribute`（含选项））。订阅：`ContentPurgedEvent`、`LocalizationDeletedEvent`、`TermChangedEvent`、`MediaDeletedEvent`。本模块实现的扩展点：`ContentTypeProvider`（PRODUCT）、`PublishContributor`（快照 `product` 部分）、`TranslatableContentProvider`、`TranslatableResourceProvider`、`MediaReferenceCollector`、`SearchDocumentProvider`、`SchemaOrgProvider`（Product）、`ContentVariantProvider`（型号）。
 
 ---
 
@@ -1008,45 +1143,103 @@ CREATE TABLE prd_product_document (
 
 | 文件 | 内容 | 里程碑 |
 |---|---|---|
-| `db/migration/product/V001__init.sql` | 4.3 中的全部表（15 张：`prd_product`、`prd_product_localization`、`prd_attribute_group`、`prd_attribute_group_localization`、`prd_attribute`、`prd_attribute_localization`、`prd_attribute_option`、`prd_attribute_option_localization`、`prd_attribute_set`、`prd_attribute_set_item`、`prd_category_attribute_set`、`prd_model`、`prd_attribute_value`、`prd_product_media`、`prd_product_document`），按本节顺序创建 | <见第 13 节> |
+| `db/migration/product/V001__init.sql` | 4.3 中的全部表（15 张：`prd_product`、`prd_product_localization`、`prd_attribute_group`、`prd_attribute_group_localization`、`prd_attribute`、`prd_attribute_localization`、`prd_attribute_option`、`prd_attribute_option_localization`、`prd_attribute_set`、`prd_attribute_set_item`、`prd_category_attribute_set`、`prd_model`、`prd_attribute_value`、`prd_product_media`、`prd_product_document`），按本节顺序创建 | 按第 13.1 节分期启用，初始结构在首个有效切片建立 |
 
 ## 5. 业务流程
 
-### 5.1 <流程名称>
+### 5.1 核心业务流程
 
-```text
-<步骤；标出事务边界、调用的服务接口、发布的事件、异步部分>
-```
-
-| 步骤 | 说明 | 失败处理 |
+| 步骤 | 事务及行为 | 失败处理 |
 |---|---|---|
+| 1 | 新建时在单一事务经 ContentApi.create 获取身份与中文本地化，写产品业务表；保存时以内容共同 version 校验，按属性定义检查数据类型、标准单位与选项，TaxonomyApi 整组替换分类，再调用 updateDraftMeta(expectedVersion, sharedDataChanged=true)；普通编辑不用无版本的 markDraftChanged。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 2 | 发布由 ContentApi 编排，ProductPublishContributor 只读自身草稿，输出 card、产品详情、属性、媒体和文档，校验封面及必填项；任何 ERROR 回滚整个发布。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | 停产由内容下线策略处理：GONE 或跳转至有效替代内容/主分类，相关列表按发布态自动过滤；Excel 导入先映射与逐行预检，确认后异步按型号 upsert，每行独立事务并保留结果。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+
+后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
+
+### 5.2 一致性、失败与恢复约束
+
+| 场景 | 必须满足的行为 | 可验证结果 |
+|---|---|---|
+| 共享字段与共同版本 | 型号、媒体、非文本属性共享；编辑器在一个事务内保存产品、分类、属性和 updateDraftMeta(expectedVersion, sharedDataChanged)。共享变化同时使各语言草稿版本/哈希失效，不能绕开版本检查。 | A/B 编辑器并发修改不同标签只有匹配共同版本的一次成功，失败请求的 EAV/分类也回滚；未发布变化不影响线上卡片。 |
+| 导入快照与表格安全 | 列映射/文件哈希与预检批次绑定；不执行 Excel 公式、宏、外链；导出会被表格程序当公式的文本以安全文本单元格输出。型号按既有唯一键规范化，取消不撤回已提交成功行。 | 300 行含重复型号、非法枚举、公式型字段、远程图失败，逐行可定位；网络重试不多建产品；合法导出重新打开不会执行输入文本。 |
+| 型号表与公开选择 | 型号集合由产品聚合控制版本；询价篮和 ContentVariantProvider 只暴露已发布快照中的型号，不能把删除后的草稿型号误当可询价实体。历史询盘保留型号快照。 | 未发布新增型号不出现在公开选择；旧询盘引用已删除型号仍展示 title/modelNo/url 快照，不直接查询 prd_model 失败。 |
+| 门控文档与属性翻译 | 公开文件和 PRIVATE 门控文件严格区分；form 缺失/停用时不开放原私有 URL。product.attribute 以属性 ID 聚合名称、单位说明和选项译文，TEXT 属性值走内容翻译。 | 停用 form 后受控文档仍不暴露下载地址；只改选项中文时发布 attribute 聚合变化，选项的 stable ID 与值不变。 |
 
 ## 6. 接口
 
 ### 6.1 Admin 端点
 
-| 方法 | 路径（/api/admin/v1/<apiPrefix>/…） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
+| 方法 | 路径（相对 /api/admin/v1/product） | 说明 | 权限码 | 并发控制 / 幂等 | 审计 |
 |---|---|---|---|---|---|
+| GET | `/products` | 产品与发布状态列表 | `product:product:view` | 只读；不写入业务状态 | 否 |
+| POST | `/products` | 创建产品与中文草稿 | `content:product:edit` | 唯一键检查；重复创建返回 409（不覆盖已有资源） | product.products.post |
+| GET | `/products/{id}` | 读取业务草稿与共同 version | `content:product:edit` | 只读；不写入业务状态 | 否 |
+| PUT | `/products/{id}` | 保存产品、媒体、文档、属性和分类 | `content:product:edit` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | product.products.{id}.put |
+| GET | `/attributes` | 属性字典 | `product:attribute:manage` | 只读；不写入业务状态 | 否 |
+| POST | `/attributes` | 创建属性定义 | `product:attribute:manage` | 唯一键检查；重复创建返回 409（不覆盖已有资源） | product.attributes.post |
+| PUT | `/attributes/{id}` | 修改属性与选项 | `product:attribute:manage` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | product.attributes.{id}.put |
+| GET | `/attribute-sets` | 属性集及分类映射 | `product:attribute:manage` | 只读；不写入业务状态 | 否 |
+| PUT | `/attribute-sets/{id}` | 保存属性集 | `product:attribute:manage` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | product.attribute-sets.{id}.put |
+| PUT | `/products/{id}/models` | 保存型号表 | `content:product:edit` | 聚合 version / If-Match；冲突 409 / 412，整笔回滚 | product.products.{id}.models.put |
+| POST | `/imports/validate` | Excel 映射与预检 | `product:product:import` | Idempotency-Key；同键同请求返回既有任务/结果 | product.imports.validate.post |
+| POST | `/imports/{id}/commit` | 按型号异步导入 | `product:product:import` | Idempotency-Key；同键同请求返回既有任务/结果 | product.imports.{id}.commit.post |
+| POST | `/exports` | 异步导出 xlsx | `product:product:export` | Idempotency-Key；同键同请求返回既有任务/结果 | product.exports.post |
+| GET | `/attributes/{id}` | 读取属性、选项及资源翻译状态 | `product:attribute:manage` | 只读 | 否 |
+| DELETE | `/attributes/{id}` | 检查属性值及属性集引用后软删除 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attributes.delete |
+| GET | `/attribute-groups` | 读取属性分组 | `product:attribute:manage` | 只读 | 否 |
+| POST | `/attribute-groups` | 创建中文属性分组 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attribute-groups.post |
+| PUT | `/attribute-groups/{id}` | 保存分组名称和排序 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attribute-groups.put |
+| DELETE | `/attribute-groups/{id}` | 只删除不再包含有效属性的分组 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attribute-groups.delete |
+| POST | `/attributes/{id}/options` | 创建属性选项并按属性聚合翻译 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attributes.post |
+| PUT | `/attributes/{id}/options/{optionId}` | 修改该属性选项的中文名称与排序 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attributes.put |
+| DELETE | `/attributes/{id}/options/{optionId}` | 检查引用后软删除属性选项 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attributes.delete |
+| POST | `/attribute-sets` | 创建属性集 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attribute-sets.post |
+| DELETE | `/attribute-sets/{id}` | 检查分类绑定后删除属性集 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.attribute-sets.delete |
+| PUT | `/categories/{termId}/attribute-set` | 保存产品分类与属性集绑定，不修改分类表 | `product:attribute:manage` | 更新校验聚合 version；失败整笔回滚 | product.categories.put |
+| GET | `/imports/{id}` | 读取列映射、文件哈希及预检报告 | `product:product:import` | 只读 | 否 |
+
+ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 100），默认 size=20，排序字段白名单。版本化资源按框架 5.5.6 使用 ETag: "v{version}" 与 If-Match，不能用任意 JSON 摘要替代平台版本协议；无 version 的集合写入方式见本节补充约束。创建返回资源及标识；耗时 POST 返回 202 与 jobId；无跨站点 ID 访问。写操作审计不包含凭据、完整个人数据或任意脚本正文。
+
+审核、发布、下线、修订、回收站与预览令牌统一使用 content 模块第 6 章端点，不在本模块复制生命周期控制器。业务草稿保存与共同 version 同步。
+
+**请求与结果约束**：产品保存输入共享 modelNo、品牌、分类指派、属性值、媒体角色/排序及文档门控配置，以及 locale 下名称、摘要和描述；带内容共同 version。属性值严格服从 data_type，枚举只接受现存 optionId；TEXT 可翻译，型号和单位不可翻译。导入请求给出文件 ID、列映射、匹配策略、预检批次 ID；确认时核对文件哈希，防止换文件绕过预检。
 
 ### 6.2 Public 端点
 
-| 方法 | 路径（/api/public/v1/<apiPrefix>/…） | 说明 | 限流 | 缓存 |
-|---|---|---|---|---|
+不适用：内容、菜单、媒体引用等由 delivery 返回；本模块不增加绕过发布态约束的公开读取接口。
 
 ### 6.3 Internal 端点
 
-| 方法 | 路径（/api/internal/v1/<apiPrefix>/…） | 说明 | 调用方 |
-|---|---|---|---|
+不适用：不新增 internal HTTP 端点；跨模块使用进程内 platform-api 契约。Nuxt 所需公共读取使用 6.2 的既有入口及可信代理认证。
 
 ### 6.4 权限码
 
-| 权限码 | 名称 | 数据范围 | 高危（sensitive） | 受语言范围限制（localeScoped） |
+| 权限码 | 名称 | 数据范围 | 高危 | 语言范围 |
 |---|---|---|---|---|
+| `product:product:view` | 查看产品 | 当前站点 | 否 | 否 |
+| `content:product:edit` | 编辑产品 | 当前站点 | 否 | 否 |
+| `product:attribute:manage` | 管理产品属性 | 当前站点 | 否 | 否 |
+| `product:product:import` | 导入产品 | 当前站点 | 否 | 否 |
+| `product:product:export` | 导出产品 | 当前站点 | 是，敏感操作要求二次验证 | 否 |
+| `content:product:review` | 审核产品 | 当前站点 | 否 | 否 |
+| `content:product:publish` | 发布产品 | 当前站点 | 否 | 否 |
+| `content:product:delete` | 删除产品 | 当前站点 | 否 | 否 |
 
 ### 6.5 错误码
 
-| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键（仅公开接口） |
+| 错误码 | HTTP 状态 | 后台中文信息 | 前台文案键 |
 |---|---|---|---|
+| `PRODUCT_VALIDATION_FAILED` | 422 | 输入不符合本模块规则 | — |
+| `PRODUCT_NOT_FOUND` | 404 | 请求的资源不存在 | — |
+| `CORE_MODULE_DISABLED` | 404 | 站点已停用该模块 | errors.moduleDisabled |
+| `PRODUCT_VERSION_CONFLICT`（模块内部错误码） | 409 / 412 | 资源已被修改，请刷新后重试 | — |
+
+跨模块错误使用框架已声明常量；本模块专用 HTTP 校验错误保存在本模块错误目录，不增加 platform-api 常量。公开接口不直接展示 detail；错误文案键统一登记在 UiTextApi。
+
+**重点业务失败**：PRODUCT_VALIDATION_FAILED（本模块内部）、CONTENT_VERSION_CONFLICT、CONTENT_PUBLISH_VALIDATION_FAILED。模块内部错误不扩展 platform-api；HTTP 状态按本节与框架错误常量映射。
+
+本模块内部错误补充：`PRODUCT_VERSION_CONFLICT` 默认 409，经 If-Match 提交为 412；幂等键复用但规范化业务请求不同为 `PRODUCT_IDEMPOTENCY_CONFLICT`（409）；状态操作不适用为 `PRODUCT_STATE_INVALID`（409）。只有实际存在相应端点时才注册/使用，均不新增跨模块错误常量。跨站点或数据范围外 ID 返回不泄露对象存在性的结果，日志保留 traceId 和授权判定。
 
 ## 7. 后台界面
 
@@ -1054,20 +1247,31 @@ CREATE TABLE prd_product_document (
 
 | 菜单 key | 名称 | 父菜单 | 路由 | 权限码 |
 |---|---|---|---|---|
+| product | 产品 | editorial | /product/products | product:product:view |
 
 ### 7.2 页面
 
-| 页面 | 路由 | 主要功能 | 使用的 admin-kit 组件 |
+| 页面 | 路由 | 主要功能 | 共享组件 |
 |---|---|---|---|
+| 产品 | /product/products | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
+| 内容编辑页 | /product/edit/:id | 业务标签 + 内容外壳；语言、审核、预览和发布统一交外壳 | 内容编辑外壳、ContentPicker、MediaPicker、TermPicker |
 
 ### 7.3 注册到内容编辑外壳的标签
 
-| key | 适用内容类型 | 权限码 | 组件 |
+| key | 适用内容类型 | 权限码 | 计划组件 |
 |---|---|---|---|
+| product-details | PRODUCT | content:product:edit | ProductEditor |
 
 ### 7.4 界面文案
 
-> texts.ts 中的分组与关键文案；后台只用简体中文。
+| texts.ts 分组 | 中文文案 | 使用场景 |
+|---|---|---|
+| product.title | 产品 | 页面标题 |
+| product.save | 保存成功 | 保存反馈 |
+| product.conflict | 内容已被修改，请刷新后重试 | 并发冲突 |
+| product.confirm | 确认执行此操作？ | 有副作用操作确认 |
+
+字段名、枚举标签、按钮、空状态、错误与任务进度统一集中在本模块 texts.ts；后台不引入 vue-i18n。无权限时隐藏操作，服务端仍再次校验。
 
 ## 8. 前台组件与模板
 
@@ -1075,122 +1279,168 @@ CREATE TABLE prd_product_document (
 
 ### 8.1 组件
 
-| 组件类型 | 名称（label） | 变体 | 分类 | allowedIn | 数据源 | 是否水合 |
+| 组件类型 | 名称 | 变体 | 分类 | allowedIn | 数据源 | 水合 |
 |---|---|---|---|---|---|---|
+| product-gallery | 产品图集 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| product-specification | 规格参数 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| download-list | 产品文档 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| product-model-table | 型号表 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| product-hero | 产品首屏 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| product-grid | 产品网格 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
+| product-category-grid | 产品分类网格 | 由主题声明的 2–3 个变体 | 业务 | page / slot；固定区由模板声明 | 发布快照、对象化引用或第 8.4 节 | 按交互需要；静态内容不水合 |
 
 ### 8.2 属性与翻译
 
 | 组件 | 属性 | 类型 / x-editor | x-translatable | maxLength |
 |---|---|---|---|---|
+| product-gallery | images | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| product-specification | contentId | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| download-list | contentId | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| product-model-table | contentId | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| product-hero | contentId | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| product-grid | source | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+| product-category-grid | source | 按 component-schemas 的 JSON Schema；对象引用用对应选择器 | false | — |
+
+字符串/富文本逐内部字段标记可翻译，型号、ID、枚举、key、URL 与引用不可翻译。内容/媒体/分类/数据源使用 $content/$media/$term/$source，不存渲染 URL。样式只使用 Token。
 
 ### 8.3 模板
 
-| 模板 key | 内容类型 | 固定区域与插槽 |
-|---|---|---|
+不适用：模板元数据由 page 的 TemplateProvider 提供；本模块只提供所属组件或数据。
 
 ### 8.4 数据源
 
-| key | 参数 | 返回 | 缓存标签 |
-|---|---|---|---|
+不适用：不提供 DataSourceProvider；使用发布快照或既有贡献接口。
 
 ### 8.5 文案键
 
-| 文案键 | 默认中文文案 | 使用位置 |
+| 文案键 | 默认中文文案 | 位置 |
 |---|---|---|
+| product.empty | 暂无内容 | 列表/组件空态 |
+| product.loading | 正在加载 | 交互等待 |
+| product.retry | 重试 | 可恢复错误 |
 
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
 
-| 键 | 类型 | 默认值 | 说明 | 敏感（x-secret） |
-|---|---|---|---|---|
+不新增 sys_setting 键；第 4 章业务配置表、模板或布局字段沿用各自定义及默认值，不能重复存放同一配置。没有独立站点设置 Schema 时，描述符 settings 为 null。
 
-### 9.2 部署配置（application.yml，前缀 b2bweb.<id>）
+### 9.2 部署配置（application.yml）
 
-| 属性 | 默认值 | 说明 |
-|---|---|---|
+本模块不另设连接地址或凭据前缀；数据库、Redis、对象存储及远程服务配置采用平台框架 5.12、5.14 的 `b2bweb.infra.*` 和环境变量。第 2.7 节列出的端口由 application 装配。部署地址、TLS 与密钥不写入仓库或响应。
+
+执行批量任务时使用第 10 章的处理量与取消点；这些是初始运行预算，不能覆盖接口安全上限。任何新增可调参数先在本节明确类型、默认值及边界后再实现。
 
 ## 10. 定时与异步任务
 
-> 没有时写“不适用”。定时任务实现 `ScheduledTask`，通用异步任务实现 `JobHandler`（平台框架设计 4.4.12）；锁名与任务类型按平台框架设计 3.7 命名。事件监听器已在 2.6 中列出，这里只补充耗时长、需要单独调度或重试的处理。`PER_SITE` 任务由 core 在站点上下文中逐站点执行，停用了本模块的站点自动跳过（系统设计 3.8）。外部服务（AI 引擎、邮件、CDN）只在事务提交后的异步处理中调用，失败不回滚已提交的业务数据（ADR-003、ADR-017）。
-
-| 任务 | 类型（定时 / sys_job / 事件监听） | 触发 | 锁名 | 幂等与重试 | 模块停用时 |
+| 任务 | 类型 | 触发 | 处理粒度与批量 | 锁与幂等 | 停用行为 |
 |---|---|---|---|---|---|
+| 产品导入 | sys_job | 确认 Excel 预检 | 100 行/批；每行事务；可取消并保留已完成结果 | `product.import_products`；按站点和对象/版本认领，幂等完成 | 跳过并保留待处理数据 |
+| 产品导出 | sys_job | 后台请求 | 500 行游标/批；导出文件有授权与过期时间 | `product.export_products`；按站点和对象/版本认领，幂等完成 | 跳过并保留待处理数据 |
 
-> 每个任务另写：执行粒度（`PER_SITE` / 系统级）、单次处理量与分批方式、超时、能否取消、失败后的可见结果（`sys_job` 的失败报告、指标 `b2bweb.<id>.*` 或告警）。
+普通任务为 PER_SITE；全局引擎或跨站点认领仅在 4.5 允许的位置执行。每批完成后更新进度与心跳，检查取消；短事务不得包裹外部调用。单次工作预算 60 秒，到预算即保存游标并续跑，外部端口超时用框架 4.7 的各端口上限。可重试失败指数退避；永久失败写 sys_job 报告或领域任务状态并输出 `b2bweb.product.task.errors` 指标，不记录敏感载荷。
+
+上述标识为本模块任务/锁的稳定名称；定时任务仅该任务互斥，不用一个 product.task 串行阻塞全部维护。core 已负责站点命名空间，不重复手工添加 s{siteId}。sys_job 进度写入后在安全批次边界响应取消；任务超时/租约丢失须停止提交新结果。
 
 ## 11. 测试要点
 
-> 测试层级、替身与契约测试的写法见平台框架设计第 9 章，门禁与覆盖率见第 10 章。“至少”后的用例为必测项；不适用的行写“不适用：<原因>”，不得删除。
-
-| 层级 | 覆盖内容 | 关键用例 |
+| 层级 | 覆盖内容 | 必测用例 |
 |---|---|---|
-| 单元 | <领域对象、不变量（3.2）、状态机（3.3）、扩展点实现（2.4）> | 至少：3.2 每条不变量的违反用例；3.3 每个非法状态转换被拒绝 |
-| 模块集成（Testcontainers + 替身） | <应用服务 + 本模块的表与迁移> | 至少：迁移脚本在空库（MySQL 8.4）上执行通过；6.1 中声明的并发控制与幂等；唯一约束冲突转为 6.5 的错误码 |
-| 契约（作为提供方） | <2.3 中本模块提供的服务接口> | 继承 testkit 中的 `<接口名>ContractTest`，用真实实现运行；不提供服务接口时写“不适用” |
-| 事件（Scenario API，含重复投递） | <2.6 中发布与订阅的事件> | 至少：事件在业务事务内发布、事务回滚时不发布；每个监听器重复投递只生效一次、过期事件被丢弃（ADR-003） |
-| 停用行为（可停用模块） | <系统设计 3.8 的各项> | 至少：停用后写操作与公开接口返回 `CORE_MODULE_DISABLED`；扩展点实现不再被收集；定时任务跳过；`analyzeDisableImpact` 的结果正确；重新启用后数据完整（S10） |
-| 站点隔离 | <6.1 的全部后台接口与 4.5 的全部站点级表> | 至少：站点 A 的用户不能读写站点 B 的数据（遍历全部后台端点，系统设计 28）；豁免表只在 4.5 列出的位置访问 |
-| 翻译（如有可翻译字段） | <`TranslatableContentProvider` / `TranslatableResourceProvider` 实现> | 至少：提取 → 回写往返一致；`x-translatable = false` 的字段不被提取；`HUMAN` / `REVIEWED` 段不被机器译文覆盖；资源变化时发布 `TranslatableResourceChangedEvent` |
-| 前端（组件、Admin） | <主题组件、Admin 页面> | 至少：组件 Schema 校验与画廊示例（视觉回归）；前台文字只来自文案键、后台文字只来自 `texts.ts`；无权限时操作不可见 |
-| E2E（场景） | <13.2 中验证方式为 E2E 的验收项> | Playwright 用例名包含 13.2 的验收项编号 |
+| 单元 | 第 3.2 全部不变量、3.3 状态与纯计算 | 逐条构造非法输入；合法及非法转换均断言；业务用例见 13.2 |
+| 模块集成（Testcontainers + 替身） | 第 6.1 全部端点、唯一约束和版本控制 | MySQL 8.4 空库迁移；跨站点 ID 拒绝；并发保存只成功一份；幂等重放不重复写入 |
+| 契约（提供方） | 不适用：不提供服务接口 | 扩展点实现运行框架 4.8.5 中对应 Conformance 套件 |
+| 事件（Scenario API） | 2.6 的发布与订阅 | 事务回滚无事件；重复投递不重复副作用；新修订后再投旧事件不回退 |
+| 停用行为 | 系统设计 3.8 | 写与公开接口 404/CORE_MODULE_DISABLED；只读历史允许；扩展点过滤、任务跳过，重启用数据保留；验证影响报告 |
+| 站点隔离 | 6.1 全部端点、4.5 全部站点表或缓存索引 | A/B 两站同构数据互不可见；全局豁免表只在显式系统权限处访问 |
+| 翻译 | 可翻译内容/资源与人工保护 | 提取回写往返一致，非文本不翻译，HUMAN/REVIEWED 不覆盖，源变化标记过期 |
+| 前端 | Admin、Schema、主题及权限 | Vitest 校验字段/权限/错误；组件画廊视觉回归、Token 及文案键检查；未授权操作不可见 |
+| E2E | 13.2 用例 | Playwright 用例名包含模块及 A 编号；不得把未实现测试写成已通过 |
+
+本章是实现后的测试要求；当前仓库没有应用或测试工程，本次只验证文档及契约引用，未执行上述应用测试。
 
 ## 12. 独立开发说明
 
 ### 12.1 依赖的测试替身
 
-> 2.2 使用的每个服务接口、2.7 使用的每个端口、2.5 收集的每个扩展点，都要在此列出 testkit 中对应的替身或示例实现（平台框架设计 2.4、第 9 章）。testkit 中缺少的替身向框架组提出需求（DoR 第 3 条，平台框架设计 2.7），不在本模块中另建一套代替其他模块的模拟实现；单元测试可以用 Mockito 模拟个别方法，但对其他模块行为的假设以替身与契约测试为准。
-
-| 替身（platform-testkit） | 代替的模块 | 用途 | 需要预置的数据 |
+| 替身或夹具（platform-testkit） | 替代能力 | 用途 | 预置数据 |
 |---|---|---|---|
+| InMemoryContentApi | ContentApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryUrlApi | UrlApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryMediaApi | MediaApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryTaxonomyApi | TaxonomyApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| InMemoryFormApi | FormApi | 替代对应 L2 模块 | 站点 A/B、公开与未公开语言、发布/草稿/下线对象 |
+| FakeRemoteFileFetcher | RemoteFileFetcher | 替代远程服务或共享基础设施 | 成功、超时、临时错误、永久拒绝与重复请求 |
+| TestPlatform / TestSites / TestUsers | core 公共服务与站点身份 | 按框架 9.2 装配替身、ManualClock | A/B 站、不同角色/语言范围、停用模块 |
+| InMemorySiteApi | SiteApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeSiteContextProvider | SiteContextProvider | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakePermissionChecker | PermissionChecker | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryAuditApi | AuditApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeEventMetaFactory | EventMetaFactory | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryJobApi | JobApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+
+类名是平台框架已定义的 testkit 交付要求，仓库尚无实现。发现缺少夹具或行为时向框架组提出 DoR 阻塞，不在模块中建立另一套跨模块模拟。
 
 ### 12.2 本模块提供的替身
 
-> 只有提供服务接口的模块填写（core、content、url、media、taxonomy、form、notification、translation，见平台框架设计 4.2）；其他模块写“不适用：不提供服务接口”。替身由框架组编写并维护，与真实实现通过同一套契约测试；本模块改变服务接口的行为时，在同一个 PR 中同步修改契约测试，并通知框架组修改替身（平台框架设计 2.3）。无法消除的差异（如不做病毒扫描、不生成真实缩略图）列入下表，并确认不影响使用方的测试结论。
-
-| 服务接口 | testkit 中的替身 | 与真实实现的差异（应为零，或已在契约测试中声明） |
-|---|---|---|
+不适用：不提供服务接口。扩展点的 Sample 实现由 testkit 统一维护。
 
 ### 12.3 本地运行
 
-> 启动方式、依赖的本地服务（平台框架设计第 11 章）、需要的配置。
+当前仅文档，尚无可运行的 `product` 工程。M0 完成后，在仓库根目录按平台框架第 11 章启动 MySQL 8.4、Redis 及本模块 2.7 需要的本地服务；通过 application 的 dev/test profile 装配本模块及 TestPlatform，不能直接依赖其他业务模块的实现。
+
+后端执行框架规定的 Maven 模块集成/契约测试，前端执行 pnpm lint、typecheck、test；演示环境再用 dev 装配执行第 13 章 E2E。具体命令以 M0 实际建立的 wrapper、脚本和锁文件为准，本文不虚构当前可运行命令。
 
 ### 12.4 演示数据
 
-> tools/demo-data 中本模块的数据及其用途。
+计划在框架规定的 `tools/demo-data` 中提供 `product` 的演示数据（该目录尚未建立）：两站相同业务 key、中文源内容、已发布英语与未公开语言、一个草稿/缺失语言对象、一个越权用户和一个故障服务场景。模块特有数据按 13.2 的四个输入构造；不得使用真实联系人或凭据。
+
+加载器只经已授权后台接口录入中文源数据，不直接写数据库；目标语言通过翻译流程及假引擎生成。按自然键重复加载幂等，仅补缺；不实际建立此目录直到 M0 任务要求实现。
 
 ## 13. 验收标准
 
 ### 13.1 里程碑切片
 
-> 与平台框架设计 13.5 中本模块的一行一致；调整切片按平台框架设计 12.5 处理。该里程碑没有切片时写“—”（不表示不能提前开发）。
-
 | 里程碑 | 交付功能 | 验收场景 |
 |---|---|---|
-| M1 | <…> | <S1、S2、S4 中与本模块相关的部分，或“模块自身”> |
-| M2 | <…> | <…> |
-| M3 | <…> | <…> |
-| M4 | <…> | <…> |
+| M1 | 基础字段与属性、媒体、文档 | S1、S2、S4（不含翻译/GA4） |
+| M2 | — | — |
+| M3 | 停产与替代（S8）；属性与选项作为可翻译资源 | S5、S7–S9、S11–S13；S4 的同意/分配增强 |
+| M4 | Excel 导入导出；型号表 | S6；搜索与数据范围验收 |
+
+切片逐字沿用平台框架 13.5；“—”表示没有该阶段集成要求，不表示不能提前实现。
 
 ### 13.2 验收项
 
-> 每条验收项写明输入、期望结果与度量（如“5 分钟内”“P95 ≤ 200 ms”）。场景验收项只写本模块负责的部分（如 S2 中 url 负责“旧 URL 301 到新 URL、不产生重定向链”），不复述整个场景；各里程碑的场景见平台框架设计 13.6。验证方式为单元 / 集成 / E2E 时写出测试类或用例名；人工检查写明检查人与方法。
-
-| # | 验收项 | 对应场景（S1–S13）或模块自身 | 验证方式（单元 / 集成 / E2E / 人工） | 里程碑 |
+| # | 输入与期望结果 | 场景 | 验证方式（计划用例名） | 里程碑 |
 |---|---|---|---|---|
-| A1 | <…> | <S? / 模块自身> | <集成：`<测试类>`> | M? |
+| A1 | 同一产品所有语言共享型号、属性定义和媒体，文本值按语言保存 | S1 | 集成：`ProductA1IT`；涉及界面时 E2E：`product-A1` | M1 |
+| A2 | 错误单位、数值范围、重复型号和不存在选项在保存时被拒绝 | S1 | 集成：`ProductA2IT`；涉及界面时 E2E：`product-A2` | M1 |
+| A3 | 停产后原路径返回 410 或单跳 301，发布卡片从列表移除 | S8 | 集成：`ProductA3IT`；涉及界面时 E2E：`product-A3` | M3 |
+| A4 | 导入 300 产品逐行报告，再次导入按型号更新而不增加重复产品 | S6 | 集成：`ProductA4IT`；涉及界面时 E2E：`product-A4` | M4 |
+| A5 | ArchUnit 与 Modulith verify 通过；零业务模块编译依赖、跨表 JOIN/外键 | 模块自身 | 架构：`ProductArchitectureTest` | M1 |
+| A6 | 第 6.1 当前切片已交付后台端点覆盖 A/B 站隔离、权限拒绝；全部成功写操作有脱敏审计 | 模块自身 | 集成：`ProductIsolationIT`、`ProductAuditIT` | M1 |
+| A7 | 停用与重新启用满足 S10，影响报告可列出内容与组件引用 | S10 | 集成：`ProductModuleLifecycleIT` | M2 |
+| A8 | 可翻译字段/资源登记并通过往返及人工保护测试 | S11、S12 | 集成：`ProductLocaleIT` | M3 |
+| A9 | 后台常规 API P95≤500ms（50并发用户）；典型产品页移动Lighthouse Performance≥90、SEO=100、Accessibility≥95；300产品导入逐行报告而非只报进程成功 | 模块自身 | 性能报告：`ProductPerformanceIT`；架构负责人核对适用指标 | M1 |
+| A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
+| A11 | A/B 编辑器并发修改不同标签只有匹配共同版本的一次成功，失败请求的 EAV/分类也回滚；未发布变化不影响线上卡片。 | 模块自身 / 5.2 | 集成：`ProductA11IT`；涉及界面 E2E：`product-A11` | M1 |
+| A12 | 300 行含重复型号、非法枚举、公式型字段、远程图失败，逐行可定位；网络重试不多建产品；合法导出重新打开不会执行输入文本。 | 模块自身 / 5.2 | 集成：`ProductA12IT`；涉及界面 E2E：`product-A12` | M4 |
+| A13 | 未发布新增型号不出现在公开选择；旧询盘引用已删除型号仍展示 title/modelNo/url 快照，不直接查询 prd_model 失败。 | 模块自身 / 5.2 | 集成：`ProductA13IT`；涉及界面 E2E：`product-A13` | M4 |
+| A14 | 停用 form 后受控文档仍不暴露下载地址；只改选项中文时发布 attribute 聚合变化，选项的 stable ID 与值不变。 | 模块自身 / 5.2 | 集成：`ProductA14IT`；涉及界面 E2E：`product-A14` | M3 |
 
-> 每个模块都要包含以下通用验收项（不适用时注明原因）：架构测试与 Modulith 验证通过，无跨模块 import 与表访问；站点隔离测试覆盖全部后台接口；后台写操作都有权限码与审计记录；可停用模块满足 S10；可翻译字段与资源已登记并通过往返测试（S11、S12）；系统设计 1.5 中与本模块相关的非功能指标；文档与代码一致（DoD，平台框架设计 2.8）。
+用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
 
 ## 14. 待定问题
 
-> 记录评审与开发中尚未决定的事项。“阻塞开发”的问题必须在评审通过（DoR）前关闭；需要新契约或修改上层文档的问题，写明契约变更请求或 Issue 编号。已关闭的问题保留在表中，填写结论。
-
-| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论 |
+| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
+| PRODUCT-M0 | 工程骨架、冻结契约与 testkit 尚未建立 | 所有运行和测试用例 | 是 | 框架负责人 | M0 完成 | 按 ADR-018 与框架 13.1 交付后才满足模块开工前提；文档补齐不等于 DoR 已通过。 |
+| PRODUCT-MEDIA | 既有 4.6/数据模型要求经 MediaApi 写草稿或资源引用，但框架 MediaApi 只声明 usages 查询，未声明引用整组替换方法 | DRAFT / 资源引用维护 | 否（已澄清） | 框架负责人、media 负责人 | 本模块首个切片开工前 | 内容 DRAFT 引用已由 ContentDraftChangedEvent → collectDraft 覆盖，发布引用由快照扫描覆盖；修正旧“直接调用 MediaApi 上报”表述，不新增写方法。删除窗口闭环由 MEDIA-02 统一跟踪。 |
 
 ## 修订记录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | V1.0 | 2026-10-14 | 初稿 |
+| V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
+| V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |

@@ -12,9 +12,9 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：本地化、修订、发布、预览；翻译模式与状态字段就绪；M2：审核、定时发布、回滚、回收站；M3：AUTO 本地化的自动发布与跟随下线，`OUTDATED` 检测；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.0 |
+| 文档版本 | V1.2 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-14 |
+| 更新日期 | 2026-10-20 |
 | 依据 | 系统设计 V1.4 第 4.4、5.5–5.7、6、10.5、13.6、22.3 节；平台框架设计 V1.0 第 4 章 4.4.16、4.5.2–4.5.4、4.5.6、4.5.19、4.6.2 节；ADR-003、ADR-004、ADR-005、ADR-017、ADR-018 |
 
 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求（见第 14 节）。
@@ -101,32 +101,84 @@
   "version": "1.0.0",
   "layer": "L2",
   "platform": ">=1.0.0 <2.0.0",
-  "requires": { "url": "^1.0" },
+  "requires": {
+    "url": "^1.0"
+  },
   "optional": {},
   "disableable": false,
   "tablePrefix": "cnt_",
   "apiPrefix": "content",
   "permissions": [
-    { "code": "content:content:view", "name": "查看内容摘要", "description": "内容选择器、内容类型列表与跨类型的内容摘要；不含草稿正文" },
-    { "code": "content:review-queue:view", "name": "查看待审核内容", "description": "列表只显示拥有对应类型审核权限的条目" },
-    { "code": "content:schedule:view", "name": "查看定时发布", "description": "列表只显示拥有对应类型发布权限的条目" },
-    { "code": "content:trash:view", "name": "查看回收站", "description": "列表只显示拥有对应类型删除权限的条目" }
+    {
+      "code": "content:content:view",
+      "name": "查看内容摘要",
+      "description": "内容选择器、内容类型列表与跨类型的内容摘要；不含草稿正文"
+    },
+    {
+      "code": "content:review-queue:view",
+      "name": "查看待审核内容",
+      "description": "列表只显示拥有对应类型审核权限的条目"
+    },
+    {
+      "code": "content:schedule:view",
+      "name": "查看定时发布",
+      "description": "列表只显示拥有对应类型发布权限的条目"
+    },
+    {
+      "code": "content:trash:view",
+      "name": "查看回收站",
+      "description": "列表只显示拥有对应类型删除权限的条目"
+    }
   ],
   "menus": [
-    { "key": "content", "name": "待审核", "parent": "editorial", "route": "/content/reviews", "permission": "content:review-queue:view", "order": 80 },
-    { "key": "content-schedules", "name": "定时发布", "parent": "editorial", "route": "/content/schedules", "permission": "content:schedule:view", "order": 85 },
-    { "key": "content-trash", "name": "回收站", "parent": "editorial", "route": "/content/trash", "permission": "content:trash:view", "order": 90 }
+    {
+      "key": "content",
+      "name": "待审核",
+      "parent": "editorial",
+      "route": "/content/reviews",
+      "permission": "content:review-queue:view",
+      "order": 80
+    },
+    {
+      "key": "content-schedules",
+      "name": "定时发布",
+      "parent": "editorial",
+      "route": "/content/schedules",
+      "permission": "content:schedule:view",
+      "order": 85
+    },
+    {
+      "key": "content-trash",
+      "name": "回收站",
+      "parent": "editorial",
+      "route": "/content/trash",
+      "permission": "content:trash:view",
+      "order": 90
+    }
   ],
   "settings": "settings.schema.json",
   "components": [],
   "events": {
     "publishes": [
-      "ContentCreatedEvent", "ContentDraftChangedEvent", "ContentPublishedEvent", "ContentUnpublishedEvent",
-      "ContentTrashedEvent", "ContentRestoredEvent", "ContentPurgedEvent",
-      "LocalizationCreatedEvent", "LocalizationDeletedEvent", "TranslationModeChangedEvent",
-      "TranslationOutdatedEvent", "ReviewRequestedEvent", "ReviewCompletedEvent"
+      "ContentCreatedEvent",
+      "ContentDraftChangedEvent",
+      "ContentPublishedEvent",
+      "ContentUnpublishedEvent",
+      "ContentTrashedEvent",
+      "ContentRestoredEvent",
+      "ContentPurgedEvent",
+      "LocalizationCreatedEvent",
+      "LocalizationDeletedEvent",
+      "TranslationModeChangedEvent",
+      "TranslationOutdatedEvent",
+      "ReviewRequestedEvent",
+      "ReviewCompletedEvent"
     ],
-    "subscribes": ["ContentPathChangedEvent", "TermChangedEvent", "TranslationCompletedEvent"]
+    "subscribes": [
+      "ContentPathChangedEvent",
+      "TermChangedEvent",
+      "TranslationCompletedEvent"
+    ]
   }
 }
 ```
@@ -228,7 +280,7 @@ content 不可停用，监听器在所有站点执行。
 
 | 类型 | 名称 | 说明 |
 |---|---|---|
-| 聚合根 | Content（`cnt_content`） | 语言无关的内容身份：站点、类型、所属模块、是否可路由、源语言、回收站状态。业务模块经 `ContentApi.create(type, locale)` 创建 |
+| 聚合根 | Content（`cnt_content`） | 语言无关的内容身份：站点、类型、所属模块、是否可路由、源语言、回收站状态。业务模块经 `ContentApi.create(CreateContentCommand)` 创建 |
 | 聚合根 | Localization（`cnt_localization`） | 内容在一种语言下的版本，是编辑、审核、发布、定时、翻译的单位，带乐观锁 `version`；生命周期从属于 Content（物理删除时级联） |
 | 实体 | Revision（`cnt_revision`） | 一次发布生成的不可变修订，`payload` 为发布快照 |
 | 实体（投影） | PublishedTerm（`cnt_published_term`） | 发布时从快照 `terms` 提取的分类指派，供列表、筛选、图谱读取 |
@@ -326,7 +378,7 @@ translation_state（目标语言本地化，由 translation 经 updateTranslatio
 
 ## 4. 数据模型
 
-遵守平台框架设计第 7 章的数据库通用约定。DDL 已在 MySQL 8.4 上执行通过；表结构以本节为准，与迁移脚本保持一致。
+遵守平台框架设计第 7 章的数据库通用约定。本节给出待实现 DDL；本次文档审查未重跑 MySQL，不能据此认定 DDL 已验证。M0 后按第 11 章在 MySQL 8.4 空库验证，并使实际迁移脚本与本节一致。
 
 ### 4.1 表清单
 
@@ -797,15 +849,15 @@ CREATE TABLE cnt_preview_token (
 
 ```text
 业务模块的事务（如 product 的 ProductService.create）
-  ├─ 写业务表
-  ├─ ContentApi.create(type, zh-CN, title, slug?)
+  ├─ ContentApi.create(CreateContentCommand(type, zh-CN, title, slug?))
   │    1. 类型已注册且所属模块在当前站点启用（ContentTypeProvider）
   │    2. 可路由：slug 为空 → UrlApi.generateSlug(title, zh-CN)；非空 → UrlApi.validateSlug
   │    3. 写 cnt_content（owner_module、routable 取自类型定义）与源语言 cnt_localization
   │       （SOURCE / NONE / EDITING / NEVER，slug_locked = 是否手工指定）
   │    4. 组装 DRAFT_HASH → draft_hash
   │    5. 发布 ContentCreatedEvent、LocalizationCreatedEvent
-  └─ 用返回的 contentId 关联业务表
+  ├─ 用返回的 contentId/localizationId 写所属模块业务行
+  └─ 同事务 updateDraftMeta(expectedVersion=返回版本) 重算完整草稿哈希
 提交
 ```
 
@@ -814,6 +866,8 @@ CREATE TABLE cnt_preview_token (
 | `createLocalization` | MANUAL 目标语言（为某市场独立编辑）；语言须已在站点启用 | `CONTENT_LOCALE_NOT_ENABLED`、`CONTENT_LOCALE_EXISTS` |
 | `ensureTargetLocalization` | 只由 translation 调用；不存在时创建 AUTO、`NONE`、slug 为空（首次发布时由译文标题生成，系统设计 13.3）；已存在原样返回 | `CONTENT_LOCALE_IS_SOURCE`、`CONTENT_TRASHED` |
 | 第 2 步 | slug 为空串（标题全为符号）时保存为空，发布校验报 ERROR | `CONTENT_SLUG_INVALID`（`errors[]` 来自 `UrlApi.validateSlug`） |
+
+create 的初始化 DRAFT_HASH 允许所属业务行尚不存在（既有 DRAFT_HASH 降级规则）；调用方写完业务行后必须完成上面的最终重算，不能在两个事务中先提交身份再补业务行。
 
 ### 5.2 保存草稿与草稿哈希
 
@@ -954,6 +1008,15 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 | 模式切换 | `changeTranslationMode`：AUTO → MANUAL 保留草稿；MANUAL → AUTO 清除 `OUTDATED`（置 `NONE`），由 translation 按源语言当前修订重新排队 |
 | 法律页面 | `TranslationCompletedEvent.humanReviewRequired` 或 `translation_review_required = 1` 时一律进入审核（禁止 15）；`translation_review_required` 的写入途径待契约（第 14 节 #1） |
 
+### 5.11 一致性、失败与恢复约束
+
+| 场景 | 必须满足的行为 | 可验证结果 |
+|---|---|---|
+| 身份与业务草稿初始化 | 同事务先调用 create 获取 contentId/localizationId，再写所属模块业务行，最后 updateDraftMeta 计算完整草稿哈希；初始 create 不得要求不存在的业务行。任何一步失败，身份/本地化/业务行与事件全部回滚。 | 故意令业务行写入失败，事务提交后各表与事件均无孤立记录；成功后 draft_hash 对应完整业务数据。 |
+| 普通保存与系统标记分开 | 编辑器保存调用 updateDraftMeta(expectedVersion=页面读取版本)，不能先无条件写库再单独提交版本。markDraftChanged 仅用于既有契约允许的系统/共享数据变化；所有步骤在同一事务。 | 两个编辑器用同一 version 保存不同布局/业务字段，只成功一次；失败方的业务行也回滚，待审记录按内容状态机取消。 |
+| 预览输入与历史修订 | GET 预览不接受 partOverrides；画布 POST 仅允许 EDITOR 用途令牌覆盖 layout，并走 PublishContributor 校验。SHARE 令牌不能写草稿，撤销/到期后立即拒绝。 | 跨站点、过期、已撤销、SHARE 携带覆盖的四类请求均拒绝；响应 no-store，不出现公开缓存条目。 |
+| 修订保留与清理 | 裁剪保留当前 published_revision_id 及有效修订预览令牌引用；purge 按影响报告和路由退役协议执行，停用的业务模块仍接收内容物理删除清理。 | 保留期任务重复运行，当前线上修订与未过期令牌所指修订仍可读；ContentPurgedEvent 在停用模块重复投递不报错。 |
+
 ## 6. 接口
 
 ### 6.1 Admin 端点
@@ -1051,20 +1114,32 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 
 | 菜单 key | 名称 | 父菜单 | 路由 | 权限码 |
 |---|---|---|---|---|
+| content | 待审核 | editorial | /content/reviews | content:review-queue:view |
+| content-schedules | 定时发布 | editorial | /content/schedules | content:schedule:view |
+| content-trash | 回收站 | editorial | /content/trash | content:trash:view |
 
 ### 7.2 页面
 
-| 页面 | 路由 | 主要功能 | 使用的 admin-kit 组件 |
+| 页面 | 路由 | 主要功能 | 共享组件 |
 |---|---|---|---|
+| 待审核 | /content/reviews | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
+| 定时发布 | /content/schedules | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
+| 回收站 | /content/trash | 按第 6 章端点完成列表、筛选、详情与授权操作；失败保留编辑上下文 | 复用框架 8.2 的 SchemaForm 与通用选择器 |
 
 ### 7.3 注册到内容编辑外壳的标签
 
-| key | 适用内容类型 | 权限码 | 组件 |
-|---|---|---|---|
+不适用：不向内容编辑外壳注册业务标签；公共生命周期控件由 content 外壳负责。
 
 ### 7.4 界面文案
 
-> texts.ts 中的分组与关键文案；后台只用简体中文。
+| texts.ts 分组 | 中文文案 | 使用场景 |
+|---|---|---|
+| content.title | 内容内核 | 页面标题 |
+| content.save | 保存成功 | 保存反馈 |
+| content.conflict | 内容已被修改，请刷新后重试 | 并发冲突 |
+| content.confirm | 确认执行此操作？ | 有副作用操作确认 |
+
+字段名、枚举标签、按钮、空状态、错误与任务进度统一集中在本模块 texts.ts；后台不引入 vue-i18n。无权限时隐藏操作，服务端仍再次校验。
 
 ## 8. 前台组件与模板
 
@@ -1072,122 +1147,165 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 
 ### 8.1 组件
 
-| 组件类型 | 名称（label） | 变体 | 分类 | allowedIn | 数据源 | 是否水合 |
-|---|---|---|---|---|---|---|
+不适用：不拥有可拖入布局的组件类型。运行时 UI 或主题固定区域见第 5、6 章。
 
 ### 8.2 属性与翻译
 
-| 组件 | 属性 | 类型 / x-editor | x-translatable | maxLength |
-|---|---|---|---|---|
+不适用：无本模块组件属性；可翻译内容及资源按第 3、4 章登记的提供方处理。
 
 ### 8.3 模板
 
-| 模板 key | 内容类型 | 固定区域与插槽 |
-|---|---|---|
+不适用：模板元数据由 page 的 TemplateProvider 提供；本模块只提供所属组件或数据。
 
 ### 8.4 数据源
 
 | key | 参数 | 返回 | 缓存标签 |
 |---|---|---|---|
+| content-query | contentType、termIds、page、size、sort | 当前语言发布卡片与分页 | list 标签、分类标签及返回内容标签 |
+
+参数必须按 paramsSchema 校验，批量读取避免 N+1；单个数据源预算遵守 DataSourceLimits（500ms），超时返回可诊断的空区域。
+
+布局数据源最多 24 条，500ms 预算；引用通过 delivery 解析，不能直接把内部草稿实体返回前台。
 
 ### 8.5 文案键
 
-| 文案键 | 默认中文文案 | 使用位置 |
-|---|---|---|
+不适用：本模块不直接显示前台 UI；公开错误文案键见 6.5。
 
 ## 9. 配置项
 
 ### 9.1 站点设置（settings.schema.json）
 
-| 键 | 类型 | 默认值 | 说明 | 敏感（x-secret） |
+| 键 | 类型 | 默认值 | 说明 | x-secret |
 |---|---|---|---|---|
+| content.reviewRequiredTypes | array | [] | 需要审核的内容类型；法律页审校约束仍单独生效 | 否 |
 
-### 9.2 部署配置（application.yml，前缀 b2bweb.<id>）
+回收站/修订保留策略与预览令牌期限依照第 3–6 章及框架 5.9；不可由前端覆盖安全上限。
 
-| 属性 | 默认值 | 说明 |
-|---|---|---|
+### 9.2 部署配置（application.yml）
+
+本模块不另设连接地址或凭据前缀；数据库、Redis、对象存储及远程服务配置采用平台框架 5.12、5.14 的 `b2bweb.infra.*` 和环境变量。第 2.7 节列出的端口由 application 装配。部署地址、TLS 与密钥不写入仓库或响应。
+
+执行批量任务时使用第 10 章的处理量与取消点；这些是初始运行预算，不能覆盖接口安全上限。任何新增可调参数先在本节明确类型、默认值及边界后再实现。
 
 ## 10. 定时与异步任务
 
-> 没有时写“不适用”。定时任务实现 `ScheduledTask`，通用异步任务实现 `JobHandler`（平台框架设计 4.4.12）；锁名与任务类型按平台框架设计 3.7 命名。事件监听器已在 2.6 中列出，这里只补充耗时长、需要单独调度或重试的处理。`PER_SITE` 任务由 core 在站点上下文中逐站点执行，停用了本模块的站点自动跳过（系统设计 3.8）。外部服务（AI 引擎、邮件、CDN）只在事务提交后的异步处理中调用，失败不回滚已提交的业务数据（ADR-003、ADR-017）。
-
-| 任务 | 类型（定时 / sys_job / 事件监听） | 触发 | 锁名 | 幂等与重试 | 模块停用时 |
+| 任务 | 类型 | 触发 | 处理粒度与批量 | 锁与幂等 | 停用行为 |
 |---|---|---|---|---|---|
+| 定时发布与下线 | 定时 | 每分钟 | 逐本地化锁定；检查 scheduled_by 权限与最新状态 | `content.publish_due`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| 回收站清理 | 定时 | 每日 | 100 内容/批；先影响分析再 purge | `content.purge_trash`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| 修订裁剪 | 定时 | 每日 | 100 内容/批；保留当前发布与需保留修订 | `content.prune_revisions`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| 预览令牌清理 | 定时 | 每日 | 500 条/批；只清理到期或已撤销令牌 | `content.cleanup_preview`；按站点和对象/版本认领，幂等完成 | 不可停用 |
 
-> 每个任务另写：执行粒度（`PER_SITE` / 系统级）、单次处理量与分批方式、超时、能否取消、失败后的可见结果（`sys_job` 的失败报告、指标 `b2bweb.<id>.*` 或告警）。
+普通任务为 PER_SITE；全局引擎或跨站点认领仅在 4.5 允许的位置执行。每批完成后更新进度与心跳，检查取消；短事务不得包裹外部调用。单次工作预算 60 秒，到预算即保存游标并续跑，外部端口超时用框架 4.7 的各端口上限。可重试失败指数退避；永久失败写 sys_job 报告或领域任务状态并输出 `b2bweb.content.task.errors` 指标，不记录敏感载荷。
+
+上述标识为本模块任务/锁的稳定名称；定时任务仅该任务互斥，不用一个 content.task 串行阻塞全部维护。core 已负责站点命名空间，不重复手工添加 s{siteId}。sys_job 进度写入后在安全批次边界响应取消；任务超时/租约丢失须停止提交新结果。
 
 ## 11. 测试要点
 
-> 测试层级、替身与契约测试的写法见平台框架设计第 9 章，门禁与覆盖率见第 10 章。“至少”后的用例为必测项；不适用的行写“不适用：<原因>”，不得删除。
-
-| 层级 | 覆盖内容 | 关键用例 |
+| 层级 | 覆盖内容 | 必测用例 |
 |---|---|---|
-| 单元 | <领域对象、不变量（3.2）、状态机（3.3）、扩展点实现（2.4）> | 至少：3.2 每条不变量的违反用例；3.3 每个非法状态转换被拒绝 |
-| 模块集成（Testcontainers + 替身） | <应用服务 + 本模块的表与迁移> | 至少：迁移脚本在空库（MySQL 8.4）上执行通过；6.1 中声明的并发控制与幂等；唯一约束冲突转为 6.5 的错误码 |
-| 契约（作为提供方） | <2.3 中本模块提供的服务接口> | 继承 testkit 中的 `<接口名>ContractTest`，用真实实现运行；不提供服务接口时写“不适用” |
-| 事件（Scenario API，含重复投递） | <2.6 中发布与订阅的事件> | 至少：事件在业务事务内发布、事务回滚时不发布；每个监听器重复投递只生效一次、过期事件被丢弃（ADR-003） |
-| 停用行为（可停用模块） | <系统设计 3.8 的各项> | 至少：停用后写操作与公开接口返回 `CORE_MODULE_DISABLED`；扩展点实现不再被收集；定时任务跳过；`analyzeDisableImpact` 的结果正确；重新启用后数据完整（S10） |
-| 站点隔离 | <6.1 的全部后台接口与 4.5 的全部站点级表> | 至少：站点 A 的用户不能读写站点 B 的数据（遍历全部后台端点，系统设计 28）；豁免表只在 4.5 列出的位置访问 |
-| 翻译（如有可翻译字段） | <`TranslatableContentProvider` / `TranslatableResourceProvider` 实现> | 至少：提取 → 回写往返一致；`x-translatable = false` 的字段不被提取；`HUMAN` / `REVIEWED` 段不被机器译文覆盖；资源变化时发布 `TranslatableResourceChangedEvent` |
-| 前端（组件、Admin） | <主题组件、Admin 页面> | 至少：组件 Schema 校验与画廊示例（视觉回归）；前台文字只来自文案键、后台文字只来自 `texts.ts`；无权限时操作不可见 |
-| E2E（场景） | <13.2 中验证方式为 E2E 的验收项> | Playwright 用例名包含 13.2 的验收项编号 |
+| 单元 | 第 3.2 全部不变量、3.3 状态与纯计算 | 逐条构造非法输入；合法及非法转换均断言；业务用例见 13.2 |
+| 模块集成（Testcontainers + 替身） | 第 6.1 全部端点、唯一约束和版本控制 | MySQL 8.4 空库迁移；跨站点 ID 拒绝；并发保存只成功一份；幂等重放不重复写入 |
+| 契约（提供方） | ContentApi | ContentApiContractTest 使用真实实现继承 ContentApiContract，并与 InMemory 实现运行同一套夹具 |
+| 事件（Scenario API） | 2.6 的发布与订阅 | 事务回滚无事件；重复投递不重复副作用；新修订后再投旧事件不回退 |
+| 停用行为 | 系统设计 3.8 | 不适用：不可停用；验证停用其可选依赖后仍能降级 |
+| 站点隔离 | 6.1 全部端点、4.5 全部站点表或缓存索引 | A/B 两站同构数据互不可见；全局豁免表只在显式系统权限处访问 |
+| 翻译 | 可翻译内容/资源与人工保护 | 不适用：不持有翻译单元；读取不跨语言回退 |
+| 前端 | Admin、Schema、主题及权限 | Vitest 校验字段/权限/错误；组件画廊视觉回归、Token 及文案键检查；未授权操作不可见 |
+| E2E | 13.2 用例 | Playwright 用例名包含模块及 A 编号；不得把未实现测试写成已通过 |
+
+本章是实现后的测试要求；当前仓库没有应用或测试工程，本次只验证文档及契约引用，未执行上述应用测试。
 
 ## 12. 独立开发说明
 
 ### 12.1 依赖的测试替身
 
-> 2.2 使用的每个服务接口、2.7 使用的每个端口、2.5 收集的每个扩展点，都要在此列出 testkit 中对应的替身或示例实现（平台框架设计 2.4、第 9 章）。testkit 中缺少的替身向框架组提出需求（DoR 第 3 条，平台框架设计 2.7），不在本模块中另建一套代替其他模块的模拟实现；单元测试可以用 Mockito 模拟个别方法，但对其他模块行为的假设以替身与契约测试为准。
-
-| 替身（platform-testkit） | 代替的模块 | 用途 | 需要预置的数据 |
+| 替身或夹具（platform-testkit） | 替代能力 | 用途 | 预置数据 |
 |---|---|---|---|
+| TestPlatform / TestSites / TestUsers | core 公共服务与站点身份 | 按框架 9.2 装配替身、ManualClock | A/B 站、不同角色/语言范围、停用模块 |
+| InMemoryUrlApi | UrlApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryUrlApi | UrlApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryUrlApi | UrlApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryUrlApi | UrlApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryUrlApi | UrlApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemorySiteApi | SiteApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeSiteContextProvider | SiteContextProvider | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemorySettingsApi | SettingsApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeCurrentUserProvider | CurrentUserProvider | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakePermissionChecker | PermissionChecker | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryUserDirectory | UserDirectory | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryAuditApi | AuditApi | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeIdGenerator | IdGenerator | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| FakeEventMetaFactory | EventMetaFactory | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+| InMemoryExtensionRegistry | ExtensionRegistry | 替代 core 公共服务；实现以框架 9.2 为准 | 当前站点、不同角色及成功/拒绝分支 |
+
+类名是平台框架已定义的 testkit 交付要求，仓库尚无实现。发现缺少夹具或行为时向框架组提出 DoR 阻塞，不在模块中建立另一套跨模块模拟。
 
 ### 12.2 本模块提供的替身
 
-> 只有提供服务接口的模块填写（core、content、url、media、taxonomy、form、notification、translation，见平台框架设计 4.2）；其他模块写“不适用：不提供服务接口”。替身由框架组编写并维护，与真实实现通过同一套契约测试；本模块改变服务接口的行为时，在同一个 PR 中同步修改契约测试，并通知框架组修改替身（平台框架设计 2.3）。无法消除的差异（如不做病毒扫描、不生成真实缩略图）列入下表，并确认不影响使用方的测试结论。
-
-| 服务接口 | testkit 中的替身 | 与真实实现的差异（应为零，或已在契约测试中声明） |
+| 服务接口 | 替身 | 差异与约束 |
 |---|---|---|
+| ContentApi | InMemoryContentApi | 完整行为以 ContentApiContract 为准；远程传输由端口假实现代替，真实端到端另测 |
 
 ### 12.3 本地运行
 
-> 启动方式、依赖的本地服务（平台框架设计第 11 章）、需要的配置。
+当前仅文档，尚无可运行的 `content` 工程。M0 完成后，在仓库根目录按平台框架第 11 章启动 MySQL 8.4、Redis 及本模块 2.7 需要的本地服务；通过 application 的 dev/test profile 装配本模块及 TestPlatform，不能直接依赖其他业务模块的实现。
+
+后端执行框架规定的 Maven 模块集成/契约测试，前端执行 pnpm lint、typecheck、test；演示环境再用 dev 装配执行第 13 章 E2E。具体命令以 M0 实际建立的 wrapper、脚本和锁文件为准，本文不虚构当前可运行命令。
 
 ### 12.4 演示数据
 
-> tools/demo-data 中本模块的数据及其用途。
+计划在框架规定的 `tools/demo-data` 中提供 `content` 的演示数据（该目录尚未建立）：两站相同业务 key、中文源内容、已发布英语与未公开语言、一个草稿/缺失语言对象、一个越权用户和一个故障服务场景。模块特有数据按 13.2 的四个输入构造；不得使用真实联系人或凭据。
 
 ## 13. 验收标准
 
 ### 13.1 里程碑切片
 
-> 与平台框架设计 13.5 中本模块的一行一致；调整切片按平台框架设计 12.5 处理。该里程碑没有切片时写“—”（不表示不能提前开发）。
-
 | 里程碑 | 交付功能 | 验收场景 |
 |---|---|---|
-| M1 | <…> | <S1、S2、S4 中与本模块相关的部分，或“模块自身”> |
-| M2 | <…> | <…> |
-| M3 | <…> | <…> |
-| M4 | <…> | <…> |
+| M1 | 本地化、修订、发布、预览；翻译模式与状态字段就绪 | S1、S2、S4（不含翻译/GA4） |
+| M2 | 审核、定时发布、回滚、回收站 | S3、S10 |
+| M3 | AUTO 本地化的自动发布与跟随下线；`OUTDATED` 检测 | S5、S7–S9、S11–S13；S4 的同意/分配增强 |
+| M4 | — | — |
+
+切片逐字沿用平台框架 13.5；“—”表示没有该阶段集成要求，不表示不能提前实现。
 
 ### 13.2 验收项
 
-> 每条验收项写明输入、期望结果与度量（如“5 分钟内”“P95 ≤ 200 ms”）。场景验收项只写本模块负责的部分（如 S2 中 url 负责“旧 URL 301 到新 URL、不产生重定向链”），不复述整个场景；各里程碑的场景见平台框架设计 13.6。验证方式为单元 / 集成 / E2E 时写出测试类或用例名；人工检查写明检查人与方法。
-
-| # | 验收项 | 对应场景（S1–S13）或模块自身 | 验证方式（单元 / 集成 / E2E / 人工） | 里程碑 |
+| # | 输入与期望结果 | 场景 | 验证方式（计划用例名） | 里程碑 |
 |---|---|---|---|---|
-| A1 | <…> | <S? / 模块自身> | <集成：`<测试类>`> | M? |
+| A1 | 发布校验失败时快照、路由、投影与事件全部回滚 | S1 | 集成：`ContentA1IT`；涉及界面时 E2E：`content-A1` | M1 |
+| A2 | 旧 version 保存和发布返回冲突，已发布修订不可变 | S3 | 集成：`ContentA2IT`；涉及界面时 E2E：`content-A2` | M1 |
+| A3 | 源语言下线后 AUTO 跟随下线，MANUAL 保留并标记过期 | S11 | 集成：`ContentA3IT`；涉及界面时 E2E：`content-A3` | M3 |
+| A4 | 预览令牌撤销后不可访问，定时发布与回收站清理幂等 | S3 / 模块自身 | 集成：`ContentA4IT`；涉及界面时 E2E：`content-A4` | M2 |
+| A5 | ArchUnit 与 Modulith verify 通过；零业务模块编译依赖、跨表 JOIN/外键 | 模块自身 | 架构：`ContentArchitectureTest` | M1 |
+| A6 | 第 6.1 当前切片已交付后台端点覆盖 A/B 站隔离、权限拒绝；全部成功写操作有脱敏审计 | 模块自身 | 集成：`ContentIsolationIT`、`ContentAuditIT` | M1 |
+| A7 | 自身不可停用；必需 url 不可缺失，装配缺失应明确失败，不能跳过路由后发布 | 模块自身 | 集成：`ContentModuleLifecycleIT` | M2 |
+| A8 | 不自行提取业务翻译单元；验证 AUTO/MANUAL 生命周期、法律页审校保护、源下线与过期完成事件不会错误发布 | S11、S12 | 集成：`ContentLocaleIT` | M3 |
+| A9 | 后台常规 API P95≤500ms（50并发用户）；标注为 Delivery 热路径的读方法 P95≤20ms；本模块公开数据变更在≤60s缓存预算内可见，记录数据规模及冷热缓存条件 | 模块自身 | 性能报告：`ContentPerformanceIT`；架构负责人核对适用指标 | M1 |
+| A10 | 实现与本文件、描述符、OpenAPI、Schema 和迁移保持一致；第 14 章阻塞项在开工前关闭 | 模块自身 | 人工：模块负责人逐项按框架 12.4 检查并附评审记录 | M1 |
+| A11 | 故意令业务行写入失败，事务提交后各表与事件均无孤立记录；成功后 draft_hash 对应完整业务数据。 | 模块自身 / 5.11 | 集成：`ContentA11IT`；涉及界面 E2E：`content-A11` | M1 |
+| A12 | 两个编辑器用同一 version 保存不同布局/业务字段，只成功一次；失败方的业务行也回滚，待审记录按内容状态机取消。 | 模块自身 / 5.11 | 集成：`ContentA12IT`；涉及界面 E2E：`content-A12` | M1 |
+| A13 | 跨站点、过期、已撤销、SHARE 携带覆盖的四类请求均拒绝；响应 no-store，不出现公开缓存条目。 | 模块自身 / 5.11 | 集成：`ContentA13IT`；涉及界面 E2E：`content-A13` | M2 |
+| A14 | 保留期任务重复运行，当前线上修订与未过期令牌所指修订仍可读；ContentPurgedEvent 在停用模块重复投递不报错。 | 模块自身 / 5.11 | 集成：`ContentA14IT`；涉及界面 E2E：`content-A14` | M2 |
 
-> 每个模块都要包含以下通用验收项（不适用时注明原因）：架构测试与 Modulith 验证通过，无跨模块 import 与表访问；站点隔离测试覆盖全部后台接口；后台写操作都有权限码与审计记录；可停用模块满足 S10；可翻译字段与资源已登记并通过往返测试（S11、S12）；系统设计 1.5 中与本模块相关的非功能指标；文档与代码一致（DoD，平台框架设计 2.8）。
+用例名为后续实现要求，不表示已有测试。性能测试需记录数据规模、并发、冷/热缓存与结果分位数；不以单次请求代替验收。
 
 ## 14. 待定问题
 
-> 记录评审与开发中尚未决定的事项。“阻塞开发”的问题必须在评审通过（DoR）前关闭；需要新契约或修改上层文档的问题，写明契约变更请求或 Issue 编号。已关闭的问题保留在表中，填写结论。
-
-| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论 |
+| # | 问题 | 影响 | 是否阻塞开发 | 负责人 | 最晚解决 | 结论/处理要求 |
 |---|---|---|---|---|---|---|
+| #1 | translation_review_required 的写入途径未在 ContentApi 明确 | 法律页机器译文审校 | 是 | 框架负责人 | M3 开工前 | 在既有 create/update 元数据流程明确输入与 testkit 行为；未解决前法律页一律禁止自动发布 |
+| #2 | 定时发布失败通知设置人的模板与事件尚无契约 | 失败反馈 | 否 | 框架负责人 | M2 开工前 | 先保留 AuditApi.recordIndependently 与失败指标；通知需通过框架 4.9 补充后实现 |
+| #4 | assemblePreview 的 partOverrides 缺少用途/字段限制 | 编辑器授权边界 | 否（已澄清） | 框架负责人 | M2 开工前 | 已按框架 4.4.16 的 PreviewRequest 与 8.3.13 澄清：仅 EDITOR 可以覆盖 layout；delivery POST 做用途、站点、大小、Schema 校验，SHARE/PREVIEW 不接受覆盖，无需新签名。 |
+| #5 | CONTENT_CARD_MISSING 被 PublishContributor 使用但未列入 ContentErrors | 错误目录一致性 | 否 | 框架负责人 | M1 开工前 | 框架错误目录统一登记既有语义，不在模块自建第二套跨模块错误常量 |
+| #11 | 4.6 事件摘要与 4.2.4 总表不完全一致 | 事件声明和测试 | 否 | 框架负责人 | M1 开工前 | 以框架完整事件定义和本模块 2.6 为准；同步末尾摘要，不增加新事件 |
+| CONTENT-M0 | 骨架、冻结契约与 testkit 尚无实现 | 实际运行测试 | 是 | 框架负责人 | M0 | 文档不等于 DoR 或实现验收通过 |
 
 ## 修订记录
 
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | V1.0 | 2026-10-14 | 初稿 |
+| V1.1 | 2026-10-20 | 依据现有系统设计、框架契约与数据模型补齐职责、描述符、流程、接口、界面、测试及验收；保留未解决的上层契约问题，未声称运行测试通过 |
+| V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
