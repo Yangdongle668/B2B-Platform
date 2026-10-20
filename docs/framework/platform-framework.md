@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.5 |
+| 文档版本 | V1.6 |
 | 状态 | 草案（Draft），待评审 |
 | 更新日期 | 2026-10-20 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.7（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-018（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.8（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-018（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -134,7 +134,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 - 模块用**模块 ID** 指称（`content`、`inquiry` 等，见系统设计 3.2）；platform-core 在 `module.json` 与数据库中的模块 ID 为 `core`，platform-api 只有契约，没有模块 ID。
 - Java 基础包名为 `com.b2bweb`，Maven groupId 为 `com.b2bweb`，前端包作用域为 `@b2bweb/*`（M0 开工前可以统一替换为正式名称，替换时同步修改本文）。
 - 文中的 GitHub 账号与团队（如 `@arch-lead`）是占位符，M0 时替换为真实账号。
-- 表格中的“系统设计 N.M”指《系统设计说明书》V1.7 的章节。
+- 表格中的“系统设计 N.M”指《系统设计说明书》V1.8 的章节。
 
 ### 1.6 术语
 
@@ -182,6 +182,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | V1.3 | 2026-10-20 | 整改DR-01～04：内容级审校策略与明确写锁、翻译目标版本、媒体三阶段删除、原子下载提交及持久幂等结果；统一事件/缓存规则。ADR仍待评审，运行验证另记 |
 | V1.4 | 2026-10-20 | M0-07原型反馈：明确RR当前读、锁内保留期判断、下载唯一冲突后新事务重放及恢复保留已捕获版本；业务服务验收仍待实现 |
 | V1.5 | 2026-10-20 | M0-07B反馈：排他初始化互斥行、事务要求、租约复核、拓扑检查点与语言范围去重；65项原型回归，正式服务门禁保留 |
+| V1.6 | 2026-10-20 | M0-07C反馈：恢复门闩覆盖读写与旧RDB代次，可靠失效不经BufferStore去抖，统一freshUntil示例；保持既有DDL和跨模块签名 |
 
 ---
 
@@ -5816,7 +5817,7 @@ public record RelationChangedEvent(EventMeta meta, Set<Long> contentIds, Relatio
 }
 ```
 
-订阅方：delivery 清除每个 `g:{contentId}`（经 2 秒合并后批量清除 CDN）。清除天然幂等。
+订阅方：delivery 清除每个 `g:{contentId}`，随后直接清除 CDN；二者成功才完成可靠投递（4.10.3），重复清除安全。
 
 #### 4.6.9 表单事件（form 发布）
 
@@ -5996,7 +5997,7 @@ delivery 处理资源翻译时的标签映射（`TranslationCompletedEvent.resou
 | `media.media` | `m:{resourceId}` |
 | `taxonomy.term` | `t:{resourceId}` |
 | `core.site_profile`、`core.ui_text`、`tracking.consent_banner` | `settings` |
-| `product.attribute_group`、`product.attribute` | `s{site}`（低频；经 2 秒合并） |
+| `product.attribute_group`、`product.attribute` | `s{site}`（低频；按4.10.3直接可靠失效） |
 | `notification.template` | 无（只用于邮件） |
 | `article.author`（4.10.2） | `settings`；发布快照中的作者不自动改写 |
 | 其他（V2 新增类型） | `s{site}`；新增资源类型时在本表登记更细的标签 |
@@ -6460,7 +6461,7 @@ package com.b2bweb.api.port;
 public interface CdnPurger {
 
     /**
-     * 按缓存标签清除（标签必须属于同一站点）。合并去抖（2 秒）由调用方经 BufferStore 完成；
+     * 按缓存标签清除（标签必须属于同一站点）。V1可靠路径直接调用，不经BufferStore去抖；
      * 适配器按服务商上限拆分批次（如每次 30 个标签）。不支持标签清除的 CDN：适配器把请求转为该站点全部域名的整站清除。
      *
      * @throws ExternalServiceException INFRA_CDN_PURGE_FAILED（retryable = true）
@@ -6951,7 +6952,7 @@ public interface LockHandle extends AutoCloseable {
 
 #### 4.7.17 BufferStore：计数与合并缓冲
 
-- 使用方：url（404 计数、重定向命中计数，系统设计 13.2）、graph（同一内容的触发合并 30 秒，15.4）、delivery（CDN 清除标签合并 2 秒，23.3）、seo（IndexNow 按分钟批量，14.7）。适配器：`RedisBufferStore`（计数用 Hash，延迟集合用 Sorted Set）。
+- 使用方：url（404 计数、重定向命中计数，系统设计 13.2）、graph（同一内容的触发合并 30 秒，15.4）、delivery（仅可丢失的优化提示，不承担可靠清除义务，23.3）、seo（IndexNow 按分钟批量，14.7）。适配器：`RedisBufferStore`（计数用 Hash，延迟集合用 Sorted Set）。
 - 键：`s{siteId}:buf:{bucket}`，自动使用当前站点；`bucket` 格式 `{moduleId}.{名称}`。消费方以 `PER_SITE` 的 `ScheduledTask`（4.4.12）定期取出处理。
 - Redis 故障时数据可能丢失：只用于可容忍少量丢失、或可由全量任务补齐的数据。
 
@@ -6972,7 +6973,7 @@ public interface BufferStore {
 
     /**
      * 登记一个待处理成员，到期时间 = 当前时间 + delay；成员已存在时保留较早的到期时间，窗口内的重复触发合并为一次。
-     * 例：graph.recompute（contentId，30 秒）、delivery.cdn_purge（标签值，2 秒）、seo.indexnow（URL，1 分钟）。
+     * 例：graph.recompute（contentId，30 秒）、seo.indexnow（URL，1 分钟）。
      */
     void schedule(String queue, String member, Duration delay);
 
@@ -7380,7 +7381,7 @@ public record CacheWriteFence(String incarnation, long counter) {}
 可靠性采用已有 Event Publication Registry：事件监听器直接 invalidate 并 purgeTags，二者都成功后才正常返回；任一步失败就抛出，保留未完成投递。V1 暂不在可靠路径去抖；BufferStore 只作可丢失的优化提示，pollDue 的结果不等于业务完成。若后续引入合并任务，必须在同一数据库事务中先提交带 eventId 幂等键的 JobApi 任务，监听器才可完成；任务失败、告警、人工重试与保留期不可丢弃未完成义务。
 
 - 发布、更新、下线始终清除 content、list(type) 及受影响 form/term/settings 标签，不只首次发布清 list；路径变化同时处理旧/新路径。
-- Redis 不可用时读绕过缓存，失效抛错重试；本地缓存 Pub/Sub 只加速，保留硬 TTL。恢复后先轮换 incarnation 并完成待失效项，再允许缓存写入。
+- Redis 不可用时读绕过缓存，失效抛错重试；本地缓存 Pub/Sub 只加速，保留硬 TTL。恢复门闩覆盖读、beginLoad和写；旧RDB/AOF恢复出的ready不能直接开闸。单节点原型以Lua读取本次server run_id并核对control.boot/epoch，进程变化即关闭缓存读写；恢复轮换epoch，使各站点惰性生成新incarnation，再重放恢复边界内义务；开闸须CAS当前boot/epoch，过期恢复者不能放行。站点代次不设置先于条目的TTL；计数器按精确十进制比较，溢出前轮换incarnation。生产恢复边界须持久记录并协调，不能把一次pending=0查询当跨MySQL/Redis原子证明；无证明时继续绕过缓存。该内部机制不新增跨模块接口，Cluster/ACL/性能另验。
 - 60 秒是正常依赖可用时的端到端新鲜度预算，不能承诺故障期间瞬时一致。后端Delivery/API及site引导响应通过服务端生成的X-Content-Fresh-Until传递最早依赖时刻，Nuxt只信任自身后端头；CDN-Cache-Control以该时刻的剩余秒数向下取整，<=0返回no-store。公开响应从回源开始计龄，回源上限 5 秒、各层共享绝对过期时刻且余寿命至多 55 秒；CDN 转发 Age、不重新给命中响应完整 TTL，禁止 stale-if-error / stale-while-revalidate 突破上限。超时回源不缓存；积压/清除失败告警，隐私和权限变化不靠长 TTL 掩盖。
 - 检查时序：loader 读旧值→事件提交→invalidate→loader 结束；重启后旧 token；Redis 成功/CDN 失败；pollDue 后宕机；列表中已有内容改标题和分类。
 
@@ -8616,9 +8617,9 @@ core 自己的定时任务：
 #### 5.10.1 缓存标签与 TaggedCache
 
 - 标签只由 `CacheTag` 的工厂方法生成（4.3.7），CDN 的 `Cache-Tag` 响应头与 Redis 的标签索引使用同一组值。
-- `RedisTaggedCache`（`com.b2bweb.infrastructure.redis`）按 4.7.14 实现：值键 `s{siteId}:{namespace}:{key}`；标签索引 `s{siteId}:tag:{标签值}`（Set）。`put` 在一个事务（`MULTI`）中写值、加入各标签集合并把集合的 TTL 延长到不短于该值；`invalidate` 用 Lua 脚本读出标签集合中的键并 `UNLINK`；值用 `platformJsonMapper` 序列化。
+- `RedisTaggedCache`（`com.b2bweb.infrastructure.redis`）按4.7.14/4.10.3实现：值键 `s{siteId}:{namespace}:{key}`；标签索引 `s{siteId}:tag:{标签值}`（Set）。回源前capture；Lua在校验恢复门闩与站点fence的同一原子操作中写值及标签，按freshUntil绝对过期，标签TTL不短于最长条目；禁止无fence的MULTI回填。失效先推进代次再清理，命中也核对代次，丢失标签不能让旧值继续命中。物理清理须有界分批，不能照搬原型的小集合SMEMBERS/UNLINK或完整命名空间SCAN为生产长脚本；值用 `platformJsonMapper` 序列化。
 - V1 使用非集群 Redis；以后改用集群时，键中的站点段改为 hash tag（`{s1}`），使同一站点的键与标签落在同一槽位。
-- 使用方：delivery 用 `getOrLoad` 合并并发回源，回源结果以 `CacheEntry(value, tags)` 返回；事件监听器调用 `invalidate`，CDN 清除经 `BufferStore` 去抖后调用 `CdnPurger`（系统设计 23.3，delivery 设计文档）。
+- 使用方：delivery用 `getOrLoadWithFreshness` 合并并发回源，结果为 `CacheEntry(value, tags, freshUntil)`；依赖命中也传递原期限，父结果取最早期限。监听器直接 `invalidate` 后调用 `CdnPurger`，二者确认成功才完成持久投递；HTTP 2xx但业务失败/响应损坏或确认丢失均须保留重试义务（系统设计23.3，delivery设计文档）。
 
 #### 5.10.2 应用内存缓存与广播失效
 
@@ -12762,7 +12763,7 @@ tools/mock-openai/
 | 文档版本 | V1.0 |
 | 状态 | 草案 / 已评审 / 已实现（M?） |
 | 更新日期 | YYYY-MM-DD |
-| 依据 | 系统设计 V1.7 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
+| 依据 | 系统设计 V1.8 第 <…> 章；平台框架设计 V1.<x> 第 4 章 <…> 节；ADR-<…> |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 

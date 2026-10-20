@@ -19,6 +19,8 @@ Redis 站点代次保护读写，invalidate 先推进代次，getOrLoad 比较�
 
 动态HTML、重定向、404/410、搜索壳与sitemap/robots沿用同一freshUntil预算：浏览器必须重验，CDN剩余TTL不超过min(55秒, freshUntil-now)，没有可信到期时间则no-store。禁止stale扩展重新延长旧内容寿命；只有带哈希静态资源可以长期immutable。
 
+M0-07C原型反馈：读、capture、写和恢复门闩在Redis端原子核对本次server run_id与恢复epoch；从RDB恢复的旧ready/代次也不能复活旧token。恢复先关闭缓存读写、轮换epoch并重投边界内失效义务，再按恢复token放行；token过期的恢复者不得开闸。原型已验证真实Redis7.4.11的RDB恢复及过期恢复者拒绝；恢复pending检查仅在静止源写夹具下执行，正式协调器仍须持久记录恢复边界，不能将一次查询视为跨存储原子屏障。单节点内部机制不新增跨模块接口或采纳状态，Cluster/ACL/容量另验。
+
 完整签名、事务边界、失败恢复与适配器约束统一在[平台框架 4.10.3](../framework/platform-framework.md)登记。本 ADR 解释决策理由，不另建跨模块契约定义。问题映射和故障验收见[处理说明](../reviews/design-issue-resolution-2026-10-20.md)。
 
 ## 备选方案
@@ -54,3 +56,4 @@ Redis 站点代次保护读写，invalidate 先推进代次，getOrLoad 比较�
 |---|---|
 | 2026-10-20 | 整理实现前设计问题的统一提案；未实施或执行运行测试 |
 | 2026-10-20 | M0整改DR-01～04：收敛当前规则；仅设计整改，业务并发/故障测试仍待M0-07 |
+| 2026-10-20 | M0-07C：真实Redis、Event Publication Registry与受控HTTP CDN端口验证；移除旧可靠路径去抖说明，结果见[缓存复审](../reviews/m0-cache-protocol-review-2026-10-20.md)，ADR仍为Proposed |

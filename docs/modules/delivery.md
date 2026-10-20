@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：`resolve`、站点引导数据、预览；M2：Cache Tag + CDN 清除；M3：多语言（hreflang、未公开语言 404）；翻译完成后的失效；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.4 |
+| 文档版本 | V1.5 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.7 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.5 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.8 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.6 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -281,7 +281,7 @@ SiteResourceChangedEvent（框架4.10.2，Proposed）：订阅：article.author�
 |---|---|---|
 | 1 | 从可信 Host 解析站点与公开语言，UrlApi.resolve 得到内容、重定向、GONE 或 NOT_FOUND；CONTENT 再读取 ContentApi.findPublishedSnapshot；只有不存在才返回 404，依赖失败返回 503。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 | 2 | 选择 TemplateProvider，收集 BreadcrumbProvider 与 DataSourceProvider，再并行调用 DeliveryContributor；每个贡献方使用独立 DeliveryOutput，汇总引用后批量解析 refs，最后合并标签并缓存。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
-| 3 | 预览先 resolvePreviewToken，核对站点、用途、有效期与权限；PREVIEW/EDITOR 使用预览快照，全链路 no-store。事件提交后先清 Redis，再经缓冲合并标签清 CDN，失败重试。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
+| 3 | 预览先 resolvePreviewToken，核对站点、用途、有效期与权限；PREVIEW/EDITOR 使用预览快照，全链路 no-store。事件提交后先清 Redis，再直接按标签清 CDN；二者成功才完成持久投递，失败重试。 | 输入或状态非法返回 4xx；数据库事务回滚；提交后外部处理失败进入重试与可见失败记录 |
 
 后台读写先校验权限与站点/语言范围；草稿写入和审计在同一事务。远程操作不能使用数据库长事务包裹。幂等重放返回既有结果；参数不同却复用同一幂等键时拒绝。
 
@@ -302,6 +302,7 @@ SiteResourceChangedEvent（框架4.10.2，Proposed）：订阅：article.author�
 - 监听器只有Redis失效与CDN purge均成功才返回；失败依靠Event Publication Registry重投，V1可靠路径不依赖BufferStore去抖。
 - SiteResourceChangedEvent(article.author/tracking.setting/tracking.script)清settings；内容更新始终清list(type)，不只首次发布。
 - 公开缓存按统一绝对过期时刻计龄，各层不重置TTL；故障、积压和失效失败可观察，不能以stale缓存突破预算。
+- Redis恢复门闩覆盖命中、capture与回填；旧RDB中的ready不能恢复可用状态，过期恢复者不得开闸，细节统一见框架4.10.3。[M0缓存复审](../reviews/m0-cache-protocol-review-2026-10-20.md)仅验证协议，正式服务仍须接入恢复协调器和真实CDN。
 
 ## 6. 接口
 
@@ -416,7 +417,7 @@ POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布
 
 | 任务 | 类型 | 触发 | 处理粒度与批量 | 锁与幂等 | 停用行为 |
 |---|---|---|---|---|---|
-| 缓存失效合并 | 定时 | 事件提交后短窗口 | 200 标签/批；BufferStore 去重；事务外 CdnPurger；不可取消已入队失效 | `delivery.flush_cache`；按站点和对象/版本认领，幂等完成 | 不可停用 |
+| 缓存可靠失效 | 持久事件监听及失败重投 | 源事务提交后 | 按服务商上限拆批；Redis后直接CdnPurger；不经可丢失BufferStore缓冲 | Event Publication Registry；两者成功才完成；重复清除安全，不注册delivery.flush_cache任务 | 不可停用 |
 
 普通任务为 PER_SITE；全局引擎或跨站点认领仅在 4.5 允许的位置执行。每批完成后更新进度与心跳，检查取消；短事务不得包裹外部调用。单次工作预算 60 秒，到预算即保存游标并续跑，外部端口超时用框架 4.7 的各端口上限。可重试失败指数退避；永久失败写 sys_job 报告或领域任务状态并输出 `b2bweb.delivery.task.errors` 指标，不记录敏感载荷。
 
@@ -535,3 +536,4 @@ POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布
 | V1.2 | 2026-10-20 | 全量复审：统一资源聚合标识、并发/失败恢复、接口闭环与验收里程碑；补充模块专项约束和审查记录，保留既有 SQL |
 | V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
 | V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.5 | 2026-10-20 | M0-07C反馈：移除旧缓冲清除流程/任务，明确恢复门闩、可靠重投和原型边界；依据框架V1.6 |

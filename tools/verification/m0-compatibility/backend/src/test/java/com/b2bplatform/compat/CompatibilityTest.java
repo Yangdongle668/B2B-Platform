@@ -41,14 +41,14 @@ class CompatibilityTest {
         assertThatThrownBy(() -> writer.create(102, true)).isInstanceOf(IllegalStateException.class);
         assertThat(mapper.selectById(102L)).isNull();
         assertThat(receipts(102)).isZero();
-        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE serialized_event LIKE '%102%'", Integer.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE EVENT_TYPE='com.b2bplatform.compat.catalog.DocumentCreated' AND JSON_EXTRACT(SERIALIZED_EVENT,'$.id')=102", Integer.class)).isZero();
     }
     @Test @Order(5) void failedListenerIsPersistedAndCanBeResubmitted() {
         listener.failNext(); writer.create(103, false);
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE STATUS='FAILED' AND SERIALIZED_EVENT LIKE '%103%'", Integer.class)).isEqualTo(1));
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE STATUS='FAILED' AND EVENT_TYPE='com.b2bplatform.compat.catalog.DocumentCreated' AND JSON_EXTRACT(SERIALIZED_EVENT,'$.id')=103", Integer.class)).isEqualTo(1));
         incomplete.resubmitIncompletePublicationsOlderThan(Duration.ZERO);
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(receipts(103)).isEqualTo(1));
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE completion_date IS NULL AND serialized_event LIKE '%103%'", Integer.class)).isZero());
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE completion_date IS NULL AND EVENT_TYPE='com.b2bplatform.compat.catalog.DocumentCreated' AND JSON_EXTRACT(SERIALIZED_EVENT,'$.id')=103", Integer.class)).isZero());
     }
     @Test @Order(6) void modulithBoundariesVerify() { ApplicationModules.of(ProbeApplication.class).verify(); }
     @Test @Order(7) void java25VirtualThreadsAreAvailable() throws Exception {

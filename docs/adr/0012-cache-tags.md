@@ -42,7 +42,7 @@
 | `s{site}:nav` / `s{site}:settings` / `s{site}:sitemap` | 导航 / 站点设置与主题 / sitemap |
 
 3. **标签由 delivery 生成**：delivery 为页面主体、所有卡片与引用添加标签；数据源的 `resolve()` 返回结果时一并返回缓存标签（10.5）。标签放在 `resolve` 响应的 `cache.tags` 中（24.4），Nuxt 原样输出为 `Cache-Tag` 响应头（21.2）。单个响应的标签超过 200 个时，把卡片标签合并为 `list:{type}`。
-4. **事件驱动失效**（23.3）：delivery 订阅内容、分类、媒体、导航、站点设置、关系、路由、模块启停以及 `TranslationCompletedEvent` 等事件（4.3），在事务提交后异步执行 `CacheInvalidator`：计算标签 → 通过 Redis 标签索引删除 Delivery 结果 → 调用 CDN 按标签清除接口（2 秒去抖合并，失败重试）。导航或站点设置变化清除 `nav` / `settings`，相当于清除整站 HTML，频率低，可以接受。
+4. **事件驱动失效**（23.3）：delivery 订阅内容、分类、媒体、导航、站点设置、关系、路由、模块启停以及 `TranslationCompletedEvent` 等事件（4.3），在事务提交后异步执行 `CacheInvalidator`：计算标签 → 通过 Redis 标签索引删除 Delivery 结果 → 调用 CDN 按标签清除接口（V1直接调用，Redis与CDN均成功才完成持久投递，失败重试；ADR-020补充）。导航或站点设置变化清除 `nav` / `settings`，相当于清除整站 HTML，频率低，可以接受。
 5. **CDN 缓存策略**（21.3）：内容页、站内搜索壳、404/410、重定向、sitemap及robots共享freshUntil预算；浏览器必须重验，CDN剩余TTL不超过min(55秒, freshUntil-now)，不能确定可信到期时刻则no-store。带哈希静态资源长期immutable；预览、私有内容与5xx不缓存。不使用 SSG。
 6. **防击穿与故障**：Delivery对同一缓存键合并并发回源，并用站点代次fence阻止旧loader回填（框架4.10.3、ADR-020）。故障不允许突破freshUntil继续使用旧页；没有可用结果返回503 + Retry-After，不能伪造404（21.5）。
 7. **缓存的 HTML 与访客无关**：访客地区、同意状态不写入缓存的 HTML，也不按地区区分缓存，地区由不缓存的轻量请求获取（20.2）；图片在 URL 中显式指定格式，不按 `Vary: Accept` 区分（12.3）。
@@ -94,3 +94,4 @@
 |---|---|
 | 2026-10-06 | 创建 |
 | 2026-10-20 | DR-04整改：统一freshUntil预算与故障行为，替换长stale；ADR仍待评审 |
+| 2026-10-20 | M0-07C反馈：移除可靠清除路径的2秒去抖描述，与ADR-020及框架4.10.3一致；仍为Proposed |

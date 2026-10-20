@@ -1,0 +1,1201 @@
+{
+  "review_id": "M0-2026-10-20-04",
+  "date": "2026-10-20",
+  "base_commit": "868c2b51237aa8842b372409533ef4adf31f7f76",
+  "remote_branch": "claude/brave-heisenberg-bpy3dh",
+  "scope": "M0-07C executable cache protocol only; not production cache/CDN/SSR/recovery coordination or G0 approval",
+  "previous_evidence": {
+    "path": "docs/reviews/evidence/m0-route-protocol-2026-10-20.json",
+    "sha256": "7c9b3d0bda680a5fafe84b60eb9f8553f65f98d7fedc49f6728f77826fb7412b"
+  },
+  "run": {
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+      "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85"
+    },
+    "redis_version": "Redis server v=7.4.11 sha=00000000:0 malloc=jemalloc-5.3.0 bits=64 build=f20da322597b16d7",
+    "schema": {
+      "mysql": "8.4.11",
+      "foreign_key_checks": 1,
+      "create_blocks": 119,
+      "alter_blocks": 3,
+      "tables": 119,
+      "columns": [
+        "cnt_content.translation_review_required",
+        "frm_submission.download_grant",
+        "mda_media.download_gate_version",
+        "mda_media.gated_form_key",
+        "mda_media.purge_job_id",
+        "prd_product_document.gated_form_key",
+        "trn_job_item.expected_target_version"
+      ],
+      "statements": [
+        {
+          "path": "docs/modules/article.md",
+          "block": 1,
+          "table": "art_author",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 5,
+          "table": "art_case_study",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 7,
+          "table": "art_faq",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 1,
+          "table": "cnt_content",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 6,
+          "table": "frm_blocklist",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 1,
+          "table": "frm_form",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 3,
+          "table": "grh_config",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 4,
+          "table": "grh_content_mode",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 5,
+          "table": "grh_dirty",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 1,
+          "table": "grh_relation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 6,
+          "table": "grh_relation_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/graph.md",
+          "block": 2,
+          "table": "grh_relation_type",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 4,
+          "table": "inq_inquiry",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 8,
+          "table": "inq_no_sequence",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 1,
+          "table": "inq_sales_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 9,
+          "table": "inq_work_calendar",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 1,
+          "table": "mda_folder",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 1,
+          "table": "nav_menu",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 1,
+          "table": "ntf_template",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 2,
+          "table": "ntf_webhook",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 4,
+          "table": "pg_component_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 2,
+          "table": "pg_global_block",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 3,
+          "table": "pg_layout",
+          "success": true
+        },
+        {
+          "path": "docs/modules/page.md",
+          "block": 1,
+          "table": "pg_page",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 3,
+          "table": "prd_attribute_group",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 9,
+          "table": "prd_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 1,
+          "table": "prd_product",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 3,
+          "table": "sch_build",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 2,
+          "table": "sch_change",
+          "success": true
+        },
+        {
+          "path": "docs/modules/search.md",
+          "block": 1,
+          "table": "sch_index_state",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 4,
+          "table": "seo_audit",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 3,
+          "table": "seo_link",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 1,
+          "table": "seo_meta",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 7,
+          "table": "seo_ping_queue",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 6,
+          "table": "seo_robots_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 2,
+          "table": "seo_template",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 19,
+          "table": "sys_audit_log",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 20,
+          "table": "sys_job",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 21,
+          "table": "sys_lock",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 1,
+          "table": "sys_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 11,
+          "table": "sys_role",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 16,
+          "table": "sys_setting",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 2,
+          "table": "sys_site",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 23,
+          "table": "sys_transaction_mutex",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 9,
+          "table": "sys_user",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 5,
+          "table": "trk_consent_log",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 3,
+          "table": "trk_consent_text",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 2,
+          "table": "trk_script",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 1,
+          "table": "trk_setting",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 1,
+          "table": "trn_engine",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 3,
+          "table": "trn_glossary_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 6,
+          "table": "trn_job",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 5,
+          "table": "trn_style_guide",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 1,
+          "table": "tx_vocabulary",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 4,
+          "table": "url_not_found",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 3,
+          "table": "url_pattern",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 2,
+          "table": "url_redirect",
+          "success": true
+        },
+        {
+          "path": "docs/modules/url.md",
+          "block": 1,
+          "table": "url_route",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 3,
+          "table": "art_article",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 2,
+          "table": "art_author_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 6,
+          "table": "art_case_study_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 8,
+          "table": "art_faq_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 2,
+          "table": "cnt_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 2,
+          "table": "frm_form_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 3,
+          "table": "frm_form_notice_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 6,
+          "table": "inq_activity",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 3,
+          "table": "inq_assignment_rule",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 7,
+          "table": "inq_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 10,
+          "table": "inq_calendar_day",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 5,
+          "table": "inq_inquiry_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/inquiry.md",
+          "block": 2,
+          "table": "inq_sales_group_member",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 2,
+          "table": "mda_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 2,
+          "table": "nav_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/notification.md",
+          "block": 3,
+          "table": "ntf_message",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 5,
+          "table": "prd_attribute",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 4,
+          "table": "prd_attribute_group_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 11,
+          "table": "prd_category_attribute_set",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 12,
+          "table": "prd_model",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 15,
+          "table": "prd_product_document",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 2,
+          "table": "prd_product_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 14,
+          "table": "prd_product_media",
+          "success": true
+        },
+        {
+          "path": "docs/modules/seo.md",
+          "block": 5,
+          "table": "seo_audit_issue",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 17,
+          "table": "sys_dict_type",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 22,
+          "table": "sys_dsr_request",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 15,
+          "table": "sys_menu",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 12,
+          "table": "sys_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 3,
+          "table": "sys_site_domain",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 4,
+          "table": "sys_site_locale",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 5,
+          "table": "sys_site_module",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 6,
+          "table": "sys_site_profile",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 8,
+          "table": "sys_ui_text",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 10,
+          "table": "sys_user_mfa",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 14,
+          "table": "sys_user_site_role",
+          "success": true
+        },
+        {
+          "path": "docs/modules/tracking.md",
+          "block": 4,
+          "table": "trk_consent_text_version",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 4,
+          "table": "trn_glossary_translation",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 2,
+          "table": "trn_memory",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 8,
+          "table": "trn_usage_daily",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 2,
+          "table": "tx_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/article.md",
+          "block": 4,
+          "table": "art_article_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 6,
+          "table": "cnt_preview_token",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 4,
+          "table": "cnt_published_term",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 5,
+          "table": "cnt_review",
+          "success": true
+        },
+        {
+          "path": "docs/modules/content.md",
+          "block": 3,
+          "table": "cnt_revision",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 4,
+          "table": "frm_submission",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 3,
+          "table": "mda_media_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 4,
+          "table": "mda_usage",
+          "success": true
+        },
+        {
+          "path": "docs/modules/navigation.md",
+          "block": 3,
+          "table": "nav_item_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 6,
+          "table": "prd_attribute_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 7,
+          "table": "prd_attribute_option",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 10,
+          "table": "prd_attribute_set_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 13,
+          "table": "prd_attribute_value",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 18,
+          "table": "sys_dict_item",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 13,
+          "table": "sys_role_permission",
+          "success": true
+        },
+        {
+          "path": "docs/framework/platform-framework.md",
+          "block": 7,
+          "table": "sys_site_profile_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 7,
+          "table": "trn_job_item",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 4,
+          "table": "tx_assignment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/taxonomy.md",
+          "block": 3,
+          "table": "tx_term_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 5,
+          "table": "frm_attachment",
+          "success": true
+        },
+        {
+          "path": "docs/modules/product.md",
+          "block": 8,
+          "table": "prd_attribute_option_localization",
+          "success": true
+        },
+        {
+          "path": "docs/modules/form.md",
+          "block": 7,
+          "success": true
+        },
+        {
+          "path": "docs/modules/media.md",
+          "block": 5,
+          "success": true
+        },
+        {
+          "path": "docs/modules/translation.md",
+          "block": 9,
+          "success": true
+        }
+      ]
+    },
+    "backend": {
+      "tests": 102,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": [
+        {
+          "name": "com.b2bplatform.compat.CompatibilityTest",
+          "tests": 7,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 6.054,
+          "cases": [
+            "flywayAndSiteFilteredReads",
+            "siteFilteredWritesRejectAnotherSite",
+            "committedEventIsDeliveredAfterCommit",
+            "rollbackPersistsNeitherDocumentNorPublication",
+            "failedListenerIsPersistedAndCanBeResubmitted",
+            "modulithBoundariesVerify",
+            "java25VirtualThreadsAreAvailable"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.cache.CacheInvalidationTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 3.457,
+          "cases": [
+            "rollbackLeavesNeitherSourceNorPublication",
+            "committedInvalidationCompletesOnlyAfterRedisAndCdn",
+            "unacknowledgedCdnKeepsDurableObligation(String)[1]",
+            "unacknowledgedCdnKeepsDurableObligation(String)[2]",
+            "unacknowledgedCdnKeepsDurableObligation(String)[3]",
+            "lostAckAfterPurgeSafelyPurgesAgain",
+            "redisFailureRetainsObligationAndBlocksRecoveryReadiness",
+            "failedPublicationSurvivesActualApplicationContextRestart"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.cache.CacheProtocolTest",
+          "tests": 15,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 2.726,
+          "cases": [
+            "counterComparisonRemainsExactAboveLuaDoubleIntegerPrecision",
+            "namespaceEvictionAdvancesFenceAndKeepsOtherSiteIndependent",
+            "expiredResultsAreNotWrittenOrRegisteredInTagSets",
+            "redisProcessRestartWithRestoredRdbCannotReviveOldReadyFlagOrTokens",
+            "cacheHitAlsoChecksFenceEvenWhenPhysicalTagIndexWasLost",
+            "signedLongCounterOverflowRotatesIncarnationInsteadOfReusingToken",
+            "recoveryGateBlocksReadsCapturesAndWritesUntilPendingBarrierIsDrained",
+            "anOldRecoveryWorkerCannotOpenANewerRecoveryGate",
+            "foreignSiteTagsCannotChangeEitherSite",
+            "capturingAfterComputationIsAnUnsafeNegativeControl",
+            "missingFenceMetadataNeverRevalidatesSurvivingOldEntry",
+            "invalidationDuringBlockedLoaderRejectsItsOldFill",
+            "keyEvictionAdvancesFenceBeforeOldLoaderCanWrite",
+            "disconnectedRedisBypassesCacheAndNeverPretendsInvalidationSucceeded",
+            "fenceMetadataDoesNotExpireBeforeEntriesAndTagsOutliveLongestEntry"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.cache.FreshnessProtocolTest",
+          "tests": 14,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.225,
+          "cases": [
+            "malformedBackendDeadlineDisablesCaching",
+            "untrustedBrowserDeadlineCannotExtendBudget",
+            "loaderOverFiveSecondsDisablesCaching",
+            "missingDependencyDeadlineDisablesCaching",
+            "edgeHitPreservesDeadlineAndAccumulatesAge",
+            "earliestDependencyAndRenderTimeReduceSharedBudget",
+            "expiredEdgeEntryAndFailedOriginReturn503WithoutStale",
+            "subsecondRemainingBudgetRoundsDownToNoStore",
+            "publicStatusesShareAbsoluteDeadline(int)[1]",
+            "publicStatusesShareAbsoluteDeadline(int)[2]",
+            "publicStatusesShareAbsoluteDeadline(int)[3]",
+            "publicStatusesShareAbsoluteDeadline(int)[4]",
+            "previewResponseIsNeverCached",
+            "privateResponseIsNeverCached"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.DownloadProtocolTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.667,
+          "cases": [
+            "missingActualTemplateRowRollsBackInsteadOfDeferringFailureToSmtp",
+            "simultaneousSameKeyWaitsForWinnerAndReplaysInFreshTransaction",
+            "lostHttpResponseAfterCommitReplaysWithoutSecondSubmissionOrSignature",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[1]",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[2]",
+            "currentGateReferenceAndScanAreRequiredBeforeGrant(String)[3]",
+            "replayReturnsOriginalGrantWithoutResigningEvenAfterExpiryOrGateRevocation",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[1]",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[2]",
+            "quarantinedRejectedAndTestRequestsProduceNoGrantOrCustomerMail(String, boolean)[3]",
+            "uncommittedSubmissionAndOutboxAreInvisibleToOtherConnections",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[1]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[2]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[3]",
+            "everyPreCommitFailureRollsBackSubmissionGrantAndOutboxAndCanRetry(Failure)[4]",
+            "smtpFailureAfterCommitRetainsOriginalGrantAndQueuedObligation"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.MediaProtocolTest",
+          "tests": 11,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.406,
+          "cases": [
+            "repeatableReadSnapshotMissesNewReferenceButCurrentReadProtectsDelete",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[1]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[2]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[3]",
+            "referenceChecksScanStateAndPublicationStage(String, boolean, boolean)[4]",
+            "deleteFirstBlocksSaveThenRejectsItAndRetainsObject",
+            "crossSiteMediaCannotBeReferenced",
+            "purgeFirstBlocksRestoreAndSurvivesDeleteFailureAndLostAcknowledgment",
+            "restoreFirstMakesWaitingPurgeIneligible",
+            "saveFirstBlocksDeleteThenRejectsIt",
+            "rolledBackPurgeLeavesNoTaskOrMarkerAndAllowsRestore"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.RouteProtocolTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 1.525,
+          "cases": [
+            "workerReusingSameIdentityCannotCommitAnOldAttemptAfterWaiting",
+            "sameExistingMutexNameOnAnotherSiteDoesNotWaitForThisSite",
+            "topologicalCheckpointCanResumeAtChildrenWithSmallerIds",
+            "secondItemConflictRollsBackFirstItemAndRetryUsesSameCheckpoint",
+            "cancellationPreservesCommittedPrefixAndNewGenerationRepairsFromCurrentFacts",
+            "invalidCursorBatchSizeAndMutexNamespaceFailClosed",
+            "canonicalLanguageScopeIsPartOfJobDeduplicationAndCheckpoint",
+            "coldInitializationAcrossSitesMayWaitButNeverSharesGeneration",
+            "insertIgnoreThenLockHasARealSharedLockUpgradeDeadlock",
+            "sourceRollbackAlsoRollsBackGenerationAndScheduledJob",
+            "cyclicParentMoveRollsBackTreeAndGeneration",
+            "repeatableReadRouteBatchIsRejectedBeforeAnyWrites",
+            "waiterReadsCurrentSourceAfterMutexInsteadOfItsEarlierRead",
+            "unchangedSourceDoesNotAdvanceGenerationOrScheduleWork",
+            "concurrentFirstCreationUsesOneExclusiveMutexRow",
+            "repeatedPathChangesKeepOldRedirectsPointingDirectlyToCurrentLocalization",
+            "generationChangeDiscardsOldCursorAndRebuildsFromCurrentParentTree",
+            "failingBatchRollsBackRoutesRedirectsProjectionCheckpointAndSearchLogTogether",
+            "committedBatchWithLostResponseResumesWithoutDuplicateRedirectsOrSearchCapture"
+          ]
+        },
+        {
+          "name": "com.b2bplatform.compat.protocol.TranslationProtocolTest",
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0,
+          "seconds": 0.715,
+          "cases": [
+            "applyFirstBlocksPolicyAndLateCompletionCannotAutoPublish",
+            "providerFailureRollsBackAllContributionsAndTaskCompletion",
+            "missingCapturedVersionCannotWriteAnyProvider",
+            "manualModeCannotReceiveMachineOutput",
+            "lostLeaseCannotWriteAnyProvider",
+            "legalPolicyAndPolicyAbaBothRejectLateCompletion",
+            "identicalPolicyIsNoOpButStaleContentVersionStillConflicts",
+            "recoveredTaskNeverRefreshesTheCapturedVersionForOldOutput",
+            "policyFirstBlocksApplyThenInvalidatesAllLocalesAndPendingApproval",
+            "manualEditRejectsCapturedOldResultWithoutRefreshingVersion",
+            "newerSourceRevisionSupersedesOldMachineResult",
+            "contributorsCommitTogetherAndIncrementCommonVersionExactlyOnce"
+          ]
+        }
+      ],
+      "java": "25.0.4.1",
+      "dependencies": [
+        "spring-boot-4.0.8.jar",
+        "flyway-core-11.14.1.jar",
+        "mybatis-plus-core-3.5.17.jar",
+        "spring-modulith-core-2.0.8.jar",
+        "lettuce-core-6.8.2.RELEASE.jar"
+      ],
+      "registry_table": "EVENT_PUBLICATION",
+      "cases": [
+        "flywayAndSiteFilteredReads",
+        "siteFilteredWritesRejectAnotherSite",
+        "committedEventIsDeliveredAfterCommit",
+        "rollbackPersistsNeitherDocumentNorPublication",
+        "failedListenerIsPersistedAndCanBeResubmitted",
+        "modulithBoundariesVerify",
+        "java25VirtualThreadsAreAvailable"
+      ]
+    }
+  },
+  "cache_restart_proof": {
+    "oldBoot": "69b8aacc7441c16d57645af3302c4bd383ca5386",
+    "newBoot": "f8f66286f935dd4c15fdcf9fabb9f68bc2e71f04",
+    "rdbRestored": true
+  },
+  "ddl_unchanged_from_base": {
+    "create_blocks": 119,
+    "alter_blocks": 3,
+    "files": [
+      {
+        "path": "docs/framework/platform-framework.md",
+        "blocks": 24,
+        "sha256": "c02de06ffe61beacedc9c88df9f912a9ae8861a80c3718ee7e36de6e873c1182"
+      },
+      {
+        "path": "docs/modules/article.md",
+        "blocks": 8,
+        "sha256": "14d874fa1d363f6afe85d07ca64210d89b75ba6aff94cc87644ed03fd3417082"
+      },
+      {
+        "path": "docs/modules/content.md",
+        "blocks": 6,
+        "sha256": "fc32f23bf41111f16839f5d7fc1396d35836345f92949e875ab8d7d77da1d203"
+      },
+      {
+        "path": "docs/modules/form.md",
+        "blocks": 7,
+        "sha256": "8657f060381a1d0b487e43ef4b68608df19121eb4d55dd44cf5dc0fbb58fc28f"
+      },
+      {
+        "path": "docs/modules/graph.md",
+        "blocks": 6,
+        "sha256": "b44c3af13df89d820c26494fd7b9030766f5962111c71a877879e29ebd856b62"
+      },
+      {
+        "path": "docs/modules/inquiry.md",
+        "blocks": 10,
+        "sha256": "a9a958744c1f1d8c18e4186c86a6316a4370e04ec4fd93bcfeba5e0b2a411371"
+      },
+      {
+        "path": "docs/modules/media.md",
+        "blocks": 5,
+        "sha256": "e3128edd21a053b31642cbe96215c73acd2b9daa873c40232f16bde88450ae57"
+      },
+      {
+        "path": "docs/modules/navigation.md",
+        "blocks": 3,
+        "sha256": "7788dcbe207d26a87fed70f6f4b3e8d8c7fe41257eafd53990d91fbd6b39f033"
+      },
+      {
+        "path": "docs/modules/notification.md",
+        "blocks": 3,
+        "sha256": "7d5ee617a323862a94ec424aa888e02701ca6962c234885c3137eb4a41ff1286"
+      },
+      {
+        "path": "docs/modules/page.md",
+        "blocks": 4,
+        "sha256": "b4c9c372ca36195c36acc270389a38c3ded1282991d3bcaeeba2dd744bcd94a6"
+      },
+      {
+        "path": "docs/modules/product.md",
+        "blocks": 15,
+        "sha256": "7760f216965c9a549d6d68de7fa07a13d7979946218c7fdcae64537c9c6ee2e0"
+      },
+      {
+        "path": "docs/modules/search.md",
+        "blocks": 3,
+        "sha256": "ba6dc375b6ed2e6c227893d4a9ffde77739b0f4b238509b403483452e8cdc1cb"
+      },
+      {
+        "path": "docs/modules/seo.md",
+        "blocks": 7,
+        "sha256": "936dce99043ad4c02e8929eb916beca750fe5a4c948c181c90f17a3ba1bda2e1"
+      },
+      {
+        "path": "docs/modules/taxonomy.md",
+        "blocks": 4,
+        "sha256": "cd5fc6da8f124a94bd5ba269dfd1eb6ecc6cf3782d6f8d80e46d3a9f42f80b6e"
+      },
+      {
+        "path": "docs/modules/tracking.md",
+        "blocks": 5,
+        "sha256": "0fa11029bc9956cd997220b2e71c96ec081e2128bc60248a607030800aca7e14"
+      },
+      {
+        "path": "docs/modules/translation.md",
+        "blocks": 9,
+        "sha256": "c18d9588c45b9896f8fc40ff34f5f20316df80c65dfcc1b7c4cbb8362acda2e7"
+      },
+      {
+        "path": "docs/modules/url.md",
+        "blocks": 4,
+        "sha256": "9bbb0cacf01250e80f2a57b8704526d8616ac8e9d6f939befe6deb88f03a207e"
+      }
+    ]
+  },
+  "source_sha256": {
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/cache/CacheInvalidationTest.java": "b9dc89ec46b37ae3be8e8ce3031096e2bd3e59c11b2644022089d34ae33fd6e7",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/cache/CacheProtocolModel.java": "1820d16a2b7d4eb267e91d32897726c4e07ccfad52bc3443620907344238ca79",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/cache/CacheProtocolTest.java": "28d6e0ea21fedb5db826edeb77e29f05c525aba79e8742eb70c552732ab6d512",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/cache/FreshnessProtocolTest.java": "cd34699bf6030f9e6c597f466a811d74a20d97fb3ad32880a8a1b07dba91d1b3",
+    "tools/verification/m0-compatibility/backend/src/test/resources/cache/protocol.lua": "60bd0c1729ed65d738fd25f8683f759c6bb2e5add7e91dc16cc5f08ca2a75aaf",
+    "tools/verification/m0-compatibility/.gitignore": "6d187191e244f1883a2c6750fa4d40a3c734619fad8a20f4a21f4ab9b6542756",
+    "tools/verification/m0-compatibility/README.md": "6b252bf94d64bfa2e5fbfc68b7dfd88f9d372d144338d73fc90d47461362936e",
+    "tools/verification/m0-compatibility/backend/pom.xml": "f1ae3cdce5fc301ec0e923dd6f824b12291d64fe5840d6bd528a8797e8874a33",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/ProbeApplication.java": "57c660e1974358bfc939b0908afe00c887faf7c7c74a5608c68cc2c2065416c2",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/DocumentCreated.java": "a55b5a78df9d67b52e29d9a6200e65c57b3e5cb64c8357a7a8022e9022574e05",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeMapper.java": "c515fae656c9e718607ecb0748f1ca1b700557d672dfbd8612a965ad435ea47b",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeRow.java": "c9ded128a3ec4b2f7a9b77be8ad9dae1a768beb01229433919b5e033a57e0656",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/catalog/ProbeWriter.java": "4d7fafa3bcb9084d355675c83911ff550539a69d665d443e91b47f6f67d9fb2d",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/infra/ProbePersistence.java": "bdaab56c26970cdcf51b835dcf403aeb65abd9ebbf35d0b60196675348b9e244",
+    "tools/verification/m0-compatibility/backend/src/main/java/com/b2bplatform/compat/receipts/ProbeListener.java": "a618065972eb886fe6bd70ee140d7c45e0cd33670a46916c68d80f85b8e71417",
+    "tools/verification/m0-compatibility/backend/src/main/resources/application.properties": "f687192436a3d90eac09d9042efb6e6e80516f66a3bff2c22d2be823e5514e9f",
+    "tools/verification/m0-compatibility/backend/src/main/resources/db/migration/V001__probe.sql": "d42e70c8035994c17c0e2e7d9034054025f9bd38e1e8d0a078b330b494432605",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/CompatibilityTest.java": "37703ab5b382fe82ac21fe705a79ce9d9b12be053dd8c9258377c72d2e723708",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/DownloadProtocolTest.java": "0c468241e67b74a00534eda08cca55c90dd0f2d6bc5cf660b66830dfe589c010",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/MediaProtocolTest.java": "fd1a2efc7eec90b94e72d9687733e9662a268d0dbc1024541edd13125c40240d",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/ProtocolFixture.java": "086b39772ad62e6dd1731546eff297fd81284f778025cbe9ffaa671d534aec2c",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/ProtocolModel.java": "86c98490bb13bced7693c84a8faea4813d0b6f8a67c68dc40793c25fc545cf64",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/RouteProtocolModel.java": "40d118763050d8caa0e2f438bff28f923608f2de61a864a59fd600b1ad810098",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/RouteProtocolTest.java": "d7a7f6d075f885763c0aa1e9377e345805a4d437b042a4ebc6c37e9d15a229f0",
+    "tools/verification/m0-compatibility/backend/src/test/java/com/b2bplatform/compat/protocol/TranslationProtocolTest.java": "c25db73f01b6bb18cb3e42be0c70d301b38496d54dc09c055705da9c0bf4598a",
+    "tools/verification/m0-compatibility/frontend/app/app.vue": "0c20f0162f2151785aa06f3c73bc0efa84e76337bbaf7aa82e6252590cf21ba9",
+    "tools/verification/m0-compatibility/frontend/app/components/ProbeCounter.vue": "09c9df8443ae6d3ad967ee14d6559eba06c19b6976a0f71755a41f73057b5d56",
+    "tools/verification/m0-compatibility/frontend/app/providers/probe.ts": "5b21e6ccdf1cf52af7a5ba5cf17d83e474e41f426b84a5c9e0bdba06119c6953",
+    "tools/verification/m0-compatibility/frontend/app/texts/zh-CN.json": "bffae7731773bad698a7ca62cdcea199b6b7413758be3e6815d1f98fa142e56f",
+    "tools/verification/m0-compatibility/frontend/nuxt.config.ts": "8a34e6353f37eef3ee6c3ee3bf7497ad99024fca3af33e79e4a6616c7f3c5bf6",
+    "tools/verification/m0-compatibility/frontend/package-lock.json": "fc68f4b6121471bd37b3a10e986842c7e6443b6dbc136e9789b0da74e219cb52",
+    "tools/verification/m0-compatibility/frontend/package.json": "07d109f549115b69975d2397455c0c5d126959ed4cfd12a2b3535d5736c321f5",
+    "tools/verification/m0-compatibility/frontend/public/probe.png": "2d2c648b10bb8d6a380586cb4becf62f9ea17ce527f20f37467e5a252ca997ca",
+    "tools/verification/m0-compatibility/frontend/tsconfig.json": "665bfd2725ef0790a0173aacdd820037c4420f3df365ae3873953f8c953b9b08",
+    "tools/verification/m0-compatibility/requirements.txt": "28e36b0e232c8c81f931f863f886375d4f9454deef795cb4b52b913b286972c7",
+    "tools/verification/m0-compatibility/verify_backend.py": "2d2b4fce800c923509aa1c1851da1ef9a8504b19b9e0fca270ca7dfa6b705504",
+    "tools/verification/m0-compatibility/verify_design.py": "629e7424b1da0c6a80cac1d98e9bcd391292606765b9aac19a637e06eddd2c3b",
+    "tools/verification/m0-compatibility/verify_frontend.py": "adfe3da4e302d5b917c41e695832cc65d717851bb00a8363ae796ea180320190"
+  },
+  "artifacts_sha256": {
+    "TEST-com.b2bplatform.compat.CompatibilityTest.xml": "62a5761caa7d968324a24bdf87e325cab10ecbb8f3332254da1adf188024ff8f",
+    "TEST-com.b2bplatform.compat.cache.CacheInvalidationTest.xml": "8b1564b2d8790d274fa7a844e6cbf92a29fa238702b9f94e35aa3cb2195b3a4a",
+    "TEST-com.b2bplatform.compat.cache.CacheProtocolTest.xml": "58af830d97b21b248fa69795b66d4ad4d19dc773c5d9a32d8ce822afd0605186",
+    "TEST-com.b2bplatform.compat.cache.FreshnessProtocolTest.xml": "5693dd7e960a0b9cd00440ab48c96d67d4ce8907d9295e023c3ebc8f7f34816a",
+    "TEST-com.b2bplatform.compat.protocol.DownloadProtocolTest.xml": "da9a45b343535ffdfb2514962565cc3cae4bfabed865115b5c46500d693412a1",
+    "TEST-com.b2bplatform.compat.protocol.MediaProtocolTest.xml": "40832ddfead79c6021eafe0cd97ffe09524e4b4eab307725342f2da93b773009",
+    "TEST-com.b2bplatform.compat.protocol.RouteProtocolTest.xml": "9e1553f46b459ffd2c14edfe3f0fcc214c29d5de2f9347ae1d7fc39953c387fe",
+    "TEST-com.b2bplatform.compat.protocol.TranslationProtocolTest.xml": "14fa007fda8d1f9892898a830c3a9cadb7281909ddb87118f06364517a3455f1"
+  },
+  "limitations": [
+    "Single Redis node with INFO allowed inside Lua; no Cluster, restricted ACL, replication, AOF or failover proof.",
+    "Recovery pending predicate uses quiescent source writes; production durable recovery barrier/coordinator still required.",
+    "CDN endpoint is a loopback HTTP fault fixture, no real provider credentials or public purge.",
+    "HTTP transport is real; origin/SSR/edge are surrogates with one injected clock, not Nuxt or deployed CDN and not a cross-node clock-skew test.",
+    "No cache throughput/large-tag cleanup capacity claim; production cleanup must be bounded.",
+    "Protocol code is test-only; formal services, testkit and CI still pending."
+  ],
+  "static_design_checks": {
+    "modules": 17,
+    "permissions": 96,
+    "components": 36,
+    "admin_endpoints": 234,
+    "acceptance_cases": 238,
+    "errors": [],
+    "documents_sha256": {
+      "docs/adr/0000-build-vs-buy.md": "5ac06675e0ed757c045728d2998b61ea0c69d24683b771a1cd4a7d4d21c7987e",
+      "docs/adr/0001-compile-time-modules.md": "1d3a88c1797b19228cb857efdcb384aa8bc53820ffee392c34256be8ec517ec9",
+      "docs/adr/0002-module-communication.md": "c6a70ec07a09eee15bc8835d8998a70e470f2156477688e3db9d489d7b47e7da",
+      "docs/adr/0003-event-reliability.md": "71750d9131b8057e6f873ce4546e30d7945b52c66b532f9348981f89a6fed290",
+      "docs/adr/0004-content-kernel.md": "243cbbf874e4d48e33166a4ff449dea2f4a50778a482f13e1c893e9fcd05337f",
+      "docs/adr/0005-i18n-and-url-strategy.md": "0c6c513eadb766638cd9c7fc9b242a9ed4689dbe1357f0c26cc01efa33473f0e",
+      "docs/adr/0006-template-and-page-builder.md": "89a15645239e8c5abae8c2708a6b58d2736b5a2cd8fa6b933811241a31339975",
+      "docs/adr/0007-editor-canvas-iframe.md": "f391ddf30ea2eea433d82a7ba301275b4505ff07b6820905f88d4883dde6cdd3",
+      "docs/adr/0008-seo-data-ownership.md": "44d65f5943129c7ef8be627e10da9ba5754cb2d22dbc3d4b51514f11f379b9f1",
+      "docs/adr/0009-site-and-locale.md": "f496353baa5ff709e88d2c8a091f02369464c64ceff25e6475268bdb2f7a472d",
+      "docs/adr/0010-admin-authentication.md": "3d431b5c4e15984107cb69f1642275cf64cfc4da4e645791a91153342cfd958e",
+      "docs/adr/0011-technology-versions.md": "06200736d5b6a68be324656b86af19b2cb00d5ec40083d70077594454d88e123",
+      "docs/adr/0012-cache-tags.md": "c7006e5e167fb797edc33bbe8d6a3640b0791c2cc42dda96dc7b37030c22d679",
+      "docs/adr/0013-search-read-model.md": "fe9c7082be864ba4279f3903aa1609eadad121b9b88060149f6add66fc3dba78",
+      "docs/adr/0014-id-strategy.md": "3d51c34b4de1ad23ff9b5b71446a5581bc42128f30aa8c1effd7f1ccbb680121",
+      "docs/adr/0015-hosting-region-and-data-residency.md": "f7833ffa134f0ba8d88c5f5f14ab881cc687cce792868130e58e65214a1a0d45",
+      "docs/adr/0016-privacy-compliance-baseline.md": "8de0c77c088e59411d8983d9efc34055c2736c5e7a87820d175bd5b91a975415",
+      "docs/adr/0017-ai-translation-and-translation-memory.md": "08f03ee3075a24a7342aaffd1934f0b66c7a3a5b2fcb5e688a200d75ba54446a",
+      "docs/adr/0018-framework-first-parallel-modules.md": "92fa469c9ca656f69c37d007ba694855fae490d0887aa14fd01e7b747f800fae",
+      "docs/adr/0019-transactional-media-references.md": "d2ee0e4181ba79fca3d9c13de6730f1a2c5a181fd4f4a6151cfe3016b344f69e",
+      "docs/adr/0020-cache-invalidation-fences.md": "74e073e07c12dc6c42efc4d8d33473f10f5b2c22e48e88755769bf035b9b532e",
+      "docs/adr/0021-immutable-search-generations.md": "3d1a589e2e98d2ca4d41d49807821abf07fbe269461e524872688c0e26f4175a",
+      "docs/adr/0022-current-route-recalculation.md": "f73b966021762b7b320e9a2dbe245f236ebe918e6d6ff8cde1d67e0178dbb554",
+      "docs/adr/0023-form-notification-direction.md": "a4652c4c3a97d80c42154d274b8338c72d7a7e681f764116d4b8548a171aff15",
+      "docs/adr/0024-translation-review-guard.md": "e50d8983047385a1e08b09363b357e79a7639efa325d58edea88fb0386a268f4",
+      "docs/adr/0025-site-resource-lifecycle.md": "543172073a8cf133bd183e84ffd872566c05eb3f7cbb67fff3ea90dd3469b6b2",
+      "docs/adr/README.md": "74e7aa1722486c588c05fd8eff053ed524ea358a323509682c6f0b047bc9ef3a",
+      "docs/adr/template.md": "067ac09d4496dce081df67414f74565bac911ff6cc1e6be95aef4c44b41f7563",
+      "docs/architecture/system-design.md": "f6aa5a7d49f8a1c8ec9d006fd50d65c4d9e3249b048580371fa133ef2e77cba2",
+      "docs/design/visual-direction.md": "bfc9cb8b8433903f54afe1d232c997f4b4eccf0f28741b2fa0ac1226d969be70",
+      "docs/framework/platform-framework.md": "a439eedebd16dd4afe9b82ce7a0a329f537f6e8a3360cbe7fac5a86ac9e1f50e",
+      "docs/modules/README.md": "51a8c8bb7c3539ef36d1ce5f440733b9be33007bc1b16c0b1d9ea0edd3d43173",
+      "docs/modules/article.md": "bf8c8b722a9704b5ba2a85de4ab805a17ee2bbeaa339ce1f44daaef1ee9ab80e",
+      "docs/modules/content.md": "010fad3ece13fe2633a12a1dea35463fa59864023b6121dbdd813c8422c5a050",
+      "docs/modules/delivery.md": "2df5839129fb24e65edcac8f49ecd4868f83b8ea833c54d98455076dac66ee21",
+      "docs/modules/form.md": "9abadc0fb6d095348c0d4d2909bd145343a493669743488c69e6e3d8d8b710cd",
+      "docs/modules/graph.md": "775d52e846ac2f82f3cb8cbb85c087a3f3150b1b641d85b8d86947a9c6fa5bad",
+      "docs/modules/inquiry.md": "270c363de1d98b92ae0ca37ec584928b428659171bdd7084f4a0b4f0697bbdc7",
+      "docs/modules/media.md": "64fbce3220c8023f74eec54de645da216a73a9d6075cb712f5104d1ad974eae4",
+      "docs/modules/navigation.md": "d0136a5bd246b41daff2ba507c2eb992b9e2db4b98e671042edee0450559a0ff",
+      "docs/modules/notification.md": "9b1fbf50d310762c7dd90bb2942e5103f5b4d71ed0779742d15075042e588d97",
+      "docs/modules/page.md": "7cafd34169d1d9923438411d77b29047bf1ea5bb45007e78801271ea865f0616",
+      "docs/modules/product.md": "342c9d2d83aa6d030cfdf93c5c427ac20bd56b13543bed360133dd9b622804e4",
+      "docs/modules/search.md": "5d188c3d2a429349902df70c43979eacaead8af8bfc4ed6d91cc07fc9f878a55",
+      "docs/modules/seo.md": "605b83451634195e7189d9dd44bb02df7d259f4f9f61a0dee73825b3cf93745f",
+      "docs/modules/taxonomy.md": "efec115dafc4985ac0ed37d534d04a246f5c2094a472adb458344f1b6477d628",
+      "docs/modules/tracking.md": "ce72970e892b64bf0307c97dccef3a682271b9908ace991b5aeb7406772ea0d1",
+      "docs/modules/translation.md": "a8447e923248c88caedf4229f95c50fc151e373372d6cf07c228717bf0f304d6",
+      "docs/modules/url.md": "ad1d1d3f56985f29755dfd3e0afb16fe355b6c8c77960e728a3b8302530e5717",
+      "docs/plans/development-plan.md": "bc13f41dd7fdfad77deee87200048d91221d0da4e07c984b0a5f9ca9cb11b799",
+      "docs/reviews/design-issue-resolution-2026-10-20.md": "6c9ce5f6fbdef4857bb5788052116ea3675a30669b32c242d017385a740a4488",
+      "docs/reviews/formal-design-review-2026-10-20.md": "aea8276a7ddac218f333f3acd63574620e504cd02d4f56eb306a46f49d66a666",
+      "docs/reviews/m0-cache-protocol-review-2026-10-20.md": "43ca7b926358ac83648a53ae9e09c822b0d1c491ada26168d2f94b954cc995e9",
+      "docs/reviews/m0-remediation-2026-10-20.md": "40031bb23df115927065d89380f8983e159f774ad3a2b33d69812b73332d8ca1",
+      "docs/reviews/m0-route-protocol-review-2026-10-20.md": "b83d5ac3d40fa77b20fd0b81c8a8012878e924856ae09d78957df2227f6bb164",
+      "docs/reviews/m0-transaction-protocol-review-2026-10-20.md": "8eee271a65608454922b8db1a147450b9d0ea0cae43bdf468ab1d4366732f003",
+      "docs/reviews/module-design-review-2026-10-20.md": "eed980709f48a1da495da5a0d60c34fb1191554e2185cdb2fe47d6e46da5199e",
+      "CLAUDE.md": "a96dd977a2386747c40ad1f889be78e11c8edeb93c25279ef31fd934936433a0",
+      "tools/verification/m0-compatibility/README.md": "6b252bf94d64bfa2e5fbfc68b7dfd88f9d372d144338d73fc90d47461362936e"
+    }
+  },
+  "adr_states": {
+    "Accepted": 5,
+    "Proposed": 21
+  }
+}
