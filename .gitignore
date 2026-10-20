@@ -1,0 +1,15 @@
+**/target/
+**/node_modules/
+**/.nuxt/
+**/.output/
+**/.vite/
+**/coverage/
+**/__pycache__/
+**/.results/
+.reports/
+.dev/
+.env
+.env.*
+!.env.example
+*.log
+**/dist/

@@ -1,0 +1,17 @@
+[extend]
+useDefault = true
+[[allowlists]]
+description = "Generated dependencies, build outputs and explicitly ignored local state"
+paths = ['''(^|/)(node_modules|target|\.dev|\.reports|\.results|\.nuxt|\.output|dist|\.git)(/|$)''']
+[[allowlists]]
+description = "Historical evidence records SHA-256 document checksums, not credentials"
+condition = "AND"
+paths = ['''(^|/)docs/reviews/evidence/[^/]+\.json$''']
+regexTarget = "line"
+regexes = ['''"docs/adr/[^"\n]+\.md": "[a-f0-9]{64}"''']
+[[allowlists]]
+description = "Exact pre-existing documentation-only IndexNow example, retained in historical evidence"
+condition = "AND"
+paths = ['''(^|/)docs/(modules/seo\.md|reviews/evidence/[^/]+\.json)$''']
+regexTarget = "secret"
+regexes = ['''^3f7c2a9e5b8d4c1fa0e6b2d9c7a4f1e8$''']
