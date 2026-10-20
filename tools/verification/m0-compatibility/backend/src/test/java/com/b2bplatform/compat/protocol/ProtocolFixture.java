@@ -57,9 +57,11 @@ abstract class ProtocolFixture {
         final CompletableFuture<Void> future;
         final AtomicLong mysqlConnectionId = new AtomicLong();
         final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofVirtual().factory());
-        Contender(Work work) {
+        Contender(Work work) { this(Connection.TRANSACTION_REPEATABLE_READ, work); }
+        Contender(int isolation, Work work) {
             future = CompletableFuture.runAsync(() -> {
                 try (var c = connect()) {
+                    c.setTransactionIsolation(isolation);
                     mysqlConnectionId.set(scalar(c, "SELECT CONNECTION_ID()"));
                     try { work.run(c); c.commit(); }
                     catch (Exception e) { c.rollback(); throw e; }

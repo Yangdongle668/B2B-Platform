@@ -2,7 +2,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.4 |
+| 文档版本 | V1.5 |
 | 状态 | 草案（Draft），待评审 |
 | 更新日期 | 2026-10-20 |
 | 项目代号 | B2B Web Platform |
@@ -181,6 +181,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | V1.2 | 2026-10-20 | 为11项实现前设计问题补齐4.10统一契约草案、事务/恢复协议和新增表；ADR-019～025待评审，未冻结或实现 |
 | V1.3 | 2026-10-20 | 整改DR-01～04：内容级审校策略与明确写锁、翻译目标版本、媒体三阶段删除、原子下载提交及持久幂等结果；统一事件/缓存规则。ADR仍待评审，运行验证另记 |
 | V1.4 | 2026-10-20 | M0-07原型反馈：明确RR当前读、锁内保留期判断、下载唯一冲突后新事务重放及恢复保留已捕获版本；业务服务验收仍待实现 |
+| V1.5 | 2026-10-20 | M0-07B反馈：排他初始化互斥行、事务要求、租约复核、拓扑检查点与语言范围去重；65项原型回归，正式服务门禁保留 |
 
 ---
 
@@ -7434,13 +7435,13 @@ public interface TransactionMutexApi {
 }
 ```
 
-锁由 core 的 sys_transaction_mutex 表实现，唯一 `(site_id,name)`；INSERT IGNORE 建行后 SELECT FOR UPDATE；不设自动过期。`name` 仅允许 `{moduleId}.{用途}` 白名单，禁止用户传任意键。提交前释放连接或失联导致事务回滚，不能继续写。所有页面层级、影响 routeHints 的字段、slug 发布、URL 模式、语言前缀保存入口，**在任何源对象行锁之前**取得 `content.route_tree` 互斥锁；有效拓扑/路径输入变化 advance，统一锁顺序避免 page→content 与 job→page 死锁。多站点批处理逐站执行。
+锁由 core 的 sys_transaction_mutex 表实现，唯一 `(site_id,name)`；以INSERT ... ON DUPLICATE KEY UPDATE id=id取得排他锁（新id来自IdGenerator），再SELECT FOR UPDATE读取generation；不使用INSERT IGNORE共享锁再升级的实现。lock/advance必须加入已有事务（MANDATORY），无事务先拒绝，不另开事务或在autocommit下返回已释放的锁；不设自动过期。`name` 仅允许 `{moduleId}.{用途}` 白名单，禁止用户传任意键。提交前释放连接或失联导致事务回滚，不能继续写。所有页面层级、影响 routeHints 的字段、slug 发布、URL 模式、语言前缀保存入口，**在任何源对象行锁之前**取得 `content.route_tree` 互斥锁；有效拓扑/路径输入变化 advance，统一锁顺序避免 page→content 与 job→page 死锁。多站点批处理逐站执行。初始化阶段宜用短事务预建已注册的站点互斥行；不同站点首次建行仍可能争用唯一索引间隙，不能承诺零物理争用。1213死锁与1205锁超时必须回滚整个调用方事务，由外层限次重试，不能保留源写后只重试加锁语句。候选集合的发布/下线/删除/恢复变化同样属于有效输入变化，需要advance，不能只对页面移动推进代次。
 
-requestRouteRecalculation 以最新 generation 与 locales 提交 JobApi 任务，幂等键含 generation。content 对 SiteSettingsChangedEvent 的 URL_PREFIX_CHANGED 以及 SiteResourceChangedEvent(url.pattern)订阅补交同类任务；事件只作调度，执行时不把 payload 当成当前事实。
+requestRouteRecalculation 以最新generation与locales提交JobApi任务，幂等键包含站点/任务类型、generation和规范化语言集合（去重排序后编码或摘要）；同集合不同顺序是同一请求，不同集合不得因generation相同而丢任务。content 对 SiteSettingsChangedEvent 的 URL_PREFIX_CHANGED 以及 SiteResourceChangedEvent(url.pattern)订阅补交同类任务；事件只作调度，执行时不把 payload 当成当前事实。
 
-相关路由源写入及重算批次显式采用READ_COMMITTED，且先取得事务互斥锁再读取业务输入，禁止复用等待前建立的旧快照。每次恢复/批次在该事务互斥锁内，content 从自己的 cnt_ 表取得当前可路由本地化，经 ContentTypeProvider.routeHints 获取当前业务树与参数，建立父先于子的候选顺序，再调用 reservePath/applyRoute。父路径来自本批已更新或先前已提交的当前 url 路由。批次最多100项，遇路径冲突该批回滚、记录冲突并暂停，不改 slug、不覆盖第三方路由。
+相关路由源写入及重算批次显式采用READ_COMMITTED，且先取得事务互斥锁再读取业务输入，禁止复用等待前建立的旧快照。每次恢复/批次先取该事务互斥锁，再复核JobApi当前执行租约及任务可运行状态；不能仅比较可能复用的worker_id，旧认领版本不得写路由或检查点。租约失效、FAILED暂停或取消时不得继续提交批次。content 从自己的 cnt_ 表取得当前可路由本地化，经 ContentTypeProvider.routeHints 获取当前业务树与参数，建立父先于子的候选顺序，再调用 reservePath/applyRoute。父路径来自本批已更新或先前已提交的当前 url 路由。批次最多100项，遇路径冲突该批回滚、记录冲突并暂停，不改 slug、不覆盖第三方路由。
 
-任务记录起始 generation 与稳定内容 ID 游标；generation 变化则放弃旧游标，从当前树重新排序重算，新任务取代旧目标。每批发布对应 ContentPathChangedEvent，search 的捕获在同一路由事务内完成。重试读取当前路由，不重复生成跳转链；取消保留已提交批次，下一任务从当前事实修复。只承诺任务最终完成后路径一致，不把多批更新描述为全站原子切换。
+任务记录起始generation及不透明检查点（语言、最后完成的contentId和完成位置）。同generation、同语言集合内按确定的父先子后序列定位检查点后继，不能用WHERE content_id > lastId分页：父ID可能大于子ID。检查点找不到或位置不一致必须拒绝，不能静默跳过。generation变化则放弃旧游标，从当前树重新排序重算，以保留原语言范围的新目标替代旧任务；旧任务不能继续覆盖新树。每批的url路由、自动重定向、content路径投影、JobApi检查点和search变更捕获必须同事务提交或回滚；完成所有源/检查点写入后才按语言排序执行捕获。每批发布对应ContentPathChangedEvent，事件也在此事务登记。重试读取当前路由，不重复生成跳转链；取消保留已提交批次，下一任务从当前事实修复。只承诺任务最终完成后路径一致，不把多批更新描述为全站原子切换。
 
 #### 4.10.6 FORM-01 / NOTIFICATION-02：原子下载提交与通知权限
 
@@ -10361,7 +10362,7 @@ CREATE TABLE sys_transaction_mutex (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='事务互斥技术状态';
 ```
 
-在 M0 core 初始化迁移之后追加独立迁移，不改写已有迁移。空库执行、并发首次建行、死锁回滚、连接丢失、A/B站隔离均待 MySQL 8.4 集成验证。
+在M0 core初始化迁移之后追加独立迁移，不改写已有迁移。M0-07B已以真实MySQL验证首次建行、共享锁升级死锁负对照、独立站点generation及常态行锁隔离；冷建行的唯一索引末端间隙争用已记录。正式core的断连/连接池恢复、限次重试及完整生命周期仍待集成，原型不等于生产迁移或G0验收。
 
 ---
 

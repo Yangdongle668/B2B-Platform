@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：`product-detail` 模板（模板元数据与 `TemplateProvider`）；M2：页面、模板与插槽、页面编辑器、全局区块；M3：法律页面（`legal` 模板）；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.5 |
+| 文档版本 | V1.6 |
 | 状态 | 草案 |
 | 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.7 第 10 章及 3.2、3.8、24–29 章；平台框架设计 V1.4 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 依据 | 系统设计 V1.7 第 10 章及 3.2、3.8、24–29 章；平台框架设计 V1.5 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -575,7 +575,7 @@ CREATE TABLE pg_component_usage (
 依据[平台框架 4.10.1、4.10.5、4.10.7](../framework/platform-framework.md)及[设计问题处理说明](../reviews/design-issue-resolution-2026-10-20.md)。新增契约相关ADR仍为Proposed；下列方案已具体化，待评审冻结后同批实现，不能据此声明运行问题已验证。涉及本节的旧异步引用、原地索引写入或待定措辞按此方案替代。
 
 - 页面布局/全局区块保存由content草稿哈希流程收集媒体并同步登记；资源型图片按源事务登记，不能等异步引用更新后再保护删除。
-- 页面树移动先取得content.route_tree数据库事务锁，再写pg_元数据并调用ContentApi.requestRouteRecalculation；任务读取当前ContentTypeProvider.routeHints，不把旧树输入交给url恢复使用。
+- 页面树移动先取得content.route_tree数据库事务锁，再写pg_元数据并调用ContentApi.requestRouteRecalculation；任务读取当前ContentTypeProvider.routeHints，不把旧树输入交给url恢复使用；移动旧页面到较新的父页面后，ID大小不再代表父子顺序，恢复必须按拓扑检查点定位。
 - 创建/切换legal模板时同一事务按内容ID及内容version更新cnt_content.translation_review_required；新目标语言读取该共享策略，旧审批和旧翻译任务不得发布新草稿。
 
 ## 6. 接口
@@ -889,3 +889,4 @@ ID 序列化为字符串，时间为 ISO-8601 UTC；列表 page/size（size ≤ 
 | V1.3 | 2026-10-20 | 补充 Tesla 参考下的前台视觉、响应式与交互状态要求，引用统一视觉基线；业务模型、接口与组件类型保持不变 |
 | V1.4 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
 | V1.5 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
+| V1.6 | 2026-10-20 | M0-07B验证当前树重算与小ID子页面恢复；沿用统一content任务，不传旧树给url；详见路由协议复审，未代替正式服务验收 |

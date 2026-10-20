@@ -1,6 +1,6 @@
 # 模块需求与设计文档索引
 
-> **当前正式评审结论**：[FR-2026-10-20](../reviews/formal-design-review-2026-10-20.md)允许进入M0验证与整改，暂不通过整体契约冻结。6项P1与3项P2已登记；后续已完成[39项事务协议原型](../reviews/m0-transaction-protocol-review-2026-10-20.md)，正式服务验收仍保留。下一步按[开发流程与任务计划](../plans/development-plan.md)推进。此前“11项已有方案”不表示所有设计缺口已关闭。
+> **当前正式评审结论**：[FR-2026-10-20](../reviews/formal-design-review-2026-10-20.md)允许进入M0验证与整改，暂不通过整体契约冻结。6项P1与3项P2已登记；后续已完成[39项事务协议原型](../reviews/m0-transaction-protocol-review-2026-10-20.md)，正式服务验收仍保留。M0-07B又完成[19项路由协议原型](../reviews/m0-route-protocol-review-2026-10-20.md)，下一项为真实Redis/CDN验证。下一步按[开发流程与任务计划](../plans/development-plan.md)推进。此前“11项已有方案”不表示所有设计缺口已关闭。
 
 本文是现有模块设计的入口。依据 [系统设计](../architecture/system-design.md)、[平台框架](../framework/platform-framework.md) 和 [ADR-018](../adr/0018-framework-first-parallel-modules.md)，每个模块保留职责、依赖与契约、领域与数据模型、流程、接口、后台与前台、配置、任务、测试、独立开发、验收和待定问题 14 章。
 

@@ -19,6 +19,7 @@
 | `docs/reviews/formal-design-review-2026-10-20.md` | 正式技术评审、DR-01～09及实库DDL证据 | 允许M0整改验证；暂不冻结契约 |
 | `docs/reviews/m0-remediation-2026-10-20.md` | DR-01～04整改、真实兼容性验证及剩余关卡 | M0执行记录 |
 | `docs/reviews/m0-transaction-protocol-review-2026-10-20.md` | 媒体/翻译/下载39项协议原型及剩余验收 | M0-07部分完成 |
+| `docs/reviews/m0-route-protocol-review-2026-10-20.md` | 路由互斥/generation/检查点19项原型与初始化反馈 | M0-07B完成；正式实现待验收 |
 | `docs/plans/development-plan.md` | M0整改/验证队列、M1业务链及M2～M4开发验收流程 | 执行计划，未开始业务编码 |
 | `docs/adr/` | 架构决策记录；索引、状态与流程见 `docs/adr/README.md` | 持续维护 |
 | `docs/framework/platform-framework.md` | 平台框架设计：工程结构、全部跨模块契约（platform-api）、platform-core 与基础设施、数据库通用约定、前端框架、测试替身、CI、模块文档模板、并行开发计划 | 编写中 |

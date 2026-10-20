@@ -134,7 +134,9 @@ export MAVEN_OPTS="${MAVEN_OPTS:-} -Djavax.net.ssl.trustStore=/tmp/probe-cacerts
                                cases=[c.attrib['name'] for c in report.findall('testcase')]))
             if report.attrib['name'] == 'com.b2bplatform.compat.CompatibilityTest':
                 root = report
-    assert len(suites) == 4, 'Expected compatibility, media, translation and download suites'
+    assert {s['name'].rsplit('.', 1)[-1] for s in suites} == {
+        'CompatibilityTest', 'MediaProtocolTest', 'TranslationProtocolTest', 'DownloadProtocolTest', 'RouteProtocolTest'
+    }, 'Expected all five compatibility/protocol suites'
     props = {p.attrib['name']: p.attrib['value'] for p in root.find('properties')}
     jars = [Path(x).name for x in props['java.class.path'].split(':')
             if re.search(r'(spring-boot-4|modulith-core|flyway-core|mybatis-plus-core)', x)]
