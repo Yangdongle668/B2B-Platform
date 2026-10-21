@@ -24,6 +24,7 @@ public final class FakeTranslationEngine implements TranslationEngine {
   }
 
   public TranslationResult translate(TranslationRequest request) {
+    if (org.springframework.transaction.support.TransactionSynchronizationManager.isActualTransactionActive()) throw new IllegalStateException("翻译引擎不能在事务中调用");
     if (failure != null) throw failure;
     requests.add(request);
     var items =

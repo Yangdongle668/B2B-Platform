@@ -37,6 +37,8 @@ public final class SampleExtensions {
     put("resource:" + site + ":" + id + ":" + locale, value);
   }
 
+  public JsonNode resourceValue(long site,String id,String locale) { return get("resource:"+site+":"+id+":"+locale); }
+
   public void personal(long site, String email, JsonNode value) {
     put("personal:" + site + ":" + email.toLowerCase(Locale.ROOT), value);
   }

@@ -65,4 +65,30 @@ class ContractCatalogTest {
     assertThat(samples.translated(1, 22, "en").path("modelNo").asString()).isEqualTo("A-123");
     assertThat(samples.translated(1, 22, "en").path("manual").asBoolean()).isTrue();
   }
+  @Test
+  void everyInterfaceHasExecutableSharedSuiteAndConcreteDoubleHarness() throws Exception {
+    var suites=com.b2bweb.testkit.contract.ContractSuites.all();
+    var catalog=JsonMapper.builder().build().readTree(getClass().getResourceAsStream("/META-INF/b2bweb/testkit/contract-catalog.json"));
+    Set<String> expected=new HashSet<>();
+    for(String family:List.of("services","ports"))for(var type:catalog.path(family))expected.add(type.asString());
+    assertThat(suites.keySet()).containsExactlyInAnyOrderElementsOf(expected);
+    Set<Class<?>> harnesses=new HashSet<>();
+    var resolver=new org.springframework.core.io.support.PathMatchingResourcePatternResolver();
+    var metadata=new org.springframework.core.type.classreading.CachingMetadataReaderFactory();
+    for(var resource:resolver.getResources("classpath*:com/b2bweb/testkit/**/*Test*.class")) {
+      var name=metadata.getMetadataReader(resource).getClassMetadata().getClassName();
+      var type=Class.forName(name,false,getClass().getClassLoader());
+      if(!java.lang.reflect.Modifier.isAbstract(type.getModifiers()))harnesses.add(type);
+    }
+    for(var entry:suites.entrySet()) {
+      var suite=entry.getValue();assertThat(java.lang.reflect.Modifier.isAbstract(suite.getModifiers())).isTrue();
+      assertThat(Arrays.stream(suite.getDeclaredMethods()).filter(method->method.isAnnotationPresent(org.junit.jupiter.api.Test.class)).count()).as("behavior scenarios for %s",entry.getKey()).isPositive();
+      assertThat(harnesses).as("concrete inherited JUnit harness for %s",entry.getKey()).anySatisfy(harness->assertThat(suite.isAssignableFrom(harness)).isTrue());
+    }
+  }
+ @Test void canonicalEventTableMatchesExplicitSamples() throws Exception {
+  var catalog=JsonMapper.builder().build().readTree(getClass().getResourceAsStream("/META-INF/b2bweb/testkit/contract-catalog.json"));
+  Set<String> canonical=new HashSet<>();for(var type:catalog.path("events"))canonical.add(type.asString());
+  assertThat(com.b2bweb.testkit.event.EventSamples.all().keySet().stream().map(Class::getName).toList()).containsExactlyInAnyOrderElementsOf(canonical);
+ }
 }

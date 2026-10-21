@@ -5,7 +5,7 @@ import argparse,json,re
 ROOT=Path(__file__).resolve().parents[2]
 def inventory():
  document=(ROOT/'docs/framework/platform-framework.md').read_text();result={}
- for section,label in [('4.2.2','services'),('4.2.3','extensions'),('4.2.5','ports')]:
+ for section,label in [('4.2.2','services'),('4.2.3','extensions'),('4.2.4','events'),('4.2.5','ports')]:
   body=document.split('#### '+section+' ')[1].split('\n#### ')[0].split('\n### ')[0];names=[]
   for row in body.splitlines():
    if not row.startswith('| `'):continue
@@ -16,7 +16,9 @@ def inventory():
     paths=list((ROOT/'backend/platform/platform-api/src/main/java').rglob(name+'.java'))
     if len(paths)!=1:raise ValueError('Canonical type missing or ambiguous: '+name)
     source=paths[0].read_text();package=re.search(r'^package (.*);',source,re.M).group(1)
-    if 'public interface '+name not in source:continue
+    if label=='events':
+     if 'implements DomainEvent' not in source:raise ValueError('Not a domain event: '+name)
+    elif 'public interface '+name not in source:continue
     names.append(package+'.'+name)
   result[label]=sorted(set(names))
  return result
