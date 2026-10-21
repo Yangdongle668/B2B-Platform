@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-21",
+  "implementation_revision": "39ee5d5a69c0b0618147c561f9b7b983cc2bc7fa",
+  "scope": "R3 frontend helpers; complete M0/G0 remains unapproved",
+  "source_sha256": {
+    "frontend/packages/website-kit/src/delivery.ts": "4a9cbc24dfb29c59ac6a7f4ad29af0ad7badf43155d7628bd070c3e5c1d55d1b",
+    "frontend/packages/website-kit/src/delivery.test.ts": "9b3f039531360e6db0d4b4b7b271edaf15e385d9e2a5d65764e26ce53cf2b27a",
+    "frontend/apps/website/app/composables/useSeoHead.ts": "31e80a7b0761ed03e48392600163082237d2f1424fd8eafd20b5e77f4473f781",
+    "frontend/apps/website/app/composables/useImagePreload.ts": "c7b3b2678d213251a9efe809186ba5817be1bdc3c2ddf46b57a237185b4245ea",
+    "frontend/apps/website/app/components/B2bImage.vue": "b4279bb9b3834ed23c0fcdcdbd33418c78fd435cdf1d8a28994bdc3b5fae693e"
+  },
+  "frontend": {
+    "lint": true,
+    "typecheck": true,
+    "test_files": 10,
+    "tests": 45,
+    "new_delivery_helper_tests": 6,
+    "admin_build": true,
+    "nuxt_build": true
+  },
+  "browser": {
+    "preview": {
+      "transport": "real local HTTPS iframe",
+      "injected_responses": false,
+      "content_provider": "explicit development-only in-memory fixture; not production content",
+      "ephemeral_editor": true,
+      "sharing_cannot_enter_editor": true,
+      "server_gate_csp_and_private_headers": true,
+      "share_preview_ssr": true,
+      "real_iframe_init_and_patch": true,
+      "selection_roundtrip": true,
+      "unsafe_patch_rejected": true,
+      "wrong_window_source_rejected": true,
+      "live_issuer_revocation": true,
+      "fixtures_removed": true
+    },
+    "general": {
+      "viewports": [
+        {
+          "width": 1440,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 768,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 390,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 360,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        }
+      ],
+      "auth_scope": "UI injected failure handling; real API/session/MFA is tested by backend integration suite",
+      "ssr_without_js": true,
+      "admin_failure_state": true,
+      "admin_axe_violations": []
+    }
+  },
+  "security": {
+    "gitleaks": true,
+    "pnpm_high_gate": false,
+    "automatic_waivers": false
+  },
+  "limitations": {
+    "production_delivery_media_assembly_verified": false,
+    "live_imgproxy_chain_verified": false,
+    "full_chapter_8_acceptance_complete": false,
+    "g0_complete": false
+  },
+  "backend": "No Java, Maven or backend contract changes in this increment; preceding 214-test results remain in m0-foundation-closeout-2026-10-21.json"
+}
