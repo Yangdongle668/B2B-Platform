@@ -8,5 +8,11 @@
   "gallery.title": "组件预览",
   "gallery.description": "首屏展示",
   "error.title": "服务暂不可用",
-  "theme.label": "工业"
+  "theme.label": "工业",
+  "preview.unavailable": "预览不可用，请重新打开编辑器",
+  "preview.renderError": "此区块无法渲染，请检查组件配置",
+  "preview.invalidLayout": "布局更新不符合约束",
+  "preview.loading": "正在加载预览",
+  "preview.banner": "预览模式",
+  "preview.insert": "插入区块"
 }

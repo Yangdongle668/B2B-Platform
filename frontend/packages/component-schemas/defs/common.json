@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "mediaRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$media"
+      ],
+      "x-translatable": false,
+      "properties": {
+        "$media": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$",
+          "x-translatable": false
+        }
+      }
+    },
+    "contentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$content"
+      ],
+      "x-translatable": false,
+      "properties": {
+        "$content": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$",
+          "x-translatable": false
+        }
+      }
+    },
+    "termRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$term"
+      ],
+      "x-translatable": false,
+      "properties": {
+        "$term": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*$",
+          "x-translatable": false
+        }
+      }
+    },
+    "link": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/contentRef"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "href"
+          ],
+          "properties": {
+            "href": {
+              "type": "string",
+              "pattern": "^https?://(?![^/?#]*@)[^/\\s?#]+(?:[/?#]|$)",
+              "x-translatable": false
+            },
+            "rel": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "nofollow",
+                  "sponsored"
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "x-translatable": false
+    },
+    "cta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "link",
+        "style"
+      ],
+      "properties": {
+        "label": {
+          "title": "按钮文字",
+          "type": "string",
+          "x-translatable": true
+        },
+        "link": {
+          "title": "按钮链接",
+          "$ref": "#/$defs/link"
+        },
+        "style": {
+          "title": "按钮样式",
+          "enum": [
+            "primary",
+            "secondary"
+          ],
+          "x-translatable": false
+        }
+      }
+    },
+    "richNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "doc",
+            "text",
+            "heading",
+            "hardBreak",
+            "horizontalRule",
+            "paragraph",
+            "bulletList",
+            "orderedList",
+            "listItem",
+            "blockquote",
+            "codeBlock",
+            "table",
+            "tableRow",
+            "tableCell",
+            "tableHeader",
+            "image",
+            "video",
+            "alert",
+            "productCard",
+            "cta"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "attrs": {
+          "type": "object"
+        },
+        "content": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/richNode"
+          }
+        },
+        "marks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "enum": [
+                  "bold",
+                  "italic",
+                  "strike",
+                  "code",
+                  "link"
+                ]
+              },
+              "attrs": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "richText": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/richNode"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "doc"
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "x-translatable": true
+    },
+    "richTextInline": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/richNode"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "doc"
+            },
+            "content": {
+              "type": "array",
+              "maxItems": 1,
+              "items": {
+                "properties": {
+                  "type": {
+                    "const": "paragraph"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      ],
+      "x-translatable": true
+    },
+    "dataSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$source"
+      ],
+      "x-translatable": false,
+      "properties": {
+        "$source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "params"
+          ],
+          "properties": {
+            "provider": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            },
+            "params": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "styleValue": {
+      "enum": [
+        "default",
+        "panel",
+        "ink",
+        "none",
+        "small",
+        "medium",
+        "large",
+        "full",
+        "wide",
+        "narrow"
+      ],
+      "x-translatable": false
+    }
+  }
+}

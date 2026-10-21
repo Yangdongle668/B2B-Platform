@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "version",
+    "module",
+    "category",
+    "label",
+    "variants",
+    "propsSchema",
+    "styleOptions",
+    "allowedIn"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "module": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "category": {
+      "enum": [
+        "layout",
+        "marketing",
+        "content",
+        "product",
+        "lead",
+        "system"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "pattern": "[㐀-鿿]"
+    },
+    "description": {
+      "type": "string",
+      "pattern": "[㐀-鿿]"
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "variantAliases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "propsSchema": {
+      "type": "object",
+      "required": [
+        "type",
+        "additionalProperties",
+        "properties"
+      ],
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "additionalProperties": {
+          "const": false
+        },
+        "properties": {
+          "type": "object"
+        }
+      }
+    },
+    "styleOptions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-zA-Z0-9]*$"
+      }
+    },
+    "seo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lcpCandidate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "allowedIn": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "page",
+          "slot",
+          "children",
+          "global-block"
+        ]
+      }
+    },
+    "children": {
+      "type": "object",
+      "required": [
+        "slots",
+        "allowed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "slots": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]*$"
+          }
+        },
+        "allowed": {
+          "oneOf": [
+            {
+              "const": "*"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "restricted": {
+      "type": "string"
+    },
+    "deprecated": {
+      "type": "boolean"
+    },
+    "migrations": {
+      "type": "string"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "layout"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "children"
+        ],
+        "properties": {
+          "children": {}
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "children"
+          ],
+          "type": "object",
+          "properties": {
+            "children": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "version": {
+            "minimum": 2,
+            "type": "integer"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "migrations"
+        ],
+        "properties": {
+          "migrations": {}
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "type": "rich-text",
+  "version": 1,
+  "module": "page",
+  "category": "content",
+  "label": "仅测试资源定义",
+  "variants": [
+    "default"
+  ],
+  "propsSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "headline",
+      "image",
+      "form"
+    ],
+    "properties": {
+      "headline": {
+        "title": "标题",
+        "type": "string",
+        "x-translatable": true
+      },
+      "image": {
+        "title": "图片",
+        "$ref": "../../defs/common.json#/$defs/mediaRef"
+      },
+      "related": {
+        "title": "相关内容",
+        "$ref": "../../defs/common.json#/$defs/contentRef"
+      },
+      "form": {
+        "title": "表单",
+        "type": "string",
+        "x-ref": "form",
+        "x-translatable": false
+      },
+      "cta": {
+        "title": "按钮",
+        "$ref": "../../defs/common.json#/$defs/cta"
+      }
+    }
+  },
+  "styleOptions": [],
+  "allowedIn": [
+    "page",
+    "children"
+  ]
+}

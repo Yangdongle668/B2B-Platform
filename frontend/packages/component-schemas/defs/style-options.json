@@ -1,0 +1,18 @@
+{
+  "background": [
+    "default",
+    "panel",
+    "ink"
+  ],
+  "paddingY": [
+    "none",
+    "small",
+    "medium",
+    "large"
+  ],
+  "container": [
+    "full",
+    "wide",
+    "narrow"
+  ]
+}

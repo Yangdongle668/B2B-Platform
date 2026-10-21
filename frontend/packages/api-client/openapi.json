@@ -1186,6 +1186,54 @@
           "bootstrap-controller"
         ]
       }
+    },
+    "/api/public/v1/delivery/preview": {
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "preview-controller"
+        ]
+      },
+      "post": {
+        "operationId": "editor",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "preview-controller"
+        ]
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 import { describe,it,expect } from 'vitest'
 import { freshnessHeaders,text } from './index'
-import { acceptPreviewMessage,defineAdminModule,enabledModules } from '../../admin-kit/src/index'
+import { defineAdminModule,enabledModules } from '../../admin-kit/src/index'
 import { validateComponent } from '../../component-schemas/src/index'
 const start = Date.parse('2030-01-01T00:00:00Z')
 describe('absolute freshness', () => {
@@ -10,9 +10,8 @@ describe('absolute freshness', () => {
  it('returns retry metadata for unavailable source', () => expect(freshnessHeaders({startedAt:start,status:503},start)).toMatchObject({'Retry-After':'120','Cache-Control':'no-store'}))
 })
 describe('framework boundaries', () => {
- it('requires exact preview origin, source and nonce', () => { const source = {} as Window; const event = {origin:'https://preview.example.test',source,data:{type:'b2bweb:preview:ready',nonce:'one'}}; expect(acceptPreviewMessage(event,event.origin,source,'one')).toBe(true); expect(acceptPreviewMessage({...event,origin:'https://evil.test'},event.origin,source,'one')).toBe(false); expect(acceptPreviewMessage(event,event.origin,{} as Window,'one')).toBe(false); expect(acceptPreviewMessage(event,event.origin,source,'old')).toBe(false) })
  it('rejects cross-module route names', () => expect(() => defineAdminModule({id:'product',routes:[{path:'list',name:'inquiry.list',component:async()=>({}),meta:{title:'x'}}]})).toThrow())
  it('filters disabled modules', () => expect(enabledModules([{id:'product',routes:[]},{id:'inquiry',routes:[]}],new Set(['product']))).toHaveLength(1))
- it('validates schema and rejects extra executable props', () => { const props = {title:'sample',description:'sample',actionLabel:'sample',actionPath:'/zh/'}; expect(validateComponent('page.hero',props)).toBe(true); expect(validateComponent('page.hero',{...props,script:'alert(1)'})).toBe(false); expect(validateComponent('page.hero',{...props,actionPath:'javascript:alert(1)'})).toBe(false) })
+ it('validates schema and rejects extra executable props', () => { const props = {title:'sample',description:'sample'}; expect(validateComponent('hero',props)).toBe(true); expect(validateComponent('hero',{...props,script:'alert(1)'})).toBe(false); expect(validateComponent('hero',{...props,actionPath:'/zh/'})).toBe(false) })
  it('never silently falls back for a missing text', () => { expect(text({'greeting':'Hello {name}'},'greeting',{name:'Lin'})).toBe('Hello Lin'); expect(()=>text({},'missing')).toThrow() })
 })

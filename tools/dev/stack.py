@@ -85,6 +85,14 @@ def up(no_build=False):
   subprocess.run(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','30','-keyout',str(STATE/'key.pem'),'-out',str(STATE/'cert.pem'),'-subj','/CN=localhost','-addext','subjectAltName=DNS:localhost,IP:127.0.0.1'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True);(STATE/'key.pem').chmod(0o600)
  with (STATE/'web.log').open('a') as log:
   proc=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'serve'],cwd=ROOT,stdout=log,stderr=subprocess.STDOUT,start_new_session=True);value['supervisor']=proc.pid;save(value)
+ local_tls=ssl.create_default_context(cafile=str(STATE/'cert.pem'))
+ ready_client=urllib.request.build_opener(urllib.request.ProxyHandler({}),urllib.request.HTTPSHandler(context=local_tls))
+ for _ in range(100):
+  try:
+   with ready_client.open('https://localhost:8443/__local_health',timeout=.5) as response:
+    if response.status==200:break
+  except OSError:time.sleep(.2)
+ else:raise TimeoutError('Local HTTPS supervisor not ready; inspect .dev/stack/web.log')
  print('Local stack: https://localhost:8443/ and https://localhost:8443/admin/ (local self-signed certificate).')
  print('Login admin@local.test; initial password is in .dev/stack/state.json (bootstrapPassword). MFA enrollment and password change are required.')
  print('Mailpit: http://localhost:8025. Stop with python tools/dev/stack.py down; data is retained.')
@@ -110,7 +118,7 @@ def serve():
   do_GET=do_POST=do_PUT=do_PATCH=do_DELETE=do_OPTIONS=do_HEAD=handle_request
   def log_message(self,*args):pass
  try:
-  environment=os.environ.copy();environment.update(PNPM_HOME=str(ROOT/'.dev/pnpm-home'),NITRO_HOST='127.0.0.1',NITRO_PORT='3000',NUXT_TELEMETRY_DISABLED='1')
+  environment=os.environ.copy();environment.update(PNPM_HOME=str(ROOT/'.dev/pnpm-home'),NITRO_HOST='127.0.0.1',NITRO_PORT='3000',NUXT_TELEMETRY_DISABLED='1',NUXT_INTERNAL_TOKEN=config()['internalTokens'].split(',')[0],NUXT_PUBLIC_ADMIN_ORIGIN='https://localhost:8443')
   for cmd,cwd in [(['node','.output/server/index.mjs'],ROOT/'frontend/apps/website'),(['pnpm','exec','vite','preview','--host','127.0.0.1','--port','5173','--strictPort'],ROOT/'frontend/apps/admin')]:processes.append(subprocess.Popen(cmd,cwd=cwd,env=environment))
   server=http.server.ThreadingHTTPServer(('127.0.0.1',8443),Proxy);tls=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);tls.load_cert_chain(STATE/'cert.pem',STATE/'key.pem');server.socket=tls.wrap_socket(server.socket,server_side=True)
   def stop(*args):raise KeyboardInterrupt()

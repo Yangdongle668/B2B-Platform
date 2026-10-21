@@ -23,5 +23,9 @@ export function defineAdminModule(definition: AdminModuleDefinition): AdminModul
   return Object.freeze(definition)
 }
 export function enabledModules(modules: AdminModuleDefinition[], enabled: ReadonlySet<string>): AdminModuleDefinition[] { return modules.filter(module => enabled.has(module.id)) }
-export interface PreviewMessage { type: 'b2bweb:preview:ready' | 'b2bweb:preview:select'; nonce: string; sectionId?: string }
-export function acceptPreviewMessage(event: Pick<MessageEvent,'origin' | 'source' | 'data'>, origin: string, source: MessageEventSource | null, nonce: string): event is MessageEvent<PreviewMessage> { return source !== null && event.origin === origin && event.source === source && event.data?.nonce === nonce && ['b2bweb:preview:ready','b2bweb:preview:select'].includes(event.data?.type) }
+export { SchemaForm, formSubmission, inferEditor } from './schema-form'
+export type { FormSchema, SchemaFormContext, SchemaControls } from './schema-form'
+export { EditorCanvasHost } from './editor-host'
+export { RichTextEditor } from './richtext-editor'
+export { referenceControls } from './reference-controls'
+export type { ReferenceServices, ReferenceChoice } from './reference-controls'

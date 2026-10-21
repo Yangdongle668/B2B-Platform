@@ -1,0 +1,9 @@
+[
+  {
+    "variant": "default",
+    "props": {
+      "title": "框架示例标题",
+      "description": "框架示例说明"
+    }
+  }
+]

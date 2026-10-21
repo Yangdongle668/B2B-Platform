@@ -1,0 +1,51 @@
+{
+  "$schema": "../../meta/component.schema.json",
+  "type": "hero",
+  "version": 1,
+  "module": "page",
+  "category": "marketing",
+  "label": "首屏展示",
+  "description": "M0 框架示例，完整业务组件按页面模块切片实现",
+  "variants": [
+    "default"
+  ],
+  "propsSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "title",
+      "description"
+    ],
+    "properties": {
+      "title": {
+        "title": "标题",
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120,
+        "x-translatable": true,
+        "x-seo": "heading"
+      },
+      "description": {
+        "title": "说明",
+        "type": "string",
+        "maxLength": 1000,
+        "x-editor": "textarea",
+        "x-translatable": true
+      }
+    }
+  },
+  "styleOptions": [
+    "background",
+    "paddingY",
+    "container"
+  ],
+  "seo": {
+    "lcpCandidate": true
+  },
+  "allowedIn": [
+    "page",
+    "slot",
+    "children",
+    "global-block"
+  ]
+}

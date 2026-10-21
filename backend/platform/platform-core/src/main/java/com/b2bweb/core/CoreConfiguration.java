@@ -212,6 +212,11 @@ public class CoreConfiguration {
   }
 
   @Bean
+  com.b2bweb.core.support.schema.ComponentSchemaCatalog componentSchemas(ModuleCatalog modules) throws java.io.IOException {
+    return new com.b2bweb.core.support.schema.ComponentSchemaCatalog(modules);
+  }
+
+  @Bean
   TransactionMutexApi transactionMutex(JdbcTemplate jdbc, SiteContexts sites, IdGenerator ids) {
     return new TransactionMutex(jdbc, sites, ids, Set.of("content.route_tree"));
   }

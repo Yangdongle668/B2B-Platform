@@ -292,6 +292,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/public/v1/delivery/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post: operations["editor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -908,6 +924,48 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["Changed"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    editor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
                 };
             };
         };

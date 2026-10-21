@@ -1,0 +1,11 @@
+{
+  "name": "@b2bweb/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/editor-protocol.ts",
+    "./editor-protocol": "./src/editor-protocol.ts",
+    "./richtext": "./src/richtext.ts"
+  }
+}

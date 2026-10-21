@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "key",
+    "version",
+    "contentTypes",
+    "label",
+    "regions"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "contentTypes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      }
+    },
+    "label": {
+      "type": "string",
+      "pattern": "[㐀-鿿]"
+    },
+    "legal": {
+      "type": "boolean"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-zA-Z0-9]*$"
+          },
+          "fixed": {
+            "const": true
+          },
+          "slot": {
+            "const": true
+          },
+          "component": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "props": {
+            "type": "object"
+          },
+          "allowed": {
+            "oneOf": [
+              {
+                "const": "*"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                }
+              }
+            ]
+          },
+          "default": {
+            "type": "array"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "fixed",
+              "component"
+            ],
+            "not": {
+              "required": [
+                "slot"
+              ],
+              "type": "object",
+              "properties": {
+                "slot": {}
+              }
+            },
+            "type": "object",
+            "properties": {
+              "fixed": {},
+              "component": {}
+            }
+          },
+          {
+            "required": [
+              "slot",
+              "allowed"
+            ],
+            "not": {
+              "required": [
+                "fixed"
+              ],
+              "type": "object",
+              "properties": {
+                "fixed": {}
+              }
+            },
+            "type": "object",
+            "properties": {
+              "slot": {},
+              "allowed": {}
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -6,11 +6,12 @@
     "node": "^24.15.0"
   },
   "scripts": {
-    "lint": "eslint frontend tools/frontend && stylelint \"frontend/**/*.{css,vue}\" && node tools/frontend/lint.mjs && node tools/frontend/modules.mjs",
+    "lint": "eslint frontend tools/frontend && stylelint \"frontend/**/*.{css,vue}\" && node tools/frontend/lint.mjs && node tools/frontend/modules.mjs && pnpm check:schemas",
     "typecheck": "tsc --noEmit -p frontend/tsconfig.json && pnpm --filter @b2bweb/admin typecheck && pnpm --filter @b2bweb/website typecheck",
     "test": "vitest run",
     "build": "pnpm --filter @b2bweb/admin build && pnpm --filter @b2bweb/website build",
-    "generate:client": "openapi-typescript frontend/packages/api-client/openapi.json -o frontend/packages/api-client/src/schema.d.ts"
+    "generate:client": "openapi-typescript frontend/packages/api-client/openapi.json -o frontend/packages/api-client/src/schema.d.ts",
+    "check:schemas": "node frontend/packages/component-schemas/scripts/check.mjs"
   },
   "devDependencies": {
     "@types/node": "24.10.1",
