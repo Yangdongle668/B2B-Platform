@@ -21,6 +21,7 @@ python tools/dev/stack.py up
 ./mvnw verify
 python tools/generators/contracts.py --check
 python tools/generators/catalog.py --check
+python tools/generators/modules.py --check
 python tools/checks/architecture.py
 python tools/checks/migrations.py
 python tools/verification/m0-compatibility/verify_design.py

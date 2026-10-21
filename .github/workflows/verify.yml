@@ -20,6 +20,7 @@ jobs:
       - run: python tools/verification/m0-compatibility/verify_design.py
       - run: python tools/generators/contracts.py --check
       - run: python tools/generators/catalog.py --check
+      - run: python tools/generators/modules.py --check
       - run: python tools/checks/architecture.py
       - run: python tools/checks/migrations.py
       - run: ./mvnw -q verify

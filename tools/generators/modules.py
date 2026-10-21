@@ -7,9 +7,13 @@ import re,json,argparse
 ROOT=Path(__file__).resolve().parents[2]
 BASE=ROOT/'backend/modules'
 PARENT='../../..'
+CHECK=False
 def pom(name,parent,dependencies=''):
  return f'<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><parent><groupId>com.b2bweb</groupId><artifactId>b2b-platform</artifactId><version>0.1.0-SNAPSHOT</version><relativePath>{parent}/pom.xml</relativePath></parent><artifactId>{name}</artifactId><dependencies>{dependencies}</dependencies></project>\n'
 def put(path,body,immutable=False):
+ if CHECK:
+  if not path.exists() or path.read_text()!=body:raise SystemExit('Generated module drift: '+str(path))
+  return
  path.parent.mkdir(parents=True,exist_ok=True)
  if immutable and path.exists() and path.read_text()!=body:raise SystemExit('Immutable migration changed; add new migration: '+str(path))
  path.write_text(body)
@@ -26,6 +30,7 @@ def schema(text):
   ordered.extend(creates[t] for t in ready);pending-=set(ready)
  return ordered,alters
 if __name__=='__main__':
+ parser=argparse.ArgumentParser();parser.add_argument('--check',action='store_true');CHECK=parser.parse_args().check
  framework=(ROOT/'docs/framework/platform-framework.md').read_text()
  modules=[]
  for doc in sorted((ROOT/'docs/modules').glob('*.md')):
@@ -64,4 +69,4 @@ public class {module_class} implements com.b2bweb.api.extension.PlatformModule {
    put(core/'src/main/resources/db/migration/core'/version,sql+'\n',True)
  else:put(initial,'\n\n'.join(creates)+'\n',True)
  put(core/'src/main/resources/META-INF/b2bweb/module.schema.json',framework.split('### A.2 JSON Schema')[1].split('```json\n')[1].split('\n```')[0]+'\n')
- print(json.dumps({'module_skeletons':len(modules),'core_tables':len(creates),'module_names':modules}))
+ print(json.dumps({'module_skeletons':len(modules),'core_tables':len(creates),'module_names':modules,'mode':'check' if CHECK else 'write'}))
