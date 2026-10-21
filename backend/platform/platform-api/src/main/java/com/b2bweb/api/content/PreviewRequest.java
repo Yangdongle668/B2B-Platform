@@ -27,7 +27,11 @@ import com.b2bweb.api.extension.*;
 import com.b2bweb.api.event.*;
 import com.b2bweb.api.port.*;
 
-/** @param partOverrides partKey → 未保存的部分（只用于 DeliveryMode.EDITOR） */
-public record PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides) {
-    public PreviewRequest { partOverrides = Map.copyOf(partOverrides); }
+/** @param partOverrides 仅EDITOR/Draft允许：声明过且通过Schema的未保存layout，不允许保留元数据或AUTO目标布局。 */
+public record PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides, PreviewPurpose purpose) {
+    public PreviewRequest { partOverrides = Map.copyOf(partOverrides); Objects.requireNonNull(mode); Objects.requireNonNull(purpose); }
+    /** 兼容读取入口，不能通过传入覆盖来升级用途。 */
+    public PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides) {
+        this(localizationId, mode, partOverrides, PreviewPurpose.PREVIEW);
+    }
 }

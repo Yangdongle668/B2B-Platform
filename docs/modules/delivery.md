@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：`resolve`、站点引导数据、预览；M2：Cache Tag + CDN 清除；M3：多语言（hreflang、未公开语言 404）；翻译完成后的失效；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.5 |
+| 文档版本 | V1.6 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.9 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.7 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018 |
+| 更新日期 | 2026-10-21 |
+| 依据 | 系统设计 V1.10 第 21、23、24 章及 3.2、3.8、24–29 章；平台框架设计 V1.8 第 4、7–13 章；ADR-002、ADR-003、ADR-005、ADR-009、ADR-018、ADR-030 |
 
 > 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求。
 
@@ -316,7 +316,7 @@ SiteResourceChangedEvent（框架4.10.2，Proposed）：订阅：article.author�
 
 GET `/api/public/v1/delivery/resolve?path=`、`/site?locale=`、`/preview?token=`。resolve 返回 CONTENT / REDIRECT / GONE / NOT_FOUND 及对应数据；重定向与错误由 Nuxt 保持原 HTTP 语义。LIVE 检查语言公开状态；PREVIEW/EDITOR no-store、noindex,nofollow。请求须遵守框架可信 Host 与 Internal Token 校验，不接受外部伪造站点头。
 
-POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布解析入口：JSON 体含 token 与 partOverrides，仅接受 EDITOR 用途令牌及 layout 白名单覆盖；不接受 GET 查询参数传任意 JSON，不持久化。限制请求大小不超过内容快照 1MB 上限，响应 no-store；复用 ContentApi.resolvePreviewToken/assemblePreview，不增加跨模块契约。GET preview 不支持临时覆盖。
+POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布解析入口：JSON体仅含token与partOverrides，不接受客户端自报purpose/issuedBy/站点。先按可信Host验证PreviewTarget：仅EDITOR/Draft且签发人当前仍有站点成员资格及编辑权限/语言范围时允许layout白名单覆盖；不接受 GET 查询参数传任意 JSON，不持久化。限制请求大小不超过内容快照 1MB 上限，响应 no-store；复用 ContentApi.resolvePreviewToken/assemblePreview，不增加跨模块契约。GET preview不支持临时覆盖；用途不符或失效返回DELIVERY_PREVIEW_INVALID(404)，授权/后端依赖不可用返回503，不能放行或改成404。见ADR-030。
 
 ### 6.3 Internal 端点
 
@@ -537,3 +537,4 @@ POST `/api/public/v1/delivery/preview` 为框架 8.3.13 要求的编辑器画布
 | V1.3 | 2026-10-20 | 补齐实现前统一方案与事务/恢复接入要求；关联ADR待评审，未执行应用测试 |
 | V1.4 | 2026-10-20 | 整改正式评审DR-01～04的字段/锁/失败与缓存语义，同步框架V1.3；运行及ADR状态单独跟踪 |
 | V1.5 | 2026-10-20 | M0-07C反馈：移除旧缓冲清除流程/任务，明确恢复门闩、可靠重投和原型边界；依据框架V1.6 |
+| V1.6 | 2026-10-21 | 按ADR-030从可信PreviewTarget校验EDITOR用途和签发人，不采信客户端用途，保留真实预览集成验收 |

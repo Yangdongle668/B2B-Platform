@@ -28,4 +28,10 @@ import com.b2bweb.api.event.*;
 import com.b2bweb.api.port.*;
 
 public record PreviewTarget(long siteId, long contentId, long localizationId, String locale, PreviewMode mode,
-                            Instant expiresAt) {}
+                            Instant expiresAt, PreviewPurpose purpose, @Nullable Long issuedBy) {
+    public PreviewTarget {
+        Objects.requireNonNull(mode); Objects.requireNonNull(expiresAt); Objects.requireNonNull(purpose);
+        if (purpose == PreviewPurpose.EDITOR && (!(mode instanceof PreviewMode.Draft) || issuedBy == null || issuedBy <= 0))
+            throw new IllegalArgumentException("编辑器令牌必须绑定用户与草稿模式");
+    }
+}

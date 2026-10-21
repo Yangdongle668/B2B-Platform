@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.7 |
+| 文档版本 | V1.8 |
 | 状态 | 草案（Draft），待评审 |
-| 更新日期 | 2026-10-20 |
+| 更新日期 | 2026-10-21 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.9（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-029（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.10（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-030（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -2505,11 +2505,12 @@ public final class Permissions {
     public enum ContentAction { EDIT, REVIEW, PUBLISH, DELETE }
 
     /**
-     * 内容生命周期权限码：content:{type 小写}:{action 小写}，
-     * 如 forContent("PRODUCT", PUBLISH) = "content:product:publish"，forContent("CASE_STUDY", EDIT) = "content:case_study:edit"。
+     * 内容生命周期权限码：content:{type小写且下划线转连字符}:{action 小写}，
+     * 如 forContent("PRODUCT", PUBLISH) = "content:product:publish"，forContent("CASE_STUDY", EDIT) = "content:case-study:edit"。
      */
     public static String forContent(String contentType, ContentAction action) {
-        return "content:" + contentType.toLowerCase(java.util.Locale.ROOT) + ":" + action.name().toLowerCase(java.util.Locale.ROOT);
+        if (!ContentTypes.isValidFormat(contentType)) throw new IllegalArgumentException("内容类型格式无效");
+        return "content:" + contentType.toLowerCase(java.util.Locale.ROOT).replace('_', '-') + ":" + action.name().toLowerCase(java.util.Locale.ROOT);
     }
 }
 ```
@@ -3176,15 +3177,24 @@ public interface ContentApi {
 
     // ───────────── 预览（系统设计 6.5） ─────────────
 
-    /** 生成签名预览令牌：ttl 默认 1 小时，分享链接最长 7 天；超过时抛出 CONTENT_PREVIEW_TTL_INVALID。 */
-    PreviewToken createPreviewToken(long localizationId, PreviewMode mode, Duration ttl);
+    /** 兼容入口：只签发PREVIEW（≤1小时）或SHARE（>1小时），绝不推断EDITOR。 */
+    default PreviewToken createPreviewToken(long localizationId, PreviewMode mode, @Nullable Duration ttl) {
+        return createPreviewToken(localizationId, mode,
+                ttl != null && ttl.compareTo(Duration.ofHours(1)) > 0 ? PreviewPurpose.SHARE : PreviewPurpose.PREVIEW, ttl);
+    }
 
-    /** 校验预览令牌（签名、有效期、站点）；无效时为空。 */
+    /**
+     * 显式用途签发。PREVIEW/SHARE/EDITOR最长分别1小时/7天/12小时，空ttl默认1小时/1小时/12小时。
+     * EDITOR只允许Draft，绑定当前用户并校验站点成员及edit权限/语言范围；其余后台入口同样自行校验编辑权限。
+     */
+    PreviewToken createPreviewToken(long localizationId, PreviewMode mode, PreviewPurpose purpose, @Nullable Duration ttl);
+
+    /** 校验签名/签发行、撤销、有效期、站点和内容可见性；EDITOR另复核签发人当前编辑权限/语言范围。无效时为空。 */
     Optional<PreviewTarget> resolvePreviewToken(String token);
 
     /**
      * 从草稿（或指定修订）临时组装快照，与发布同一套代码（AssemblyPurpose.PREVIEW），不持久化、不发布事件。
-     * partOverrides 用于编辑器画布传入未保存的部分（如 "layout"）。
+     * partOverrides仅用于验证过用途的EDITOR/Draft；V1只接受声明的layout并经对应贡献方/Schema校验，AUTO目标只读。
      */
     PreviewSnapshot assemblePreview(@Valid PreviewRequest request);
 
@@ -3355,12 +3365,25 @@ public sealed interface PreviewMode permits PreviewMode.Draft, PreviewMode.Revis
 
 public record PreviewToken(String token, Instant expiresAt) {}
 
-public record PreviewTarget(long siteId, long contentId, long localizationId, String locale, PreviewMode mode,
-                            Instant expiresAt) {}
+/** 用途与草稿/修订模式独立；EDITOR不由TTL或请求模式推断。 */
+public enum PreviewPurpose { PREVIEW, SHARE, EDITOR }
 
-/** @param partOverrides partKey → 未保存的部分（只用于 DeliveryMode.EDITOR） */
-public record PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides) {
-    public PreviewRequest { partOverrides = Map.copyOf(partOverrides); }
+public record PreviewTarget(long siteId, long contentId, long localizationId, String locale, PreviewMode mode,
+                            Instant expiresAt, PreviewPurpose purpose, @Nullable Long issuedBy) {
+    public PreviewTarget {
+        Objects.requireNonNull(mode); Objects.requireNonNull(expiresAt); Objects.requireNonNull(purpose);
+        if (purpose == PreviewPurpose.EDITOR && (!(mode instanceof PreviewMode.Draft) || issuedBy == null || issuedBy <= 0))
+            throw new IllegalArgumentException("编辑器令牌必须绑定用户与草稿模式");
+    }
+}
+
+/** @param partOverrides 仅EDITOR/Draft允许：声明过且通过Schema的未保存layout，不允许保留元数据或AUTO目标布局。 */
+public record PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides, PreviewPurpose purpose) {
+    public PreviewRequest { partOverrides = Map.copyOf(partOverrides); Objects.requireNonNull(mode); Objects.requireNonNull(purpose); }
+    /** 兼容读取入口，不能通过传入覆盖来升级用途。 */
+    public PreviewRequest(long localizationId, PreviewMode mode, Map<String, JsonNode> partOverrides) {
+        this(localizationId, mode, partOverrides, PreviewPurpose.PREVIEW);
+    }
 }
 
 /** 预览快照：结构与 PublishedSnapshot.payload 相同；issues 为组装时的校验问题（预览不因 ERROR 中止）。 */
@@ -11412,6 +11435,8 @@ f.number(spec.value, { maximumFractionDigits: 2 })
 **预览**（系统设计 6.5）：`/__preview/[token]` 在服务端调用 `GET /api/public/v1/delivery/preview?token=…`（带内部令牌），按 `CONTENT` 渲染，顶部显示预览横幅（文案键 `preview.*`）；响应 `noindex, nofollow` 与 `no-store`（ADR-007）。
 
 **编辑器画布**（系统设计 10.8、ADR-007）：`/__editor?token=…`
+
+入口必须先验证PreviewTarget.purpose=EDITOR及issuedBy的当前编辑权限/语言范围；PREVIEW/SHARE不能用于画布或partOverrides。用途不符返回404、鉴权服务故障返回503，均no-store。见ADR-030。
 
 | 项 | 规定 |
 |---|---|

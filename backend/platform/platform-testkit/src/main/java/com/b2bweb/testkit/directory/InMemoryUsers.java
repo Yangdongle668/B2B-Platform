@@ -7,6 +7,12 @@ import com.b2bweb.testkit.security.*;
 import java.util.*;
 
 public final class InMemoryUsers implements UserDirectory {
+  private UserDirectory delegate;
+
+  public void delegate(UserDirectory source) {
+    delegate = Objects.requireNonNull(source);
+  }
+
   private record Entry(UserSummary user, boolean admin, Set<Long> sites) {}
 
   private final MemoryStore store;
@@ -26,6 +32,7 @@ public final class InMemoryUsers implements UserDirectory {
   }
 
   public void seed(UserSummary user, boolean admin, Set<Long> membership) {
+    if (delegate != null) throw new IllegalStateException("真实用户目录桥接时不能写入内存用户夹具");
     if (permissions instanceof FakePermissionChecker fake) {
       fake.registerAdmin(user.userId(), admin && user.active());
       fake.registerActive(user.userId(), user.active());
@@ -39,17 +46,20 @@ public final class InMemoryUsers implements UserDirectory {
   }
 
   public Optional<UserSummary> find(long id) {
+    if (delegate != null) return delegate.find(id);
     return store.atomic(
         rows -> Optional.ofNullable((Entry) rows.get("directory-user:" + id)).map(Entry::user));
   }
 
   public Map<Long, UserSummary> findAll(Collection<Long> ids) {
+    if (delegate != null) return delegate.findAll(ids);
     Map<Long, UserSummary> result = new LinkedHashMap<>();
     for (long id : ids) find(id).ifPresent(user -> result.put(id, user));
     return Map.copyOf(result);
   }
 
   public boolean isActiveMember(long id) {
+    if (delegate != null) return delegate.isActiveMember(id);
     return store.atomic(
         rows -> {
           var e = (Entry) rows.get("directory-user:" + id);
@@ -60,6 +70,7 @@ public final class InMemoryUsers implements UserDirectory {
   }
 
   public List<UserSummary> usersWithPermission(String permission, String locale) {
+    if (delegate != null) return delegate.usersWithPermission(permission, locale);
     return store.atomic(
         rows -> {
           List<UserSummary> result = new ArrayList<>();

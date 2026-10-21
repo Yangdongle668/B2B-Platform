@@ -13,7 +13,7 @@
 
 | 路径 | 内容 | 状态 |
 |---|---|---|
-| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.9 |
+| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.10 |
 | `docs/design/visual-direction.md` | 前台视觉基线：Tesla 风格参考、Token 建议、页面结构与视觉验收 | 方向已确定，视觉稿待交付 |
 | `docs/reviews/design-issue-resolution-2026-10-20.md` | 11 项设计问题统一方案、契约映射和故障验收 | 方案已补齐，ADR 待评审 |
 | `docs/reviews/formal-design-review-2026-10-20.md` | 正式技术评审、DR-01～09及实库DDL证据 | 允许M0整改验证；暂不冻结契约 |

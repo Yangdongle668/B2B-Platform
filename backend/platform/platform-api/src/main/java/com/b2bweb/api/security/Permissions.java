@@ -35,10 +35,11 @@ public final class Permissions {
     public enum ContentAction { EDIT, REVIEW, PUBLISH, DELETE }
 
     /**
-     * 内容生命周期权限码：content:{type 小写}:{action 小写}，
-     * 如 forContent("PRODUCT", PUBLISH) = "content:product:publish"，forContent("CASE_STUDY", EDIT) = "content:case_study:edit"。
+     * 内容生命周期权限码：content:{type小写且下划线转连字符}:{action 小写}，
+     * 如 forContent("PRODUCT", PUBLISH) = "content:product:publish"，forContent("CASE_STUDY", EDIT) = "content:case-study:edit"。
      */
     public static String forContent(String contentType, ContentAction action) {
-        return "content:" + contentType.toLowerCase(java.util.Locale.ROOT) + ":" + action.name().toLowerCase(java.util.Locale.ROOT);
+        if (!ContentTypes.isValidFormat(contentType)) throw new IllegalArgumentException("内容类型格式无效");
+        return "content:" + contentType.toLowerCase(java.util.Locale.ROOT).replace('_', '-') + ":" + action.name().toLowerCase(java.util.Locale.ROOT);
     }
 }

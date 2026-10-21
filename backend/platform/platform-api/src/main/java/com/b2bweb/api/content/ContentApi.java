@@ -221,15 +221,24 @@ public interface ContentApi {
 
     // ───────────── 预览（系统设计 6.5） ─────────────
 
-    /** 生成签名预览令牌：ttl 默认 1 小时，分享链接最长 7 天；超过时抛出 CONTENT_PREVIEW_TTL_INVALID。 */
-    PreviewToken createPreviewToken(long localizationId, PreviewMode mode, Duration ttl);
+    /** 兼容入口：只签发PREVIEW（≤1小时）或SHARE（>1小时），绝不推断EDITOR。 */
+    default PreviewToken createPreviewToken(long localizationId, PreviewMode mode, @Nullable Duration ttl) {
+        return createPreviewToken(localizationId, mode,
+                ttl != null && ttl.compareTo(Duration.ofHours(1)) > 0 ? PreviewPurpose.SHARE : PreviewPurpose.PREVIEW, ttl);
+    }
 
-    /** 校验预览令牌（签名、有效期、站点）；无效时为空。 */
+    /**
+     * 显式用途签发。PREVIEW/SHARE/EDITOR最长分别1小时/7天/12小时，空ttl默认1小时/1小时/12小时。
+     * EDITOR只允许Draft，绑定当前用户并校验站点成员及edit权限/语言范围；其余后台入口同样自行校验编辑权限。
+     */
+    PreviewToken createPreviewToken(long localizationId, PreviewMode mode, PreviewPurpose purpose, @Nullable Duration ttl);
+
+    /** 校验签名/签发行、撤销、有效期、站点和内容可见性；EDITOR另复核签发人当前编辑权限/语言范围。无效时为空。 */
     Optional<PreviewTarget> resolvePreviewToken(String token);
 
     /**
      * 从草稿（或指定修订）临时组装快照，与发布同一套代码（AssemblyPurpose.PREVIEW），不持久化、不发布事件。
-     * partOverrides 用于编辑器画布传入未保存的部分（如 "layout"）。
+     * partOverrides仅用于验证过用途的EDITOR/Draft；V1只接受声明的layout并经对应贡献方/Schema校验，AUTO目标只读。
      */
     PreviewSnapshot assemblePreview(@Valid PreviewRequest request);
 

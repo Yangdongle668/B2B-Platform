@@ -77,3 +77,4 @@ ADR-000、ADR-005、ADR-009、ADR-017、ADR-018 为 Accepted，其余为 Propose
 | ADR-027 | M0设置值与模块启动回调统一 | Proposed | [0027-m0-settings-and-lifecycle.md](0027-m0-settings-and-lifecycle.md) |
 | ADR-028 | M0本地S3兼容服务候选 | Proposed | [0028-local-s3-provider.md](0028-local-s3-provider.md) |
 | ADR-029 | 站点模块停用策略与事务锁 | Proposed | [0029-module-disable-policy-contract.md](0029-module-disable-policy-contract.md) |
+| ADR-030 | 预览用途、编辑器签发人与覆盖权限 | Proposed | [0030-preview-purpose-and-editor-authorization.md](0030-preview-purpose-and-editor-authorization.md) |

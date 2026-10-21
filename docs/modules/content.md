@@ -12,10 +12,10 @@
 | 平台版本 | `>=1.0.0 <2.0.0`（module.json 的 platform） |
 | 里程碑切片 | M1：本地化、修订、发布、预览；翻译模式与状态字段就绪；M2：审核、定时发布、回滚、回收站；M3：AUTO 本地化的自动发布与跟随下线，`OUTDATED` 检测；M4：—（详见第 13 节） |
 | 模块负责人 | 待定 |
-| 文档版本 | V1.7 |
+| 文档版本 | V1.8 |
 | 状态 | 草案 |
-| 更新日期 | 2026-10-20 |
-| 依据 | 系统设计 V1.9 第 4.4、5.5–5.7、6、10.5、13.6、22.3 节；平台框架设计 V1.7 第 4 章 4.4.16、4.5.2–4.5.4、4.5.6、4.5.19、4.6.2 节；ADR-003、ADR-004、ADR-005、ADR-017、ADR-018 |
+| 更新日期 | 2026-10-21 |
+| 依据 | 系统设计 V1.10 第 4.4、5.5–5.7、6、10.5、13.6、22.3 节；平台框架设计 V1.8 第 4 章 4.4.16、4.5.2–4.5.4、4.5.6、4.5.19、4.6.2 节；ADR-003、ADR-004、ADR-005、ADR-017、ADR-018、ADR-030 |
 
 本文只引用《平台框架设计》第 4 章中的契约，不定义新的跨模块契约；需要新契约时按平台框架设计 2.3 提出契约变更请求（见第 14 节）。
 
@@ -1001,8 +1001,8 @@ purge(contentId)：在回收站中（手动确认，或满 30 天由 content.pur
 
 | 操作 | 处理 |
 |---|---|
-| 签发 | 后台接口按 `purpose` 签发：`PREVIEW`（1 小时）、`SHARE`（≤ 7 天，可写备注）、`EDITOR`（≤ 12 小时，页面编辑器画布）；`ContentApi.createPreviewToken` 按 `ttl` 取 `PREVIEW` 或 `SHARE`。令牌 = Base64URL(`{jti, siteId, localizationId, mode, revisionNo, exp}`) + HMAC-SHA256 签名；表中只存 `jti` 行 |
-| 校验 | `resolvePreviewToken`：验签（轮换期内接受旧密钥）→ 站点等于当前站点 → 行存在 → 未撤销 → 未过期；`last_used_at` 每分钟最多更新一次 |
+| 签发 | 后台接口按 `purpose` 签发：`PREVIEW`（1 小时）、`SHARE`（≤ 7 天，可写备注）、`EDITOR`（≤ 12 小时，页面编辑器画布）；`ContentApi.createPreviewToken`显式用途重载用于EDITOR；旧三参数入口仅产生PREVIEW/SHARE。空ttl默认1小时/1小时/12小时。令牌 = Base64URL(`{jti, siteId, localizationId, mode, revisionNo, purpose, issuedBy, exp}`) + HMAC-SHA256 签名；表中只存 `jti` 行 |
+| 校验 | `resolvePreviewToken`：验签（轮换期内接受旧密钥）→ 站点等于当前站点 → 行存在 → 未撤销 → 未过期且内容/语言仍可预览；签名purpose/issuedBy须与签发行一致。EDITOR另要求Draft，复核签发人有效、当前站点成员及edit权限/语言范围；`last_used_at` 每分钟最多更新一次 |
 | 组装 | `assemblePreview`：以 `AssemblyPurpose.PREVIEW` 调用全部贡献方，`partOverrides` 只用于编辑器画布（限制方式见第 14 节 #4）；`REVISION` 模式直接读取修订 `payload` |
 | 撤销 | 单个撤销或“撤销该本地化全部分享链接”；立即生效（校验时查表） |
 
@@ -1318,7 +1318,7 @@ M0-07实施检查：M0-07实测父/子锁竞争与版本失效；同步草稿哈
 |---|---|---|---|---|---|---|
 | #1 | translation_review_required 的写入途径未在 ContentApi 明确 | 法律页机器译文审校 | 方案已补齐，待评审冻结 | 框架负责人 | M3 开工前 | 统一方案：可信元数据方法、初始化继承、事件targetVersion和当前政策复检；ADR-024。详见框架4.10.7及本模块第5章；保留原编号追踪评审与实施，不宣称已实现。 |
 | #2 | 定时发布失败通知设置人的模板与事件尚无契约 | 失败反馈 | 否 | 框架负责人 | M2 开工前 | 先保留 AuditApi.recordIndependently 与失败指标；通知需通过框架 4.9 补充后实现 |
-| #4 | assemblePreview 的 partOverrides 缺少用途/字段限制 | 编辑器授权边界 | 否（已澄清） | 框架负责人 | M2 开工前 | 已按框架 4.4.16 的 PreviewRequest 与 8.3.13 澄清：仅 EDITOR 可以覆盖 layout；delivery POST 做用途、站点、大小、Schema 校验，SHARE/PREVIEW 不接受覆盖，无需新签名。 |
+| #4 | assemblePreview 的 partOverrides 缺少用途/字段限制 | 编辑器授权边界 | M0候选契约已补，待评审和集成验证 | 框架负责人 | iframe实现前 | ADR-030：PreviewTarget与PreviewRequest显式携带purpose，EDITOR绑定签发人并复核授权；仅EDITOR/Draft可以覆盖layout，AUTO目标只读；delivery POST核对签名用途、站点、1MB上限与Schema。旧“无需新签名”的判断不成立，不能仅凭请求模式认定EDITOR。 |
 | #5 | CONTENT_CARD_MISSING统一登记 | 错误目录一致性 | 否（已登记） | 框架负责人 | M1 开工前 | 已在框架4.4.16 ContentErrors登记CARD_MISSING(422)，仍由框架维护唯一错误目录 |
 | #11 | 4.6 事件摘要与 4.2.4 总表不完全一致 | 事件声明和测试 | 否 | 框架负责人 | M1 开工前 | 以框架完整事件定义和本模块 2.6 为准；同步末尾摘要，不增加新事件 |
 | CONTENT-M0 | 骨架、冻结契约与 testkit 尚无实现 | 实际运行测试 | 是 | 框架负责人 | M0 | 文档不等于 DoR 或实现验收通过 |
@@ -1335,3 +1335,4 @@ M0-07实施检查：M0-07实测父/子锁竞争与版本失效；同步草稿哈
 | V1.5 | 2026-10-20 | M0-07实测父/子锁竞争与版本失效；同步草稿哈希和发布父先子后锁说明，原型不代替正式ContentApi验收 |
 | V1.6 | 2026-10-20 | M0-07B路由原型19项通过；登记content.recalculate_routes任务及拓扑检查点、租约与原子捕获要求；详见路由协议复审，未代替正式服务验收 |
 | V1.7 | 2026-10-20 | 同步框架V1.7和ADR-027的schemaVersion设置对象与默认值；仍为待评审设计，完整业务提供方未实现 |
+| V1.8 | 2026-10-21 | ADR-030补预览用途、签发人、EDITOR续用授权及layout覆盖契约；保留iframe和真实提供方验收 |

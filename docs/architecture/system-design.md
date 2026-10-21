@@ -2,9 +2,9 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.9（M0正式工程候选与契约编译反馈；历史决策见0.5） |
+| 文档版本 | V1.10（M0预览授权契约补强；历史决策见0.5） |
 | 状态 | 草案（Draft）：产品形态、目标市场、自研、语言策略、AI 翻译、开发方式与前台视觉参考方向已确认，其余待评审 |
-| 更新日期 | 2026-10-20 |
+| 更新日期 | 2026-10-21 |
 | 项目代号 | B2B Web Platform |
 | 定位 | 模块化、可扩展、SEO 原生、设计系统驱动的企业网站与询盘获客平台 |
 
@@ -186,6 +186,13 @@ V1.3 确认了以下事项，并据此修订相关章节；其余内容沿用 V1
 | M0工程候选 | 框架V1.7为唯一Java契约来源；设置值统一schemaVersion对象；模块每次启动的同步回调及停用策略读取补齐；初始化使用排他upsert和当前读 | ADR-026、027、029待评审，构件保持0.1.0-SNAPSHOT |
 | 持久技术表 | 原119个CREATE/3个ALTER保持不变；Core追加sys_processed_event与Modulith EVENT_PUBLICATION的版本化迁移，当前121个CREATE/3个ALTER实库执行通过 | 事件登记使用独立迁移账号，应用账号只有DML；不改已生成V001 |
 | 正式运行链路 | Core安全/站点隔离/任务/调度/引用与搜索协调器、测试替身、17模块骨架及开发栈进入工程；S3兼容测试服务使用S3Mock候选 | 运行证据见M0工程记录；MinIO、完整契约行为、依赖高危门禁及人工评审仍须逐项通过，未开放M1全面开工 |
+
+**V1.10（2026-10-21）**
+
+| 工程反馈 | 统一行为 | 状态 |
+|---|---|---|
+| 预览授权 | 框架V1.8显式区分PREVIEW/SHARE/EDITOR，EDITOR绑定签发人且续用时复核成员、编辑权限/语言范围；未保存覆盖仅EDITOR/Draft的layout，不写草稿或公共缓存 | ADR-030为Proposed；候选契约及替身反例推进中，iframe与真实提供方未验收 |
+| 内容权限码 | Permissions.forContent将下划线转换为连字符，与TERM_PAGE、CASE_STUDY、GLOBAL_BLOCK的module.json声明一致 | 不引入权限别名；正式冻结待评审 |
 
 ---
 
@@ -1216,10 +1223,10 @@ public interface PublishContributor {
 
 ### 6.5 预览
 
-- 后台点击“预览”时生成预览令牌（签名，包含 site、localizationId、模式 `draft` 或 `revision:n`；有效期 1 小时；分享链接最长 7 天）。
+- 后台点击“预览”时生成预览令牌（签名及签发行均绑定site、localizationId、模式、purpose与issuedBy；PREVIEW最长1小时、SHARE最长7天、EDITOR最长12小时）。
 - Nuxt 路由 `/__preview/{token}` 调用 `GET /api/public/v1/delivery/preview`；Delivery 调用各 `PublishContributor.contribute()` 从草稿**临时**组装快照（与发布同一套代码，但不持久化）后渲染。
 - 预览响应带 `X-Robots-Tag: noindex, nofollow` 与 `Cache-Control: no-store`。
-- 页面编辑器中的实时预览通过 postMessage 传递未保存的文档（见 10.8）。
+- 页面编辑器使用显式EDITOR/Draft令牌，并在每次解析时复核签发人当前成员资格和编辑权限/语言范围；PREVIEW/SHARE不能提交未保存覆盖。V1覆盖仅允许layout，AUTO目标只读，通过postMessage传递未保存文档（见10.8、ADR-030）。
 
 ### 6.6 并发控制
 

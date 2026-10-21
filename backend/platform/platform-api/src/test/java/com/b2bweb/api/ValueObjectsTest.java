@@ -12,6 +12,27 @@ import tools.jackson.databind.json.JsonMapper;
 
 class ValueObjectsTest {
   @Test
+  void contentPermissionKeysMatchTheDeclaredHyphenatedResources() {
+    assertThat(
+            com.b2bweb.api.security.Permissions.forContent(
+                ContentTypes.CASE_STUDY, com.b2bweb.api.security.Permissions.ContentAction.EDIT))
+        .isEqualTo("content:case-study:edit");
+    assertThat(
+            com.b2bweb.api.security.Permissions.forContent(
+                ContentTypes.TERM_PAGE, com.b2bweb.api.security.Permissions.ContentAction.EDIT))
+        .isEqualTo("content:term-page:edit");
+    assertThat(
+            com.b2bweb.api.security.Permissions.forContent(
+                ContentTypes.GLOBAL_BLOCK, com.b2bweb.api.security.Permissions.ContentAction.EDIT))
+        .isEqualTo("content:global-block:edit");
+    assertThatThrownBy(
+            () ->
+                com.b2bweb.api.security.Permissions.forContent(
+                    "term-page", com.b2bweb.api.security.Permissions.ContentAction.EDIT))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @Test
   void semverOfficialPrecedenceAndLargeNumericIdentifiers() {
     var order =
         List.of(

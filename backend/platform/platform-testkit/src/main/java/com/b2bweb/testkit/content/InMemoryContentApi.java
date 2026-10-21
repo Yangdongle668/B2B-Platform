@@ -5,6 +5,7 @@ import static com.b2bweb.testkit.common.Records.copy;
 import com.b2bweb.api.common.*;
 import com.b2bweb.api.content.*;
 import com.b2bweb.api.event.*;
+import com.b2bweb.api.security.*;
 import com.b2bweb.api.site.*;
 import com.b2bweb.api.translation.*;
 import com.b2bweb.testkit.common.*;
@@ -21,6 +22,9 @@ public final class InMemoryContentApi implements ContentApi {
   final MemoryStore store;
   final SiteContextProvider sites;
   final SiteApi siteApi;
+  final CurrentUserProvider users;
+  final UserDirectory directory;
+  final Map<String, Consumer<JsonNode>> previewParts = new HashMap<>();
   final IdGenerator ids;
   final Clock clock;
   final EventMetaFactory meta;
@@ -34,6 +38,8 @@ public final class InMemoryContentApi implements ContentApi {
       MemoryStore store,
       SiteContextProvider sites,
       SiteApi siteApi,
+      CurrentUserProvider users,
+      UserDirectory directory,
       IdGenerator ids,
       Clock clock,
       EventMetaFactory meta,
@@ -41,6 +47,8 @@ public final class InMemoryContentApi implements ContentApi {
     this.store = store;
     this.sites = sites;
     this.siteApi = siteApi;
+    this.users = users;
+    this.directory = directory;
     this.ids = ids;
     this.clock = clock;
     this.meta = meta;
@@ -363,6 +371,12 @@ public final class InMemoryContentApi implements ContentApi {
           rows.put(prefix() + "part:" + id + ":" + key, value.deepCopy());
           return null;
         });
+  }
+
+  /** Fixture for a declared editable part and its real provider's schema validation behavior. */
+  public void previewPart(String key, Consumer<JsonNode> validator) {
+    if (!"layout".equals(key)) throw new IllegalArgumentException("V1预览仅允许声明layout覆盖");
+    previewParts.put(key, Objects.requireNonNull(validator));
   }
 
   JsonNode payload(Map<String, Object> rows, LocalizationInfo l) {
@@ -1079,17 +1093,47 @@ public final class InMemoryContentApi implements ContentApi {
         });
   }
 
-  public PreviewToken createPreviewToken(long id, PreviewMode mode, Duration ttl) {
-    if (ttl.isNegative() || ttl.isZero() || ttl.compareTo(Duration.ofDays(7)) > 0)
+  public PreviewToken createPreviewToken(
+      long id, PreviewMode mode, PreviewPurpose purpose, Duration ttl) {
+    Objects.requireNonNull(purpose);
+    Objects.requireNonNull(mode);
+    Duration maximum =
+        switch (purpose) {
+          case PREVIEW -> Duration.ofHours(1);
+          case SHARE -> Duration.ofDays(7);
+          case EDITOR -> Duration.ofHours(12);
+        };
+    if (ttl == null) ttl = purpose == PreviewPurpose.EDITOR ? maximum : Duration.ofHours(1);
+    if (ttl.isNegative() || ttl.isZero() || ttl.compareTo(maximum) > 0)
       throw new BusinessException(ContentErrors.PREVIEW_TTL_INVALID, "预览期限非法");
     var l =
         findLocalization(id)
             .orElseThrow(
                 () -> new NotFoundException(ContentErrors.LOCALIZATION_NOT_FOUND, "本地化不存在"));
+    if (!findContent(l.contentId()).filter(this::visible).isPresent())
+      throw new BusinessException(ContentErrors.STATE_INVALID, "内容已回收或模块停用");
+    if (mode instanceof PreviewMode.Revision revision
+        && findRevision(id, revision.revisionNo()).isEmpty())
+      throw new NotFoundException(ContentErrors.REVISION_NOT_FOUND, "预览修订不存在");
+    Long issuer = users.current().map(CurrentUser::userId).orElse(null);
+    if (purpose == PreviewPurpose.EDITOR) {
+      if (!(mode instanceof PreviewMode.Draft))
+        throw new BusinessException(ContentErrors.STATE_INVALID, "编辑器只允许草稿模式");
+      issuer = users.require().userId();
+      if (!editorAllowed(issuer, l))
+        throw new ForbiddenException(CoreErrors.FORBIDDEN, "没有当前语言的编辑权限");
+    }
     String token = UUID.randomUUID().toString();
     var target =
         new PreviewTarget(
-            sites.requireSiteId(), l.contentId(), id, l.locale(), mode, clock.instant().plus(ttl));
+            sites.requireSiteId(),
+            l.contentId(),
+            id,
+            l.locale(),
+            mode,
+            clock.instant().plus(ttl),
+            purpose,
+            issuer);
     store.atomic(
         rows -> {
           rows.put("preview-token:" + token, target);
@@ -1105,19 +1149,66 @@ public final class InMemoryContentApi implements ContentApi {
                 .filter(
                     t ->
                         t.expiresAt().isAfter(clock.instant())
-                            && t.siteId() == sites.requireSiteId()));
+                            && t.siteId() == sites.requireSiteId())
+                .filter(
+                    t ->
+                        siteApi
+                            .find(t.siteId())
+                            .filter(s -> s.status() != SiteStatus.ARCHIVED)
+                            .isPresent())
+                .filter(t -> siteApi.locale(t.locale()).isPresent())
+                .filter(t -> findContent(t.contentId()).filter(this::visible).isPresent())
+                .filter(t -> findLocalization(t.localizationId()).isPresent())
+                .filter(
+                    t ->
+                        !(t.mode() instanceof PreviewMode.Revision revision)
+                            || findRevision(t.localizationId(), revision.revisionNo()).isPresent())
+                .filter(
+                    t ->
+                        t.purpose() != PreviewPurpose.EDITOR
+                            || editorAllowed(
+                                t.issuedBy(), findLocalization(t.localizationId()).orElseThrow())));
+  }
+
+  private boolean editorAllowed(long user, LocalizationInfo localization) {
+    String permission =
+        Permissions.forContent(localization.contentType(), Permissions.ContentAction.EDIT);
+    return directory.isActiveMember(user)
+        && directory.usersWithPermission(permission, localization.locale()).stream()
+            .anyMatch(candidate -> candidate.userId() == user);
   }
 
   public PreviewSnapshot assemblePreview(PreviewRequest request) {
+    if (request.purpose() == PreviewPurpose.EDITOR
+        && !(request.mode() instanceof PreviewMode.Draft))
+      throw new BusinessException(ContentErrors.STATE_INVALID, "编辑器只允许草稿模式");
     return store.atomic(
         rows -> {
           var l = loc(rows, request.localizationId());
+          if (!visible(content(rows, l.contentId())))
+            throw new BusinessException(ContentErrors.STATE_INVALID, "内容已回收或模块停用");
+          if (!request.partOverrides().isEmpty()) {
+            if (request.purpose() != PreviewPurpose.EDITOR
+                || !(request.mode() instanceof PreviewMode.Draft)
+                || l.translationMode() == TranslationMode.AUTO)
+              throw new BusinessException(ContentErrors.STATE_INVALID, "当前预览不允许覆盖布局");
+            request
+                .partOverrides()
+                .forEach(
+                    (key, value) -> {
+                      var validator = previewParts.get(key);
+                      if (validator == null)
+                        throw new BusinessException(ContentErrors.STATE_INVALID, "覆盖部分未声明为可编辑");
+                      validator.accept(value.deepCopy());
+                    });
+          }
           JsonNode payload =
               request.mode() instanceof PreviewMode.Revision revision
-                  ? findRevision(l.localizationId(), revision.revisionNo()).orElseThrow().payload()
+                  ? findRevision(l.localizationId(), revision.revisionNo())
+                      .orElseThrow(
+                          () -> new NotFoundException(ContentErrors.REVISION_NOT_FOUND, "预览修订不存在"))
+                      .payload()
                   : payload(rows, l);
-          if (!request.partOverrides().isEmpty() && request.mode() instanceof PreviewMode.Revision)
-            throw new BusinessException(ContentErrors.STATE_INVALID, "修订预览不允许覆盖");
           var copy = (tools.jackson.databind.node.ObjectNode) payload.deepCopy();
           var parts = (tools.jackson.databind.node.ObjectNode) copy.path("parts");
           request.partOverrides().forEach((k, v) -> parts.set(k, v.deepCopy()));

@@ -24,8 +24,8 @@ import org.springframework.context.annotation.*;
 public class LocalStandIns {
   @Bean
   TestPlatform localTestPlatform(
-      SiteContextProvider sites, SiteApi api, CurrentUserProvider users, Clock clock) {
-    return TestPlatform.empty().bridge(sites, api, users, clock);
+      SiteContextProvider sites, SiteApi api, CurrentUserProvider users, UserDirectory directory, Clock clock) {
+    return TestPlatform.empty().bridge(sites, api, users, directory, clock);
   }
 
   @Bean

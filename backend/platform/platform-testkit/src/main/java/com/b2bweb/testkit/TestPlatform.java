@@ -44,9 +44,11 @@ public final class TestPlatform {
   final InMemoryFormApi forms = new InMemoryFormApi(store, sites);
   final InMemoryNotificationApi notifications =
       new InMemoryNotificationApi(store, sites, clock, ids);
+  final com.b2bweb.testkit.directory.InMemoryUsers directory =
+      new com.b2bweb.testkit.directory.InMemoryUsers(store, sites, users, permissions);
   final com.b2bweb.testkit.content.InMemoryContentApi content =
       new com.b2bweb.testkit.content.InMemoryContentApi(
-          store, sites, siteApi, ids, clock, meta, events::publish);
+          store, sites, siteApi, users, directory, ids, clock, meta, events::publish);
   final InMemoryTranslationApi translation = new InMemoryTranslationApi(sites, clock);
   final InMemoryObjectStorage storage = new InMemoryObjectStorage(clock);
   final com.b2bweb.testkit.job.InMemoryJobApi jobs =
@@ -69,8 +71,6 @@ public final class TestPlatform {
       new com.b2bweb.testkit.directory.InMemoryDictApi(store);
   final com.b2bweb.testkit.directory.InMemorySiteProfiles profiles =
       new com.b2bweb.testkit.directory.InMemorySiteProfiles(store, sites);
-  final com.b2bweb.testkit.directory.InMemoryUsers directory =
-      new com.b2bweb.testkit.directory.InMemoryUsers(store, sites, users, permissions);
   final com.b2bweb.testkit.security.RecordedAudit audit =
       new com.b2bweb.testkit.security.RecordedAudit(store, sites, users);
 
@@ -261,6 +261,16 @@ public final class TestPlatform {
     Object value = implementations.get(type);
     if (value == null) throw new IllegalArgumentException("测试契约未登记: " + type.getName());
     return type.cast(value);
+  }
+
+  public TestPlatform bridge(
+      SiteContextProvider sourceSites,
+      SiteApi sourceApi,
+      CurrentUserProvider sourceUser,
+      UserDirectory sourceDirectory,
+      Clock sourceClock) {
+    directory.delegate(sourceDirectory);
+    return bridge(sourceSites, sourceApi, sourceUser, sourceClock);
   }
 
   public TestPlatform bridge(
