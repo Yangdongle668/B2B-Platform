@@ -95,10 +95,11 @@ const oldJson = path => JSON.parse(execFileSync('git', ['show', `${base}:${path}
 const shrinks = (previous = [], current = []) => previous.some(value => !current.includes(value))
 const breaksProps = (old, current) => {
   if (!current) return true
-  if (JSON.stringify(old.type) !== JSON.stringify(current.type) || old.$ref !== current.$ref || old.pattern !== current.pattern || old.format !== current.format || old.const !== current.const) return true
-  if (shrinks(old.enum, current.enum) || shrinks(current.required, old.required) || old.additionalProperties !== false && current.additionalProperties === false) return true
+  if (JSON.stringify(old.type) !== JSON.stringify(current.type) || old.$ref !== current.$ref || old.pattern !== current.pattern || old.format !== current.format || current.const !== undefined && old.const !== current.const) return true
+  if (current.enum && (!old.enum || shrinks(old.enum, current.enum)) || shrinks(current.required, old.required) || old.additionalProperties !== false && current.additionalProperties === false) return true
   for (const key of ['maxLength', 'maximum', 'maxItems']) if (current[key] !== undefined && (old[key] === undefined || current[key] < old[key])) return true
   for (const key of ['minLength', 'minimum', 'minItems']) if (current[key] !== undefined && (old[key] === undefined || current[key] > old[key])) return true
+  if (['oneOf', 'anyOf', 'allOf', 'not'].some(key => JSON.stringify(old[key]) !== JSON.stringify(current[key]))) return true
   if (old.items && breaksProps(old.items, current.items)) return true
   return Object.entries(old.properties ?? {}).some(([key, value]) => breaksProps(value, current.properties?.[key]))
 }
