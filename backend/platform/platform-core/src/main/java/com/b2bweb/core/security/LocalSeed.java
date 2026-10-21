@@ -67,6 +67,18 @@ public class LocalSeed implements ApplicationRunner, Ordered {
               "INSERT INTO sys_site(id,code,name,theme_key,timezone,status)"
                   + " VALUES(1,'local','本地示例站点','industrial','Asia/Shanghai','ACTIVE') ON DUPLICATE"
                   + " KEY UPDATE id=id");
+          String domainType =
+              jdbc.queryForObject(
+                          "SELECT COUNT(*) FROM sys_site_domain WHERE site_id=1 AND type='PRIMARY'",
+                          Integer.class)
+                      == 0
+                  ? "PRIMARY"
+                  : "ALIAS";
+          jdbc.update(
+              "INSERT INTO sys_site_domain(id,site_id,domain,type) VALUES(?,1,'localhost',?) ON"
+                  + " DUPLICATE KEY UPDATE id=id",
+              ids.nextId(),
+              domainType);
           jdbc.update(
               "INSERT INTO sys_site_locale(id,site_id,locale,url_prefix,hreflang,`public`)"
                   + " VALUES(?,1,'zh-CN','zh','zh-CN',1) ON DUPLICATE KEY UPDATE id=id",

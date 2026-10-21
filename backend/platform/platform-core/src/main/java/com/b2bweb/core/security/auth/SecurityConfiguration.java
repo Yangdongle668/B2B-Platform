@@ -130,17 +130,50 @@ public class SecurityConfiguration {
 
   @Bean
   @Order(2)
-  SecurityFilterChain publicApi(HttpSecurity http) throws Exception {
+  SecurityFilterChain publicApi(
+      HttpSecurity http,
+      SiteContexts sites,
+      UserContexts users,
+      com.b2bweb.api.site.SiteApi api,
+      com.b2bweb.core.module.ModuleCatalog catalog,
+      org.springframework.core.env.Environment env)
+      throws Exception {
     return http.securityMatcher("/api/public/**")
         .csrf(c -> c.disable())
         .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .requestCache(c -> c.disable())
+        .addFilterBefore(
+            new RequestSiteFilter(sites, users, api, new InternalTrust(env), false),
+            AuthorizationFilter.class)
+        .addFilterAfter(new ModuleGuardFilter(catalog, api, sites), RequestSiteFilter.class)
         .authorizeHttpRequests(c -> c.anyRequest().permitAll())
         .build();
   }
 
   @Bean
   @Order(3)
+  SecurityFilterChain internalApi(
+      HttpSecurity http,
+      SiteContexts sites,
+      UserContexts users,
+      com.b2bweb.api.site.SiteApi api,
+      com.b2bweb.core.module.ModuleCatalog catalog,
+      org.springframework.core.env.Environment env)
+      throws Exception {
+    return http.securityMatcher("/api/internal/**")
+        .csrf(c -> c.disable())
+        .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .requestCache(c -> c.disable())
+        .addFilterBefore(
+            new RequestSiteFilter(sites, users, api, new InternalTrust(env), true),
+            AuthorizationFilter.class)
+        .addFilterAfter(new ModuleGuardFilter(catalog, api, sites), RequestSiteFilter.class)
+        .authorizeHttpRequests(c -> c.anyRequest().permitAll())
+        .build();
+  }
+
+  @Bean
+  @Order(4)
   SecurityFilterChain deny(HttpSecurity http, org.springframework.core.env.Environment env)
       throws Exception {
     return http.csrf(c -> c.disable())

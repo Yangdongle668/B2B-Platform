@@ -26,7 +26,10 @@ public final class InMemoryUsers implements UserDirectory {
   }
 
   public void seed(UserSummary user, boolean admin, Set<Long> membership) {
-    if (permissions instanceof FakePermissionChecker fake) fake.registerAdmin(user.userId(), admin);
+    if (permissions instanceof FakePermissionChecker fake) {
+      fake.registerAdmin(user.userId(), admin && user.active());
+      fake.registerActive(user.userId(), user.active());
+    }
     store.atomic(
         rows -> {
           rows.put(

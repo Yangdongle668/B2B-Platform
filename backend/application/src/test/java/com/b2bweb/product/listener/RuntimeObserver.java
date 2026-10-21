@@ -29,6 +29,16 @@ public class RuntimeObserver {
   @ApplicationModuleListener
   public void onEnabled(ModuleEnabledEvent event) {
     if (failNext.compareAndSet(true, false)) throw new IllegalStateException("injected failure");
-    received.put(event.eventId(), sites.requireSiteId() + ":" + users.actor().toEventActor());
+    received.put(
+        event.eventId(),
+        sites.requireSiteId()
+            + ":"
+            + users.actor().toEventActor()
+            + ":"
+            + sites.require().origin()
+            + ":"
+            + event.actor()
+            + ":"
+            + users.current().isEmpty());
   }
 }

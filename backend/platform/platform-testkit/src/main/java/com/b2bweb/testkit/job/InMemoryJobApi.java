@@ -59,7 +59,9 @@ public final class InMemoryJobApi implements JobApi {
   }
 
   private void enabled(long site, String module) {
-    if (site != 0 && !api.isModuleEnabled(site, module)) throw new ModuleDisabledException(module);
+    if (site != 0
+        && (api.find(site).filter(s -> s.status() != SiteStatus.ARCHIVED).isEmpty()
+            || !api.isModuleEnabled(site, module))) throw new ModuleDisabledException(module);
   }
 
   private String key(long id) {

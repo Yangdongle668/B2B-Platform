@@ -6,11 +6,23 @@ import com.b2bweb.api.site.*;
 import java.util.*;
 
 public final class FakePermissionChecker implements PermissionChecker {
+  private final Map<Long, Boolean> activeUsers = new HashMap<>();
+
+  public void registerActive(long user, boolean active) {
+    activeUsers.put(user, active);
+  }
+
   private final Set<Long> admins = new HashSet<>();
 
   public void registerAdmin(long user, boolean admin) {
     if (admin) admins.add(user);
     else admins.remove(user);
+  }
+
+  private boolean administrator(CurrentUser user) {
+    return activeUsers.containsKey(user.userId())
+        ? admins.contains(user.userId())
+        : user.systemAdmin();
   }
 
   record Grant(DataScope data, LocaleScope locales) {}
@@ -39,7 +51,10 @@ public final class FakePermissionChecker implements PermissionChecker {
   public boolean has(String permission) {
     return users
         .current()
-        .map(u -> u.systemAdmin() || grants.containsKey(key(u.userId(), permission)))
+        .map(
+            u ->
+                !Boolean.FALSE.equals(activeUsers.get(u.userId()))
+                    && (administrator(u) || grants.containsKey(key(u.userId(), permission))))
         .orElse(false);
   }
 
@@ -54,14 +69,14 @@ public final class FakePermissionChecker implements PermissionChecker {
   public Optional<DataScope> dataScope(String permission) {
     if (!has(permission)) return Optional.empty();
     return Optional.of(
-        users.require().systemAdmin()
+        administrator(users.require())
             ? DataScope.ALL
             : grants.get(key(users.require().userId(), permission)).data());
   }
 
   public LocaleScope localeScope(String permission) {
     if (!has(permission)) return LocaleScope.of(Set.of());
-    return users.require().systemAdmin()
+    return administrator(users.require())
         ? LocaleScope.all()
         : grants.get(key(users.require().userId(), permission)).locales();
   }
@@ -71,8 +86,9 @@ public final class FakePermissionChecker implements PermissionChecker {
   }
 
   public boolean userHas(long id, String permission) {
-    return admins.contains(id)
-        || users.current().filter(u -> u.userId() == id && u.systemAdmin()).isPresent()
-        || grants.containsKey(key(id, permission));
+    return !Boolean.FALSE.equals(activeUsers.get(id))
+        && (admins.contains(id)
+            || users.current().filter(u -> u.userId() == id && administrator(u)).isPresent()
+            || grants.containsKey(key(id, permission)));
   }
 }

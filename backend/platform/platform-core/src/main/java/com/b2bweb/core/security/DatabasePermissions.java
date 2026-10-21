@@ -35,10 +35,7 @@ public final class DatabasePermissions implements PermissionChecker {
   }
 
   public boolean has(String code) {
-    return users
-        .current()
-        .map(u -> u.systemAdmin() || !grants(u.userId(), code).isEmpty())
-        .orElse(false);
+    return users.current().map(u -> userHas(u.userId(), code)).orElse(false);
   }
 
   public boolean hasAny(String... codes) {
@@ -49,19 +46,23 @@ public final class DatabasePermissions implements PermissionChecker {
     if (!has(code)) throw new ForbiddenException(CoreErrors.FORBIDDEN, "没有操作权限");
   }
 
-  public boolean userHas(long id, String code) {
-    var admin =
-        jdbc.queryForObject(
+  private boolean isAdmin(long id) {
+    return jdbc.queryForObject(
             "SELECT COUNT(*) FROM sys_user WHERE id=? AND system_admin=1 AND status='ACTIVE' AND"
                 + " deleted_at IS NULL",
             Integer.class,
-            id);
-    return admin > 0 || !grants(id, code).isEmpty();
+            id)
+        > 0;
+  }
+
+  public boolean userHas(long id, String code) {
+    return isAdmin(id) || !grants(id, code).isEmpty();
   }
 
   public Optional<DataScope> dataScope(String code) {
     if (users.current().isEmpty()) return Optional.empty();
-    if (users.require().systemAdmin()) return Optional.of(DataScope.ALL);
+    if (!has(code)) return Optional.empty();
+    if (isAdmin(users.require().userId())) return Optional.of(DataScope.ALL);
     return grants(users.require().userId(), code).stream()
         .map(
             g ->
@@ -73,7 +74,8 @@ public final class DatabasePermissions implements PermissionChecker {
 
   public LocaleScope localeScope(String code) {
     if (users.current().isEmpty()) return LocaleScope.of(Set.of());
-    if (users.require().systemAdmin()) return LocaleScope.all();
+    if (!has(code)) return LocaleScope.of(Set.of());
+    if (isAdmin(users.require().userId())) return LocaleScope.all();
     var rows = grants(users.require().userId(), code);
     Set<String> locales = new HashSet<>();
     for (var row : rows) {

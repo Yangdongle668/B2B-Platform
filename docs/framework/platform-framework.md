@@ -7947,6 +7947,8 @@ public final class ContextHolder {
 }
 ```
 
+> M0候选工程采用成对`Scope`/try-finally管理的不继承ThreadLocal，配合TaskDecorator在工作线程捕获及恢复；上面的ScopedValue为可替换的实现示意，不改变第4章API。事件监听没有登录用户，当前actor为SYSTEM；原发起人保留在事件meta。
+
 - ScopedValue 的绑定随调用栈结束自动解除，不会泄漏给线程池中的下一个任务；嵌套绑定（`callAs`）结束后自动恢复外层上下文。
 - 若 ADR-011 锁定的编译级别低于 25（ScopedValue 在 JDK 21 中为预览特性），`ContextHolder` 改用 `ThreadLocal` 实现（在 `runWith` 的 try/finally 中恢复），API 不变。
 - `SiteContextProviderImpl`、`CurrentUserProviderImpl`（4.4.2、4.4.6）只读取 `ContextHolder` 与 Spring Security 的 `SecurityContextHolder`；绑定时同步设置日志 MDC 的 `siteId`、`userId`（5.13）。
@@ -8290,7 +8292,7 @@ public PageResult<InquiryListItem> list(InquiryQuery query, PageRequest page) {
 | 令牌 | 请求头 `X-Internal-Token`；配置 `b2bweb.core.internal.tokens`（由环境变量注入的列表，至少 32 字节随机值）：第一个为当前令牌，其余在轮换期内同样接受；比较前先做 SHA-256，再用 `MessageDigest.isEqual` 等时比较 |
 | 可信头 | 只有令牌有效时才读取 `X-Site-Host` 与 `X-Client-IP`（Nuxt 写入的访客 IP）；否则忽略这两个头 |
 | 反向代理 | 不带令牌的请求，客户端 IP 只在直连地址属于可信代理时取自 `X-Forwarded-For`（`server.forward-headers-strategy = native` + `server.tomcat.remoteip.internal-proxies`），否则取直连地址 |
-| `/api/internal/**` | 令牌有效且直连地址属于 `b2bweb.core.internal.allowed-cidrs`（默认私有网段）；不满足时 403，不说明原因 |
+| `/api/internal/**` | 令牌有效且直连地址属于 `b2bweb.core.internal.allowed-cidrs`（默认仅回环；local启动脚本额外注入本次Docker网络子网，生产须显式配置来源网段）；不满足时 403，不说明原因 |
 | 轮换 | 后端追加新令牌 → 部署 → Nuxt 切换到新令牌 → 后端删除旧令牌 → 部署（运维手册） |
 | 记录 | `ClientInfo`（`support.web`）提供规范化后的 IP 与 UA；日志中的 IP 按 5.13 截断 |
 
@@ -12718,7 +12720,7 @@ B2BWEB_MEILI_MASTER_KEY=dev-meili-master-key
 B2BWEB_IMGPROXY_KEY=<文档公开的十六进制开发值>
 B2BWEB_IMGPROXY_SALT=<文档公开的十六进制开发值>
 B2BWEB_SECRET_KEYS=dev:<文档公开的开发密钥>          # 生产安全检查拒绝此值（5.14.4）
-B2BWEB_INTERNAL_TOKENS=<文档公开的 32 字节开发令牌>   # 后端与 Nuxt 共用
+B2BWEB_INTERNAL_TOKENS=<首次启动随机生成并保存的私有开发令牌>   # 后端与 Nuxt 共用
 B2B_DEV_PASSWORD=<种子用户的公开开发密码>             # 11.6
 B2B_DEV_TOTP_SECRET=<种子用户的公开 TOTP 密钥>        # 11.6
 ```

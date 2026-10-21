@@ -116,4 +116,16 @@ class CoreDoublesTest {
     assertThat(p.siteProfileApi().get("en").companyName()).isNull();
     assertThat(p.siteProfileApi().get("en").locale()).isEqualTo("en");
   }
+
+  @Test
+  void inactiveAdministratorFixtureCannotKeepOldPermissions() {
+    var p = TestPlatform.standard().useSite(1);
+    p.userDirectory().seed(new UserSummary(12, "管理员", "admin@example.test", true), true, Set.of());
+    p.currentUserProvider()
+        .use(new CurrentUser(12, "管理员", "admin@example.test", true, Set.of(), true));
+    assertThat(p.permissionChecker().has("system:module:manage")).isTrue();
+    p.userDirectory().seed(new UserSummary(12, "管理员", "admin@example.test", false), true, Set.of());
+    assertThat(p.permissionChecker().has("system:module:manage")).isFalse();
+    assertThat(p.permissionChecker().userHas(12, "system:module:manage")).isFalse();
+  }
 }

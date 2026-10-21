@@ -39,12 +39,19 @@ public class ListenerContexts {
     if (event.siteId() != null
         && !event.deliverWhenModuleDisabled()
         && !siteApi.isModuleEnabled(event.siteId(), module)) return null;
-    try (var actor = users.asActor(event.meta().actorRef())) {
-      if (event.siteId() == null) return call.proceed();
+    try (var user = users.withoutUser();
+        var actor = users.asActor(com.b2bweb.api.common.ActorRef.SYSTEM)) {
+      if (event.siteId() == null) {
+        try (var site = sites.withoutSite()) {
+          return call.proceed();
+        }
+      }
       final Throwable[] failure = {null};
       final Object[] result = {null};
       sites.runAs(
           event.siteId(),
+          com.b2bweb.api.site.ContextOrigin.EVENT,
+          null,
           () -> {
             try {
               result[0] = call.proceed();

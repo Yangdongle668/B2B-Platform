@@ -44,6 +44,15 @@ public final class UserContexts implements CurrentUserProvider {
     };
   }
 
+  public AutoCloseable withoutUser() {
+    var previous = local.get();
+    local.remove();
+    return () -> {
+      if (previous == null) local.remove();
+      else local.set(previous);
+    };
+  }
+
   public AutoCloseable open(CurrentUser user) {
     var previous = local.get();
     local.set(user);

@@ -122,7 +122,7 @@ public final class DatabaseSiteApi implements SiteApi {
   }
 
   public boolean isModuleEnabled(long site, String id) {
-    if (find(site).filter(s -> s.status() != SiteStatus.ARCHIVED).isEmpty()) return false;
+    if (find(site).isEmpty()) return false;
     return jdbc.queryForObject(
             "SELECT COUNT(*) FROM sys_module m WHERE m.module_id=? AND m.status='INSTALLED' AND"
                 + " (m.disableable=0 OR EXISTS(SELECT 1 FROM sys_site_module sm WHERE"

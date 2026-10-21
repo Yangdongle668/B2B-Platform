@@ -65,8 +65,9 @@ public final class DatabaseJobs implements JobApi {
   }
 
   private void enabled(long site, String module) {
-    if (site != 0 && !siteApi.isModuleEnabled(site, module))
-      throw new ModuleDisabledException(module);
+    if (site != 0
+        && (siteApi.find(site).filter(s -> s.status() != SiteStatus.ARCHIVED).isEmpty()
+            || !siteApi.isModuleEnabled(site, module))) throw new ModuleDisabledException(module);
   }
 
   public JobInfo submit(JobRequest request) {

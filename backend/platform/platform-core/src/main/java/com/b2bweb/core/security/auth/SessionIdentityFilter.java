@@ -85,7 +85,24 @@ final class SessionIdentityFilter extends OncePerRequestFilter {
           Problems.write(res, 400, "CORE_SITE_REQUIRED", "请选择站点");
           return;
         }
-        long site = Long.parseLong(header);
+        long site;
+        try {
+          site = Long.parseLong(header);
+        } catch (NumberFormatException e) {
+          Problems.write(res, 400, "CORE_SITE_REQUIRED", "站点编号无效");
+          return;
+        }
+        var siteInfo =
+            jdbc.queryForList("SELECT status FROM sys_site WHERE id=?", String.class, site);
+        if (siteInfo.isEmpty()) {
+          Problems.write(res, 404, "CORE_SITE_NOT_FOUND", "站点不存在");
+          return;
+        }
+        if (siteInfo.getFirst().equals("ARCHIVED")
+            && !Set.of("GET", "HEAD", "OPTIONS").contains(req.getMethod())) {
+          Problems.write(res, 403, "CORE_FORBIDDEN", "归档站点只读");
+          return;
+        }
         if (!user.systemAdmin()
             && jdbc.queryForObject(
                     "SELECT COUNT(*) FROM sys_user_site_role ur JOIN sys_role r ON r.id=ur.role_id"
@@ -99,6 +116,8 @@ final class SessionIdentityFilter extends OncePerRequestFilter {
         }
         sites.runAs(
             site,
+            com.b2bweb.api.site.ContextOrigin.ADMIN,
+            null,
             () -> {
               try {
                 chain.doFilter(req, res);

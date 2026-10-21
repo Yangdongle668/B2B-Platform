@@ -19,6 +19,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @org.springframework.scheduling.annotation.EnableScheduling
 public class CoreConfiguration {
   @Bean
+  @Primary
+  org.springframework.context.ApplicationEventPublisher transactionalDomainEvents(
+      org.springframework.context.ApplicationContext context) {
+    return new com.b2bweb.core.event.TransactionalDomainEvents(context);
+  }
+
+  @Bean
   com.b2bweb.core.job.DatabaseJobs jobs(
       JdbcTemplate jdbc,
       org.springframework.transaction.PlatformTransactionManager manager,
@@ -96,7 +103,7 @@ public class CoreConfiguration {
     return new SiteContexts(
         id ->
             jdbc.query(
-                "SELECT * FROM sys_site WHERE id=? AND status<>'ARCHIVED'",
+                "SELECT * FROM sys_site WHERE id=?",
                 rs -> {
                   if (!rs.next()) throw new NotFoundException(CoreErrors.SITE_NOT_FOUND, "站点不存在");
                   return new SiteContext(

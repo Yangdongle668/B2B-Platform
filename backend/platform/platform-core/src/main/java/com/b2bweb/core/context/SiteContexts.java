@@ -32,6 +32,28 @@ public final class SiteContexts implements SiteContextProvider {
     return new Scope(previous, Thread.currentThread());
   }
 
+  public Scope withoutSite() {
+    var previous = local.get();
+    local.remove();
+    return new Scope(previous, Thread.currentThread());
+  }
+
+  public void runAs(long siteId, ContextOrigin origin, String locale, Runnable action) {
+    var base = resolver.apply(siteId);
+    try (var ignored =
+        open(
+            new SiteContext(
+                base.siteId(),
+                base.siteCode(),
+                base.sourceLocale(),
+                base.defaultLocale(),
+                base.timezone(),
+                locale,
+                origin))) {
+      action.run();
+    }
+  }
+
   public final class Scope implements AutoCloseable {
     private final SiteContext previous;
     private final Thread owner;

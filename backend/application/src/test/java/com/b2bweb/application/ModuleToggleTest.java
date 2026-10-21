@@ -68,7 +68,7 @@ class ModuleToggleTest {
           assertThatThrownBy(
                   () -> modules.disable("tracking", true, ModuleDisablePolicy.notFound()))
               .isInstanceOf(ForbiddenException.class);
-          assertThat(api.isModuleEnabled("core")).isFalse();
+          assertThat(api.isModuleEnabled("core")).isTrue();
         });
   }
 

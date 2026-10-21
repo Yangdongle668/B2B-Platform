@@ -360,7 +360,10 @@ class PlatformIntegrationTest {
     incomplete.resubmitIncompletePublicationsOlderThan(java.time.Duration.ZERO);
     org.awaitility.Awaitility.await()
         .atMost(java.time.Duration.ofSeconds(10))
-        .untilAsserted(() -> assertThat(observer.received(event.eventId())).isEqualTo("701:801"));
+        .untilAsserted(
+            () ->
+                assertThat(observer.received(event.eventId()))
+                    .isEqualTo("701:system:EVENT:801:true"));
     assertThat(sites.current()).isEmpty();
   }
 
@@ -368,5 +371,28 @@ class PlatformIntegrationTest {
   void applicationDatasourceCannotExecuteDdl() {
     assertThatThrownBy(() -> jdbc.execute("CREATE TABLE app_must_not_create(id INT PRIMARY KEY)"))
         .isInstanceOf(org.springframework.dao.DataAccessException.class);
+  }
+
+  @Test
+  void archivedSiteRemainsReadableButRejectsAdminWrites() throws Exception {
+    var cookie = login("editor@example.test");
+    jdbc.update("UPDATE sys_site SET status='ARCHIVED' WHERE id=701");
+    mvc.perform(get("/api/admin/v1/test/site").cookie(cookie).header("X-Site-Id", "701"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.siteId").value("701"));
+    mvc.perform(csrfPost("/api/admin/v1/test/site").cookie(cookie).header("X-Site-Id", "701"))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value("CORE_FORBIDDEN"));
+  }
+
+  @Test
+  void overflowingSiteIdIsAChineseValidationProblem() throws Exception {
+    var cookie = login("editor@example.test");
+    mvc.perform(
+            get("/api/admin/v1/test/site")
+                .cookie(cookie)
+                .header("X-Site-Id", "9999999999999999999"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("CORE_SITE_REQUIRED"));
   }
 }

@@ -10,11 +10,15 @@ def docker(*args,**kwargs):return r.docker(*args,**kwargs)
 def save(state):
  STATE.mkdir(parents=True,exist_ok=True);CONFIG.touch(mode=0o600);CONFIG.write_text(json.dumps(state,indent=2)+'\n');CONFIG.chmod(0o600)
 def config():
- if CONFIG.exists():return json.loads(CONFIG.read_text())
- value={'owner':str(ROOT),'prefix':PREFIX,'rootPassword':secrets.token_urlsafe(32),'appPassword':secrets.token_urlsafe(32),'migrationPassword':secrets.token_urlsafe(32),'storageKey':secrets.token_urlsafe(32),'searchKey':secrets.token_urlsafe(32),'bootstrapPassword':secrets.token_urlsafe(24),'secretKeys':'local:'+base64.b64encode(secrets.token_bytes(32)).decode(),'recoveryKey':base64.b64encode(secrets.token_bytes(32)).decode()};save(value);return value
+ if CONFIG.exists():
+  value=json.loads(CONFIG.read_text());
+  if 'internalTokens' not in value:value['internalTokens']=secrets.token_urlsafe(32);save(value)
+  return value
+ value={'owner':str(ROOT),'prefix':PREFIX,'internalTokens':secrets.token_urlsafe(32),'rootPassword':secrets.token_urlsafe(32),'appPassword':secrets.token_urlsafe(32),'migrationPassword':secrets.token_urlsafe(32),'storageKey':secrets.token_urlsafe(32),'searchKey':secrets.token_urlsafe(32),'bootstrapPassword':secrets.token_urlsafe(24),'secretKeys':'local:'+base64.b64encode(secrets.token_bytes(32)).decode(),'recoveryKey':base64.b64encode(secrets.token_bytes(32)).decode()};save(value);return value
 
 def env(value):
- return {'SPRING_PROFILES_ACTIVE':'local','B2BWEB_DB_URL':'jdbc:mysql://mysql:3306/b2b?allowPublicKeyRetrieval=true&useSSL=false','B2BWEB_DB_USER':'app','B2BWEB_DB_PASSWORD':value['appPassword'],'B2BWEB_DB_MIGRATION_USER':'migrator','B2BWEB_DB_MIGRATION_PASSWORD':value['migrationPassword'],'B2BWEB_REDIS_URL':'redis://redis:6379','B2BWEB_SECRET_KEYS':value['secretKeys'],'B2BWEB_RECOVERY_CODE_KEY':value['recoveryKey'],'B2BWEB_NODE_ID':'0','B2BWEB_S3_ENDPOINT':'http://storage:9090','B2BWEB_S3_SIGNING_ENDPOINT':'http://localhost:9090','B2BWEB_S3_ACCESS_KEY':'local-access','B2BWEB_S3_SECRET_KEY':value['storageKey'],'B2BWEB_MEILI_URL':'http://meilisearch:7700','B2BWEB_MEILI_MASTER_KEY':value['searchKey'],'B2BWEB_BOOTSTRAP_PASSWORD':value['bootstrapPassword'],'B2BWEB_DEV_SEED_ENABLED':'true'}
+ subnets=json.loads(docker('network','inspect',PREFIX).stdout)[0]['IPAM']['Config'];cidrs=','.join(['127.0.0.1/32','::1/128']+[entry['Subnet'] for entry in subnets])
+ return {'B2BWEB_INTERNAL_TOKENS':value['internalTokens'],'B2BWEB_CORE_INTERNAL_ALLOWED_CIDRS':cidrs,'SPRING_PROFILES_ACTIVE':'local','B2BWEB_DB_URL':'jdbc:mysql://mysql:3306/b2b?allowPublicKeyRetrieval=true&useSSL=false','B2BWEB_DB_USER':'app','B2BWEB_DB_PASSWORD':value['appPassword'],'B2BWEB_DB_MIGRATION_USER':'migrator','B2BWEB_DB_MIGRATION_PASSWORD':value['migrationPassword'],'B2BWEB_REDIS_URL':'redis://redis:6379','B2BWEB_SECRET_KEYS':value['secretKeys'],'B2BWEB_RECOVERY_CODE_KEY':value['recoveryKey'],'B2BWEB_NODE_ID':'0','B2BWEB_S3_ENDPOINT':'http://storage:9090','B2BWEB_S3_SIGNING_ENDPOINT':'http://localhost:9090','B2BWEB_S3_ACCESS_KEY':'local-access','B2BWEB_S3_SECRET_KEY':value['storageKey'],'B2BWEB_MEILI_URL':'http://meilisearch:7700','B2BWEB_MEILI_MASTER_KEY':value['searchKey'],'B2BWEB_BOOTSTRAP_PASSWORD':value['bootstrapPassword'],'B2BWEB_DEV_SEED_ENABLED':'true'}
 def owned(name):
  result=docker('inspect','--format','{{index .Config.Labels "b2bweb.local.owner"}}',name,check=False)
  if result.returncode==0 and result.stdout.strip()!=str(ROOT):raise RuntimeError('Refusing resource owned by another checkout: '+name)

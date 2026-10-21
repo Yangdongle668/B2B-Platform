@@ -141,16 +141,16 @@ public final class InMemorySiteApi implements SiteApi {
   public boolean isModuleEnabled(long site, String id) {
     if (delegate != null) return delegate.isModuleEnabled(site, id);
     var module = modules.get(id);
-    if (module == null
-        || module.status() != ModuleStatus.INSTALLED
-        || find(site).filter(s -> s.status() != SiteStatus.ARCHIVED).isEmpty()) return false;
+    if (module == null || module.status() != ModuleStatus.INSTALLED || find(site).isEmpty())
+      return false;
     return !module.disableable()
         || store.atomic(rows -> Boolean.TRUE.equals(rows.get("site-module:" + site + ":" + id)));
   }
 
   public ModuleDisablePolicy moduleDisablePolicy(String id) {
     if (delegate != null) return delegate.moduleDisablePolicy(id);
-    if (modules().stream().noneMatch(m -> m.moduleId().equals(id)))
+    if (modules().stream()
+        .noneMatch(m -> m.moduleId().equals(id) && m.status() == ModuleStatus.INSTALLED))
       throw new NotFoundException(CoreErrors.EXTENSION_KEY_UNKNOWN, "模块未登记");
     contexts.requireSiteId();
     return ModuleDisablePolicy.notFound();
