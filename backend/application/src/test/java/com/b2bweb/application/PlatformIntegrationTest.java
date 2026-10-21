@@ -344,7 +344,7 @@ class PlatformIntegrationTest {
             () ->
                 assertThat(
                         jdbc.queryForObject(
-                            "SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE STATUS='FAILED' AND"
+                            "SELECT COUNT(*) FROM EVENT_PUBLICATION WHERE LISTENER_ID LIKE '%RuntimeObserver%' AND STATUS='FAILED' AND"
                                 + " JSON_UNQUOTE(JSON_EXTRACT(SERIALIZED_EVENT,'$.meta.eventId'))=?",
                             Integer.class,
                             event.eventId()))
@@ -352,7 +352,7 @@ class PlatformIntegrationTest {
     assertThat(
             jdbc.queryForObject(
                 "SELECT JSON_TYPE(JSON_EXTRACT(SERIALIZED_EVENT,'$.meta.siteId')) FROM"
-                    + " EVENT_PUBLICATION WHERE"
+                    + " EVENT_PUBLICATION WHERE LISTENER_ID LIKE '%RuntimeObserver%' AND"
                     + " JSON_UNQUOTE(JSON_EXTRACT(SERIALIZED_EVENT,'$.meta.eventId'))=?",
                 String.class,
                 event.eventId()))

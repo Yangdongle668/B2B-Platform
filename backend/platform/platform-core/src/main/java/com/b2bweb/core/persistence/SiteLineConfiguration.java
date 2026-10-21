@@ -27,6 +27,8 @@ public class SiteLineConfiguration {
           "sys_role_permission",
           "sys_audit_log",
           "sys_processed_event",
+          "sys_cache_recovery",
+          "sys_cache_recovery_publication",
           "EVENT_PUBLICATION");
 
   @Bean

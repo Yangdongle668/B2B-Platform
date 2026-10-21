@@ -132,16 +132,8 @@ public final class InMemoryTaggedCache implements TaggedCache {
             e -> {
               Instant cap = clock.instant().plus(ttl);
               Instant until = e.freshUntil().isBefore(cap) ? e.freshUntil() : cap;
-              token.ifPresent(
-                  f ->
-                      putIfUnchanged(
-                          ns,
-                          key,
-                          e.value(),
-                          e.tags(),
-                          Duration.between(clock.instant(), until),
-                          f));
-              return new CachedValue<>(e.value(), until);
+              boolean stored = token.isPresent() && putIfUnchanged(ns, key, e.value(), e.tags(), Duration.between(clock.instant(), until), token.get());
+              return new CachedValue<>(e.value(), stored ? until : clock.instant());
             });
   }
 

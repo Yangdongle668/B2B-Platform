@@ -37,7 +37,7 @@ if __name__=='__main__':
   if doc.stem=='README':continue
   name=doc.stem;text=doc.read_text();descriptor=json.loads(text.split('### 2.1 ')[1].split('```json\n')[1].split('\n```')[0]);modules.append(name)
   base=BASE/name
-  put(base/'pom.xml',pom('module-'+name,'../../..',('<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jdbc</artifactId></dependency>' if name in ('media','search') else '')+'<dependency><groupId>com.b2bweb</groupId><artifactId>platform-api</artifactId><version>${project.version}</version></dependency><dependency><groupId>org.springframework.modulith</groupId><artifactId>spring-modulith-api</artifactId></dependency>'))
+  put(base/'pom.xml',pom('module-'+name,'../../..',('<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-jdbc</artifactId></dependency>' if name in ('media','search') else '')+('<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-webmvc</artifactId></dependency><dependency><groupId>org.springframework.modulith</groupId><artifactId>spring-modulith-events-api</artifactId></dependency>' if name=='delivery' else '')+'<dependency><groupId>com.b2bweb</groupId><artifactId>platform-api</artifactId><version>${project.version}</version></dependency><dependency><groupId>org.springframework.modulith</groupId><artifactId>spring-modulith-api</artifactId></dependency>'))
   put(base/f'src/main/resources/META-INF/b2bweb/modules/{name}/module.json',json.dumps(descriptor,ensure_ascii=False,indent=2)+'\n')
   put(base/f'src/main/java/com/b2bweb/{name}/package-info.java','/** '+descriptor['name']+'：M0 skeleton; business slice not implemented. */\n@org.springframework.modulith.ApplicationModule(allowedDependencies={"api","core :: *"})\n@org.jspecify.annotations.NullMarked\npackage com.b2bweb.'+name+';\n')
   module_class=''.join(part.title() for part in name.split('-'))+'Module'
@@ -64,9 +64,15 @@ public class {module_class} implements com.b2bweb.api.extension.PlatformModule {
    name=re.search(r'CREATE TABLE\s+(\w+)',old).group(1)
    if old.strip()!=known[name].strip():raise SystemExit('Existing core migration differs: '+name)
   extra={name:sql for name,sql in known.items() if name not in existing}
+  appended={}
+  for path in sorted((core/'src/main/resources/db/migration/core').glob('V*.sql')):
+   if path==initial:continue
+   for statement in re.split(r'\n\s*\n(?=CREATE TABLE)',path.read_text().strip()):
+    match=re.search(r'^CREATE TABLE\s+(\w+)',statement,re.M)
+    if match:appended[match.group(1)]=statement.strip()
   for name,sql in extra.items():
-   version='V002__processed_events.sql' if name=='sys_processed_event' else 'V003__event_publications.sql'
-   put(core/'src/main/resources/db/migration/core'/version,sql+'\n',True)
+   if appended.get(name)!=sql.strip():raise SystemExit('Add/check append-only core migration for: '+name)
+
  else:put(initial,'\n\n'.join(creates)+'\n',True)
  put(core/'src/main/resources/META-INF/b2bweb/module.schema.json',framework.split('### A.2 JSON Schema')[1].split('```json\n')[1].split('\n```')[0]+'\n')
  print(json.dumps({'module_skeletons':len(modules),'core_tables':len(creates),'module_names':modules,'mode':'check' if CHECK else 'write'}))

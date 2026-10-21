@@ -1,6 +1,6 @@
 # 架构决策记录（ADR）
 
-本目录保存平台的架构决策记录（Architecture Decision Record，ADR）。系统设计说明书（[`docs/architecture/system-design.md`](../architecture/system-design.md)，当前 V1.6）第 2.5 节给出全部决策的摘要，附录 B 给出文件索引；本目录中的文件是每项决策的正式记录。
+本目录保存平台的架构决策记录（Architecture Decision Record，ADR）。系统设计说明书（[`docs/architecture/system-design.md`](../architecture/system-design.md)，当前 V1.11）第 2.5 节给出全部决策的摘要，附录 B 给出文件索引；本目录中的文件是每项决策的正式记录。
 
 ## ADR 是什么
 
@@ -78,3 +78,4 @@ ADR-000、ADR-005、ADR-009、ADR-017、ADR-018 为 Accepted，其余为 Propose
 | ADR-028 | M0本地S3兼容服务候选 | Proposed | [0028-local-s3-provider.md](0028-local-s3-provider.md) |
 | ADR-029 | 站点模块停用策略与事务锁 | Proposed | [0029-module-disable-policy-contract.md](0029-module-disable-policy-contract.md) |
 | ADR-030 | 预览用途、编辑器签发人与覆盖权限 | Proposed | [0030-preview-purpose-and-editor-authorization.md](0030-preview-purpose-and-editor-authorization.md) |
+| ADR-031 | 缓存恢复的持久边界与事件发布屏障 | Proposed | [0031-cache-recovery-publication-barrier.md](0031-cache-recovery-publication-barrier.md) |

@@ -21,8 +21,25 @@ public class CoreConfiguration {
   @Bean
   @Primary
   org.springframework.context.ApplicationEventPublisher transactionalDomainEvents(
-      org.springframework.context.ApplicationContext context) {
-    return new com.b2bweb.core.event.TransactionalDomainEvents(context);
+      org.springframework.context.ApplicationContext context, JdbcTemplate jdbc) {
+    return new com.b2bweb.core.event.TransactionalDomainEvents(context, jdbc);
+  }
+
+  @Bean
+  com.b2bweb.core.cache.RedisTaggedCache taggedCache(org.springframework.data.redis.core.StringRedisTemplate redis, SiteContexts sites, tools.jackson.databind.json.JsonMapper json, Clock clock) {
+    return new com.b2bweb.core.cache.RedisTaggedCache(redis, sites, json, clock);
+  }
+
+  @Bean(destroyMethod="close")
+  com.b2bweb.core.support.cache.LocalCaches localCaches(org.springframework.data.redis.connection.RedisConnectionFactory factory, tools.jackson.databind.json.JsonMapper json) {
+    return new com.b2bweb.core.support.cache.LocalCaches(factory,json);
+  }
+
+  @Bean
+  com.b2bweb.core.cache.CacheRecovery cacheRecovery(javax.sql.DataSource source, org.springframework.transaction.PlatformTransactionManager manager,
+      com.b2bweb.core.cache.RedisTaggedCache cache, SiteApi api, SiteContexts sites,
+      org.springframework.beans.factory.ObjectProvider<com.b2bweb.api.port.CdnPurger> cdns, org.springframework.modulith.events.IncompleteEventPublications publications, ModuleMigrations migrated, @Value("${b2bweb.core.cache.recovery-enabled:true}") boolean enabled) {
+    return new com.b2bweb.core.cache.CacheRecovery(source,manager,cache,api,sites,cdns,publications,migrated,enabled);
   }
 
   @Bean

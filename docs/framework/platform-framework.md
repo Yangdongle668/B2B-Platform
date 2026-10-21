@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.8 |
+| 文档版本 | V1.9 |
 | 状态 | 草案（Draft），待评审 |
 | 更新日期 | 2026-10-21 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.10（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-030（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.11（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-031（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -184,6 +184,8 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | V1.5 | 2026-10-20 | M0-07B反馈：排他初始化互斥行、事务要求、租约复核、拓扑检查点与语言范围去重；65项原型回归，正式服务门禁保留 |
 | V1.6 | 2026-10-20 | M0-07C反馈：恢复门闩覆盖读写与旧RDB代次，可靠失效不经BufferStore去抖，统一freshUntil示例；保持既有DDL和跨模块签名 |
 | V1.7 | 2026-10-20 | 正式工程RC：完整契约编译、设置对象与启动回调统一、模块停用策略读取、Core技术表V002/V003、实际任务/调度与事务协调器；ADR-026～029待评审。保留G0完整门槛，不以目录覆盖代替全部契约语义验收 |
+| V1.8 | 2026-10-21 | ADR-030：补齐预览用途、签发人及编辑授权契约，统一内容权限码；保持待评审 |
+| V1.9 | 2026-10-21 | 正式HTTP预览、画布及Schema底座；ADR-031持久恢复边界和Core V004追加迁移；搜索空投影契约说明统一；G0仍待完整行为、安全和人工评审 |
 
 ---
 
@@ -8732,7 +8734,7 @@ core 自己的定时任务：
 #### 5.10.1 缓存标签与 TaggedCache
 
 - 标签只由 `CacheTag` 的工厂方法生成（4.3.7），CDN 的 `Cache-Tag` 响应头与 Redis 的标签索引使用同一组值。
-- `RedisTaggedCache`（`com.b2bweb.infrastructure.redis`）按4.7.14/4.10.3实现：值键 `s{siteId}:{namespace}:{key}`；标签索引 `s{siteId}:tag:{标签值}`（Set）。回源前capture；Lua在校验恢复门闩与站点fence的同一原子操作中写值及标签，按freshUntil绝对过期，标签TTL不短于最长条目；禁止无fence的MULTI回填。失效先推进代次再清理，命中也核对代次，丢失标签不能让旧值继续命中。物理清理须有界分批，不能照搬原型的小集合SMEMBERS/UNLINK或完整命名空间SCAN为生产长脚本；值用 `platformJsonMapper` 序列化。
+- `RedisTaggedCache`（`com.b2bweb.core.cache`（ADR-031候选））按4.7.14/4.10.3实现：值键 `s{siteId}:{namespace}:{key}`；标签索引 `s{siteId}:tag:{标签值}`（Set）。回源前capture；Lua在校验恢复门闩与站点fence的同一原子操作中写值及标签，按freshUntil绝对过期，标签TTL不短于最长条目；禁止无fence的MULTI回填。失效先推进代次再清理，命中也核对代次，丢失标签不能让旧值继续命中。物理清理须有界分批，不能照搬原型的小集合SMEMBERS/UNLINK或完整命名空间SCAN为生产长脚本；值用 `platformJsonMapper` 序列化。
 - V1 使用非集群 Redis；以后改用集群时，键中的站点段改为 hash tag（`{s1}`），使同一站点的键与标签落在同一槽位。
 - 使用方：delivery用 `getOrLoadWithFreshness` 合并并发回源，结果为 `CacheEntry(value, tags, freshUntil)`；依赖命中也传递原期限，父结果取最早期限。监听器直接 `invalidate` 后调用 `CdnPurger`，二者确认成功才完成持久投递；HTTP 2xx但业务失败/响应损坏或确认丢失均须保留重试义务（系统设计23.3，delivery设计文档）。
 
@@ -10525,6 +10527,29 @@ CREATE TABLE EVENT_PUBLICATION
   LAST_RESUBMISSION_DATE TIMESTAMP(6) DEFAULT NULL NULL,
   PRIMARY KEY (ID),
   INDEX EVENT_PUBLICATION_BY_COMPLETION_DATE_IDX (COMPLETION_DATE)
+);
+```
+
+### 6.10 缓存恢复技术表（ADR-031，Proposed）
+
+全局Core技术表，不含site_id，列入行级过滤豁免。源事务在发布DomainEvent前共享锁定id=1；恢复事务排他锁定该行并快照未完成发布ID。DRAINING边界确认及逐站CDN清除后才CAS放行；详细协议见[ADR-031](../adr/0031-cache-recovery-publication-barrier.md)。旧迁移不改写。
+
+```sql
+CREATE TABLE sys_cache_recovery (
+  id TINYINT NOT NULL PRIMARY KEY,
+  boot VARCHAR(64) NOT NULL DEFAULT '',
+  epoch CHAR(36) NOT NULL DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'CLOSED',
+  started_at DATETIME(6) NULL
+);
+INSERT INTO sys_cache_recovery(id) VALUES(1);
+```
+
+```sql
+CREATE TABLE sys_cache_recovery_publication (
+  epoch CHAR(36) NOT NULL,
+  publication_id VARCHAR(36) NOT NULL,
+  PRIMARY KEY(epoch, publication_id)
 );
 ```
 
