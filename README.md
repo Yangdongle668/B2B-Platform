@@ -29,11 +29,12 @@ python tools/verification/m0-compatibility/verify_backend.py
 python tools/frontend/verify.py
 python tools/frontend/browser.py
 python tools/frontend/auth_browser.py
+python tools/frontend/permissions_browser.py
 python tools/checks/new_module_exercise.py
 python tools/checks/security.py
 ```
 
-认证浏览器测试需要开发栈，使用真实 HTTPS、MySQL、Redis、MFA 和会话，不注入接口响应；测试账号的后续密码和恢复码只保存在忽略的本地状态文件。普通浏览器套件验证 SSR、画廊、四种屏宽和 axe，无会话失败提示使用明确的 HTTP 故障夹具。
+认证浏览器测试需要开发栈，使用真实 HTTPS、MySQL、Redis、MFA 和会话，不注入接口响应；测试账号的后续密码和恢复码只保存在忽略的本地状态文件。权限浏览器套件临时创建无管理权限的站点成员，验证真实菜单、403路由及后端授权，结束删除夹具。普通浏览器套件验证 SSR、画廊、四种屏宽和 axe，无会话失败提示使用明确的 HTTP 故障夹具。
 
 后端验证为每次运行创建临时 MySQL/Redis/Meilisearch/S3Mock/Mailpit，不开放主机端口；使用独立 DML 与 DDL 账号，结束只删除本次容器、卷和网络。缺少服务时失败，不跳过集成测试。部分 reactor 运行只统计本次生成的测试 XML，不合并旧结果。摘要在忽略的 `.reports/`。
 

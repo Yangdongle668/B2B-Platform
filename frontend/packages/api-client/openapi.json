@@ -35,6 +35,12 @@
             },
             "type": "array"
           },
+          "permissions": {
+            "items": {
+              "$ref": "#/components/schemas/PermissionSnapshot"
+            },
+            "type": "array"
+          },
           "site": {
             "$ref": "#/components/schemas/SiteInfo"
           }
@@ -364,6 +370,21 @@
         },
         "type": "object"
       },
+      "LocaleScope": {
+        "properties": {
+          "locales": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "unrestricted": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
       "Login": {
         "properties": {
           "email": {
@@ -507,6 +528,25 @@
         "required": [
           "password"
         ],
+        "type": "object"
+      },
+      "PermissionSnapshot": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "dataScope": {
+            "enum": [
+              "ALL",
+              "GROUP",
+              "OWN"
+            ],
+            "type": "string"
+          },
+          "localeScope": {
+            "$ref": "#/components/schemas/LocaleScope"
+          }
+        },
         "type": "object"
       },
       "Reauthenticated": {

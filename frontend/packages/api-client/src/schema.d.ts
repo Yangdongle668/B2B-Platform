@@ -305,6 +305,7 @@ export interface components {
             displayName?: string;
             menus?: components["schemas"]["Menu"][];
             modules?: components["schemas"]["ModuleInfo"][];
+            permissions?: components["schemas"]["PermissionSnapshot"][];
             site?: components["schemas"]["SiteInfo"];
         };
         Changed: {
@@ -417,6 +418,10 @@ export interface components {
             textual?: boolean;
             valueNode?: boolean;
         };
+        LocaleScope: {
+            locales?: string[];
+            unrestricted?: boolean;
+        };
         Login: {
             /** Format: email */
             email: string;
@@ -460,6 +465,12 @@ export interface components {
         };
         Password: {
             password: string;
+        };
+        PermissionSnapshot: {
+            code?: string;
+            /** @enum {string} */
+            dataScope?: "ALL" | "GROUP" | "OWN";
+            localeScope?: components["schemas"]["LocaleScope"];
         };
         Reauthenticated: {
             result?: string;

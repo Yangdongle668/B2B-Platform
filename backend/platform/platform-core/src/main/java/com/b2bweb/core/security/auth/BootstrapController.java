@@ -32,8 +32,14 @@ public class BootstrapController {
 
   public record Menu(String key, String parent, String name, String route, String icon) {}
 
+  public record PermissionSnapshot(String code, DataScope dataScope, LocaleScope localeScope) {}
+
   public record Bootstrap(
-      SiteInfo site, String displayName, List<ModuleInfo> modules, List<Menu> menus) {}
+      SiteInfo site,
+      String displayName,
+      List<ModuleInfo> modules,
+      List<Menu> menus,
+      List<PermissionSnapshot> permissions) {}
 
   @GetMapping("/bootstrap")
   public Bootstrap bootstrap() {
@@ -61,7 +67,21 @@ public class BootstrapController {
         sites.current(),
         users.require().name(),
         sites.modules().stream().filter(m -> enabled.contains(m.moduleId())).toList(),
-        menus);
+        menus,
+        jdbc
+            .queryForList(
+                "SELECT code,module_id FROM sys_permission WHERE removed_at IS NULL ORDER BY code")
+            .stream()
+            .filter(row -> enabled.contains((String) row.get("module_id")))
+            .map(row -> (String) row.get("code"))
+            .filter(permissions::has)
+            .map(
+                code ->
+                    new PermissionSnapshot(
+                        code,
+                        permissions.dataScope(code).orElse(null),
+                        permissions.localeScope(code)))
+            .toList());
   }
 
   private void requireSite(long id) {

@@ -1,4 +1,6 @@
 import type { Component } from 'vue'
+export { AdminRuntime, adminRuntimeKey, useAdminRuntime } from './runtime'
+export type { SiteBootstrap, PermissionSnapshot, RegisteredAdminRoute, AdminRouteRegistry } from './runtime'
 export interface AdminRoute { path: string; name: string; component: () => Promise<Component>; meta: { title: string; permission?: string; menuKey?: string; keepAlive?: boolean } }
 export interface ContentTabDefinition { module: string; key: string; label: string; contentTypes: '*' | string[]; permission?: string; locales?: 'source' | 'target' | 'all'; order?: number; component: () => Promise<Component> }
 export interface DashboardWidgetDefinition { key: string; title: string; permission?: string; size: 'sm' | 'md' | 'lg'; order?: number; component: () => Promise<Component> }
@@ -12,7 +14,7 @@ export function defineAdminModule(definition: AdminModuleDefinition): AdminModul
   const names = new Set<string>()
   for (const route of definition.routes) {
     if (!route.name.startsWith(`${prefix}.`) || route.path.startsWith('/') || route.path.includes('..') || names.has(route.name)) throw new Error('Invalid module route')
-    if (route.meta.permission && !route.meta.permission.startsWith(`${prefix}:`)) throw new Error('Invalid module permission')
+    if (route.meta.permission && !/^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/.test(route.meta.permission)) throw new Error('Invalid module permission')
     names.add(route.name)
   }
   for (const tab of definition.contentTabs ?? []) if (tab.module !== definition.id) throw new Error('Invalid tab owner')

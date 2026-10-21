@@ -21,6 +21,10 @@ def main():
    if page.get_by_role('heading',name='修改密码',exact=True).is_visible():
     password=secrets.token_urlsafe(24);page.get_by_label('新密码',exact=True).fill(password);page.get_by_role('button',name='继续',exact=True).click();expect(page.get_by_role('heading',name='工作台',exact=True)).to_be_visible();state['smokePassword']=password;save(state);result['required_password_change']=True
    expect(page.get_by_role('heading',name='工作台',exact=True)).to_be_visible();cookie=next(c for c in context.cookies() if c['name']=='__Host-SESSION');assert cookie['secure'] and cookie['httpOnly'] and cookie['sameSite']=='Lax';result['secure_redis_session']=True
+   page.get_by_role('link',name='模块管理',exact=True).click();expect(page.get_by_role('heading',name='模块管理',exact=True)).to_be_visible();result['dynamic_module_route']=True
+   page.reload(wait_until='networkidle');expect(page.get_by_role('heading',name='模块管理',exact=True)).to_be_visible();result['module_deep_link_refresh']=True
+   site=page.evaluate("localStorage.getItem('b2bweb.admin.siteId')");snapshot=context.request.get('https://localhost:8443/api/admin/v1/system/bootstrap',headers={'X-Site-Id':site});assert snapshot.status==200;assert any(item['code']=='system:module:manage' and item['dataScope']=='ALL' and item['localeScope']['unrestricted'] for item in snapshot.json()['permissions']);result['real_permission_snapshot']=True
+   page.goto('https://localhost:8443/admin/product/unimplemented',wait_until='networkidle');expect(page.get_by_text('页面不存在',exact=True)).to_be_visible();result['unregistered_route_denied']=True
    page.get_by_role('button',name='退出登录',exact=True).click();expect(page.get_by_role('heading',name='登录',exact=True)).to_be_visible();response=context.request.get('https://localhost:8443/api/admin/v1/system/bootstrap');assert response.status==401;result['logout_revokes_access']=True
   finally:browser.close()
  out=ROOT/'.reports/frontend/auth-browser.json';out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))

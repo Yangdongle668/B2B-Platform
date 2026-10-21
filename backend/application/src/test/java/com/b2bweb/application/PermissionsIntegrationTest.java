@@ -21,6 +21,7 @@ class PermissionsIntegrationTest extends PermissionCheckerContract {
   @Autowired UserContexts users;
   @Autowired SiteContexts sites;
   @Autowired PlatformTransactionManager manager;
+  @Autowired com.b2bweb.core.security.auth.BootstrapController bootstrap;
   TransactionStatus transaction;
   AutoCloseable siteScope;
   AutoCloseable userScope;
@@ -60,6 +61,23 @@ class PermissionsIntegrationTest extends PermissionCheckerContract {
 
   protected PermissionChecker api() {
     return permissions;
+  }
+
+  @Test
+  void bootstrapContainsOnlyEffectivePermissionScopesAndReflectsRevocation() {
+    account(true, false);
+    login(false);
+    site(771);
+    grant(DataScope.OWN, LocaleScope.of(java.util.Set.of("zh-CN")));
+    var snapshot = bootstrap.bootstrap().permissions();
+    org.assertj.core.api.Assertions.assertThat(snapshot).hasSize(1);
+    org.assertj.core.api.Assertions.assertThat(snapshot.getFirst().code()).isEqualTo(PERMISSION);
+    org.assertj.core.api.Assertions.assertThat(snapshot.getFirst().dataScope())
+        .isEqualTo(DataScope.OWN);
+    org.assertj.core.api.Assertions.assertThat(snapshot.getFirst().localeScope().allows("en"))
+        .isFalse();
+    revoke();
+    org.assertj.core.api.Assertions.assertThat(bootstrap.bootstrap().permissions()).isEmpty();
   }
 
   protected void account(boolean active, boolean administrator) {
