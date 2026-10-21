@@ -6,7 +6,7 @@ import { SchemaCatalog } from '@b2bweb/component-schemas'
 import type { ThemeRegistry } from './theme'
 import { themeComponent } from './theme'
 export interface RenderDiagnostic { code: string; sectionId: string; component: string; siteId: string; path: string }
-export interface RenderContext { schemas: SchemaCatalog; registry: ThemeRegistry; theme: string; enabledModules: ReadonlySet<string>; siteId: string; path: string; dataSources?: Record<string, unknown>; diagnostic?: (event: RenderDiagnostic) => void }
+export interface RenderContext { schemas: SchemaCatalog; registry: ThemeRegistry; theme: string; enabledModules: ReadonlySet<string>; siteId: string; path: string; headingLevel?: 1 | 2; dataSources?: Record<string, unknown>; diagnostic?: (event: RenderDiagnostic) => void }
 export function sectionClasses(section: Section, allowed: readonly string[]): string[] {
   const classes: string[] = []
   for (const [key, value] of Object.entries(section.style ?? {})) {
@@ -45,7 +45,7 @@ export function createLayoutRenderer(context: RenderContext): Component {
             const views = children.map(child => sectionView(child, depth + 1))
             slots[name] = () => views
           }
-          return h(SectionBoundary, { key: section.id, failure: () => report(section, 'section.render_error') }, { default: () => h('section', { id: `s-${section.id}`, 'data-section-id': section.id, class: classes }, [h(implementations.get(key)!, { ...migrated.props, props: migrated.props, sectionId: section.id, variant: resolved.variant, data: context.dataSources?.[section.id], priority }, slots)]) })
+          return h(SectionBoundary, { key: section.id, failure: () => report(section, 'section.render_error') }, { default: () => h('section', { id: `s-${section.id}`, 'data-section-id': section.id, class: classes }, [h(implementations.get(key)!, { ...migrated.props, props: migrated.props, sectionId: section.id, variant: resolved.variant, data: context.dataSources?.[section.id], ...(context.headingLevel ? { headingLevel: context.headingLevel } : {}), priority }, slots)]) })
         } catch { report(section, 'section.render_error'); return null }
       }
       return h('div', { class: 'b-layout' }, props.document.sections.map(section => sectionView(section, 0)))

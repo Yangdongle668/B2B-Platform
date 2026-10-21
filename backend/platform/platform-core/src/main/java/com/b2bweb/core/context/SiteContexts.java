@@ -58,16 +58,25 @@ public final class SiteContexts implements SiteContextProvider {
     private final SiteContext previous;
     private final Thread owner;
     private boolean closed;
+    private final AutoCloseable mdc;
 
     Scope(SiteContext previous, Thread owner) {
       this.previous = previous;
       this.owner = owner;
+      this.mdc =
+          com.b2bweb.core.support.log.ContextMdc.bind(
+              "siteId", current().map(s -> Long.toString(s.siteId())).orElse(null));
     }
 
     public void close() {
       if (Thread.currentThread() != owner) throw new IllegalStateException("上下文必须在原线程结束");
       if (!closed) {
         closed = true;
+        try {
+          mdc.close();
+        } catch (Exception e) {
+          throw new IllegalStateException(e);
+        }
         if (previous == null) local.remove();
         else local.set(previous);
       }

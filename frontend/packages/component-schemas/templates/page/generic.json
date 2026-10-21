@@ -1,0 +1,5 @@
+{
+ "$schema":"../../meta/template.schema.json",
+ "key":"generic","version":1,"contentTypes":["PAGE"],"label":"通用页面",
+ "regions":[{"key":"main","slot":true,"allowed":"*","default":[]}]
+}

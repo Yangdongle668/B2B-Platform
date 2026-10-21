@@ -1,6 +1,7 @@
+import type { PropsMigration } from './migrations'
 import Ajv2020 from 'ajv/dist/2020.js'
 import hero from '../components/page/hero.json'
-import { componentDefinitions } from './generated'
+import { componentDefinitions, migrationSteps } from './generated'
 import common from '../defs/common.json'
 export const heroSchema = hero.propsSchema
 export interface ComponentDefinition {
@@ -19,11 +20,8 @@ export function createValidator(): Ajv2020 {
  for (const keyword of ['x-editor','x-translatable','x-placeholder','x-group','x-order','x-visible-if','x-secret','x-enum-labels','x-media','x-content','x-term','x-ref','x-source','x-seo']) ajv.addKeyword({ keyword, valid: true })
  return ajv
 }
-export type PropsMigration = (props: Record<string, unknown>) => Record<string, unknown>
-export function defineMigrations(type: string, steps: Record<number, PropsMigration>): Record<number, PropsMigration> {
- if (!/^[a-z][a-z0-9-]*$/.test(type) || Object.entries(steps).some(([version, step]) => !/^[1-9][0-9]*$/.test(version) || typeof step !== 'function')) throw new Error('Invalid component migration registry')
- return Object.freeze({ ...steps })
-}
+export { defineMigrations, inlineFromText } from './migrations'
+export type { PropsMigration } from './migrations'
 function freezeProps(value: unknown): void { if (value && typeof value === 'object') { Object.values(value).forEach(freezeProps); Object.freeze(value) } }
 function references(value: unknown): Set<string> {
  const result = new Set<string>()
@@ -61,5 +59,10 @@ export class SchemaCatalog {
  }
  resolveVariant(type: string, variant: string): string { const def = this.entries.get(type); return def?.variantAliases?.[variant] ?? variant }
 }
-export const schemaCatalog = new SchemaCatalog(definitions)
+export const schemaCatalog = new SchemaCatalog(definitions, migrationSteps)
 export function validateComponent(type: string, props: unknown): boolean { return schemaCatalog.validate(type, props) }
+
+export { TemplateCatalog, templates } from './templates'
+export type { TemplateDefinition, TemplateRegion } from './templates'
+
+export { componentExamples } from './generated'

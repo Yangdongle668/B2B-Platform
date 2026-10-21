@@ -1,0 +1,10 @@
+<configuration>
+ <springProfile name="local | test"><property name="STRUCTURED" value="false"/></springProfile>
+ <springProfile name="!local &amp; !test"><property name="STRUCTURED" value="true"/></springProfile>
+ <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+  <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+   <layout class="com.b2bweb.core.observability.SafeLogLayout"><structured>${STRUCTURED}</structured></layout>
+  </encoder>
+ </appender>
+ <root level="INFO"><appender-ref ref="CONSOLE"/></root>
+</configuration>

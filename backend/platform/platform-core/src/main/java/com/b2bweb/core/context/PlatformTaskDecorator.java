@@ -17,6 +17,8 @@ public final class PlatformTaskDecorator implements TaskDecorator {
   }
 
   public Runnable decorate(Runnable task) {
+    Runnable traced =
+        new org.springframework.core.task.support.ContextPropagatingTaskDecorator().decorate(task);
     var site = sites.current().orElse(null);
     var user = users.current().orElse(null);
     var actor = users.actor();
@@ -35,7 +37,7 @@ public final class PlatformTaskDecorator implements TaskDecorator {
           var userScope = user == null ? users.withoutUser() : users.open(user);
           var actorScope = users.asActor(actor);
           var verification = users.withReauthentication(reauth)) {
-        task.run();
+        traced.run();
       } catch (RuntimeException | Error e) {
         throw e;
       } catch (Exception e) {

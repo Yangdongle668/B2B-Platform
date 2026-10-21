@@ -46,9 +46,33 @@ public class SiteLineConfiguration {
               }
 
               public boolean ignoreTable(String name) {
-                return GLOBAL.contains(name);
+                if (GLOBAL.stream().anyMatch(table -> table.equalsIgnoreCase(name))) return true;
+                return com.baomidou.mybatisplus.core.metadata.TableInfoHelper.getTableInfos()
+                    .stream()
+                    .filter(table -> table.getTableName().equalsIgnoreCase(name))
+                    .anyMatch(
+                        table -> {
+                          var global =
+                              table
+                                  .getEntityType()
+                                  .getAnnotation(
+                                      com.b2bweb.core.support.persistence.GlobalTable.class);
+                          if (global == null) return false;
+                          if (global.reason().isBlank())
+                            throw new IllegalStateException("全局表必须说明豁免理由");
+                          return true;
+                        });
               }
             }));
+    var pagination =
+        new com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor(
+            com.baomidou.mybatisplus.annotation.DbType.MYSQL);
+    pagination.setMaxLimit(1000L);
+    result.addInnerInterceptor(pagination);
+    result.addInnerInterceptor(
+        new com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor());
+    result.addInnerInterceptor(
+        new com.baomidou.mybatisplus.extension.plugins.inner.BlockAttackInnerInterceptor());
     return result;
   }
 }

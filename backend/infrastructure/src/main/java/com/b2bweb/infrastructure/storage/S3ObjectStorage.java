@@ -41,6 +41,7 @@ public final class S3ObjectStorage implements ObjectStorage {
 
   public void put(
       StorageKey key, InputStream input, long size, String contentType, Visibility visibility) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     if (size < 0) throw new IllegalArgumentException("对象长度不能为负");
     Path spool = null;
     try {
@@ -78,6 +79,7 @@ public final class S3ObjectStorage implements ObjectStorage {
   }
 
   public InputStream get(StorageKey key, Visibility visibility) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     try {
       return client.getObject(
           GetObjectRequest.builder().bucket(bucket(visibility)).key(key.value()).build());
@@ -91,6 +93,7 @@ public final class S3ObjectStorage implements ObjectStorage {
   }
 
   public Optional<StoredObjectInfo> stat(StorageKey key, Visibility visibility) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     try {
       var info =
           client.headObject(
@@ -112,6 +115,7 @@ public final class S3ObjectStorage implements ObjectStorage {
   }
 
   public void delete(StorageKey key, Visibility visibility) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     try {
       client.deleteObject(
           DeleteObjectRequest.builder().bucket(bucket(visibility)).key(key.value()).build());

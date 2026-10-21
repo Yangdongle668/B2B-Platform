@@ -7,7 +7,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "vue": "3.5.44",
+    "vue": "catalog:",
     "@b2bweb/shared": "workspace:*",
     "@b2bweb/component-schemas": "workspace:*",
     "@b2bweb/design-tokens": "workspace:*"

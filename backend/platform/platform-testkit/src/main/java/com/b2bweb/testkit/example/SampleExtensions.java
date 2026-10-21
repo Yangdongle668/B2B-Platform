@@ -37,7 +37,9 @@ public final class SampleExtensions {
     put("resource:" + site + ":" + id + ":" + locale, value);
   }
 
-  public JsonNode resourceValue(long site,String id,String locale) { return get("resource:"+site+":"+id+":"+locale); }
+  public JsonNode resourceValue(long site, String id, String locale) {
+    return get("resource:" + site + ":" + id + ":" + locale);
+  }
 
   public void personal(long site, String email, JsonNode value) {
     put("personal:" + site + ":" + email.toLowerCase(Locale.ROOT), value);
@@ -486,7 +488,7 @@ public final class SampleExtensions {
     public List<NotificationTemplateDefinition> templates() {
       return List.of(
           new NotificationTemplateDefinition(
-              "sample.received",
+              "sample.received.customer",
               "收到消息",
               NotificationAudience.CUSTOMER,
               NotificationChannel.EMAIL,

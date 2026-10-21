@@ -2,16 +2,18 @@
 import { useSeoHead } from '../../composables/useSeoHead'
 import { useRequestFetch, useAsyncData, createError } from '#imports'
 import { shallowRef } from 'vue'
-import { createLayoutRenderer, text } from '@b2bweb/website-kit'
+import { createLayoutRenderer, provideDeliveryRefs, text } from '@b2bweb/website-kit'
+import type { DeliveryRefs } from '@b2bweb/website-kit'
 import { schemaCatalog } from '@b2bweb/component-schemas'
 import { isLayoutDocument } from '@b2bweb/shared/editor-protocol'
 import { themeRegistry } from '../../theme'
 import texts from '../../texts/zh-CN'
 const token = String(useRoute().params.token ?? '')
-interface PreviewData { snapshot: { payload: { parts?: { layout?: unknown } } }; siteId: string; enabledModules: string[] }
+interface PreviewData { refs: DeliveryRefs; snapshot: { payload: { parts?: { layout?: unknown } } }; siteId: string; enabledModules: string[] }
 const request = useRequestFetch()
 const { data, error } = await useAsyncData('preview', () => request<PreviewData>('/__preview/resolve', { method: 'POST', body: { token } }))
 if (error.value || !data.value) throw createError({ statusCode: error.value?.statusCode === 404 ? 404 : 503, statusMessage: text(texts, 'preview.unavailable') })
+provideDeliveryRefs(() => data.value?.refs ?? {})
 const layout = data.value.snapshot.payload.parts?.layout
 if (!isLayoutDocument(layout)) throw createError({ statusCode: 503, statusMessage: text(texts, 'preview.unavailable') })
 const renderer = shallowRef(createLayoutRenderer({ schemas: schemaCatalog, registry: themeRegistry, theme: 'industrial', enabledModules: new Set(data.value.enabledModules), siteId: data.value.siteId, path: '/__preview' }))

@@ -47,16 +47,21 @@ public final class UserContexts implements CurrentUserProvider {
   public AutoCloseable withoutUser() {
     var previous = local.get();
     local.remove();
+    var mdc = com.b2bweb.core.support.log.ContextMdc.bind("userId", null);
     return () -> {
+      mdc.close();
       if (previous == null) local.remove();
       else local.set(previous);
     };
   }
 
   public AutoCloseable open(CurrentUser user) {
+    if (user == null) return withoutUser();
     var previous = local.get();
     local.set(user);
+    var mdc = com.b2bweb.core.support.log.ContextMdc.bind("userId", Long.toString(user.userId()));
     return () -> {
+      mdc.close();
       if (previous == null) local.remove();
       else local.set(previous);
     };

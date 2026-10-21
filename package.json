@@ -14,20 +14,20 @@
     "check:schemas": "node frontend/packages/component-schemas/scripts/check.mjs"
   },
   "devDependencies": {
-    "@types/node": "24.10.1",
-    "axe-core": "4.10.3",
-    "openapi-typescript": "7.10.1",
-    "typescript": "5.9.3",
-    "vitest": "3.2.4",
-    "vue-tsc": "3.3.13",
-    "eslint": "10.13.0",
-    "@eslint/js": "10.0.1",
-    "typescript-eslint": "8.72.0",
-    "eslint-plugin-vue": "10.11.1",
-    "vue-eslint-parser": "10.3.0",
-    "@stylistic/eslint-plugin": "5.10.0",
-    "stylelint": "17.16.0",
-    "postcss-html": "2.0.0",
-    "postcss": "8.5.8"
+    "@types/node": "catalog:",
+    "axe-core": "catalog:",
+    "openapi-typescript": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "vue-tsc": "catalog:",
+    "eslint": "catalog:",
+    "@eslint/js": "catalog:",
+    "typescript-eslint": "catalog:",
+    "eslint-plugin-vue": "catalog:",
+    "vue-eslint-parser": "catalog:",
+    "@stylistic/eslint-plugin": "catalog:",
+    "stylelint": "catalog:",
+    "postcss-html": "catalog:",
+    "postcss": "catalog:"
   }
 }

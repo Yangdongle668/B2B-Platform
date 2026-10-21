@@ -245,6 +245,13 @@ public final class DatabaseJobs implements JobApi {
         (String) row.get("result_file_name"));
   }
 
+  private io.micrometer.core.instrument.MeterRegistry metrics;
+
+  @org.springframework.beans.factory.annotation.Autowired
+  public void metrics(io.micrometer.core.instrument.MeterRegistry registry) {
+    this.metrics = registry;
+  }
+
   public record Claim(
       long jobId,
       long siteId,
@@ -290,6 +297,10 @@ public final class DatabaseJobs implements JobApi {
    * result.
    */
   public void execute(Claim claim) {
+    long started = System.nanoTime();
+    String metricOutcome = "success";
+    String previousJob = org.slf4j.MDC.get("jobId");
+    org.slf4j.MDC.put("jobId", Long.toString(claim.jobId()));
     try {
       JobHandler h = handler(claim.jobType());
       enabled(claim.siteId(), claim.moduleId());
@@ -320,14 +331,25 @@ public final class DatabaseJobs implements JobApi {
       context.checkpoint();
       finish(claim, "SUCCEEDED", outcome == null ? null : outcome.result(), null, null);
     } catch (JobCanceledException e) {
+      metricOutcome = "canceled";
       finish(claim, "CANCELED", null, null, null);
     } catch (ModuleDisabledException e) {
+      metricOutcome = "canceled";
       finish(claim, "CANCELED", null, "CORE_MODULE_DISABLED", "模块已停用");
     } catch (PlatformException e) {
+      metricOutcome = "failure";
       fail(claim, e.errorCode().code(), e.detail());
     } catch (Exception e) {
+      metricOutcome = "failure";
       org.slf4j.LoggerFactory.getLogger(getClass()).error("任务执行失败 jobId={}", claim.jobId(), e);
       fail(claim, "CORE_JOB_FAILED", "任务执行失败");
+    } finally {
+      if (previousJob == null) org.slf4j.MDC.remove("jobId");
+      else org.slf4j.MDC.put("jobId", previousJob);
+      if (metrics != null)
+        metrics
+            .timer("b2bweb.core.jobs.duration", "type", claim.jobType(), "outcome", metricOutcome)
+            .record(System.nanoTime() - started, java.util.concurrent.TimeUnit.NANOSECONDS);
     }
   }
 

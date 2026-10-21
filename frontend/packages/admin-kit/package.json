@@ -10,9 +10,9 @@
   "dependencies": {
     "@b2bweb/component-schemas": "workspace:*",
     "@b2bweb/shared": "workspace:*",
-    "@tiptap/pm": "3.32.0",
-    "@tiptap/starter-kit": "3.32.0",
-    "@tiptap/vue-3": "3.32.0",
-    "vue": "3.5.44"
+    "@tiptap/pm": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "@tiptap/vue-3": "catalog:",
+    "vue": "catalog:"
   }
 }

@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admin/v1/system/auth")
 public class AuthController {
   final Duration reauthWindow;
+  final io.micrometer.core.instrument.MeterRegistry metrics;
+  final com.b2bweb.api.port.RateLimiter rateLimiter;
   final Accounts accounts;
   final StringRedisTemplate redis;
   final Clock clock;
@@ -24,6 +26,8 @@ public class AuthController {
 
   AuthController(
       Accounts accounts,
+      io.micrometer.core.instrument.MeterRegistry metrics,
+      com.b2bweb.api.port.RateLimiter rateLimiter,
       StringRedisTemplate redis,
       Clock clock,
       org.springframework.session.data.redis.RedisIndexedSessionRepository sessions,
@@ -31,6 +35,8 @@ public class AuthController {
               "${b2bweb.core.security.reauth-window:10m}")
           Duration reauthWindow) {
     this.accounts = accounts;
+    this.metrics = metrics;
+    this.rateLimiter = rateLimiter;
     this.redis = redis;
     this.clock = clock;
     this.sessions = sessions;
@@ -127,14 +133,42 @@ public class AuthController {
         Long.toString(id));
   }
 
+  static String loginSubject(String value) {
+    try {
+      return HexFormat.of()
+          .formatHex(
+              MessageDigest.getInstance("SHA-256")
+                  .digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   @PostMapping("/login")
   public AuthState login(@Valid @RequestBody Login body, HttpServletRequest request) {
-    limit("login:" + body.email().strip().toLowerCase(Locale.ROOT) + ":" + request.getRemoteAddr());
+    String subject =
+        loginSubject(body.email().strip().toLowerCase(Locale.ROOT) + ":" + request.getRemoteAddr());
+    var decision =
+        rateLimiter.tryConsume(
+            new com.b2bweb.api.port.RateLimitRule(
+                "core.login", 5, Duration.ofMinutes(15), false, true),
+            subject);
+    if (!decision.allowed()) {
+      metrics.counter("b2bweb.core.auth.login", "outcome", "failure").increment();
+      throw new BusinessException(
+          ErrorCode.of("CORE_RATE_LIMITED", 429, "请求过于频繁"),
+          "请稍后重试",
+          Map.of("retryAfter", decision.retryAfter().toSeconds()));
+    }
     long id =
         accounts
             .login(body.email(), body.password())
             .orElseThrow(
-                () -> new BusinessException(CoreErrors.NOT_AUTHENTICATED, "邮箱或密码错误，或尝试次数过多"));
+                () -> {
+                  metrics.counter("b2bweb.core.auth.login", "outcome", "failure").increment();
+                  return new BusinessException(CoreErrors.NOT_AUTHENTICATED, "邮箱或密码错误，或尝试次数过多");
+                });
+    metrics.counter("b2bweb.core.auth.login", "outcome", "success").increment();
     var old = request.getSession(false);
     if (old != null) old.invalidate();
     var session = request.getSession(true);

@@ -6,10 +6,16 @@ import java.util.*;
 
 public final class InMemoryDistributedLock implements DistributedLock {
   private final Clock clock;
+  private final com.b2bweb.api.site.SiteContextProvider sites;
   private final Map<String, Handle> locks = new HashMap<>();
 
   public InMemoryDistributedLock(Clock clock) {
+    this(clock, null);
+  }
+
+  public InMemoryDistributedLock(Clock clock, com.b2bweb.api.site.SiteContextProvider sites) {
     this.clock = clock;
+    this.sites = sites;
   }
 
   private static void lease(Duration value) {
@@ -18,10 +24,17 @@ public final class InMemoryDistributedLock implements DistributedLock {
 
   public synchronized Optional<LockHandle> tryAcquire(String name, Duration lease) {
     lease(lease);
-    var old = locks.get(name);
+    if (name == null || !name.matches("[a-z]+\\.[a-z0-9_]+:.+") || name.length() > 2048)
+      throw new IllegalArgumentException("锁名称格式无效");
+    String key =
+        (sites == null
+                ? "sys:"
+                : sites.current().map(site -> "s" + site.siteId() + ":").orElse("sys:"))
+            + name;
+    var old = locks.get(key);
     if (old != null && old.expires.isAfter(clock.instant())) return Optional.empty();
-    var handle = new Handle(name, clock.instant().plus(lease));
-    locks.put(name, handle);
+    var handle = new Handle(name, key, clock.instant().plus(lease));
+    locks.put(key, handle);
     return Optional.of(handle);
   }
 
@@ -42,11 +55,12 @@ public final class InMemoryDistributedLock implements DistributedLock {
   }
 
   private final class Handle implements LockHandle {
-    final String name;
+    final String name, key;
     Instant expires;
 
-    Handle(String name, Instant expires) {
+    Handle(String name, String key, Instant expires) {
       this.name = name;
+      this.key = key;
       this.expires = expires;
     }
 
@@ -57,7 +71,7 @@ public final class InMemoryDistributedLock implements DistributedLock {
     public boolean extend(Duration lease) {
       lease(lease);
       synchronized (InMemoryDistributedLock.this) {
-        if (locks.get(name) != this || !expires.isAfter(clock.instant())) return false;
+        if (locks.get(key) != this || !expires.isAfter(clock.instant())) return false;
         expires = clock.instant().plus(lease);
         return true;
       }
@@ -65,7 +79,7 @@ public final class InMemoryDistributedLock implements DistributedLock {
 
     public void close() {
       synchronized (InMemoryDistributedLock.this) {
-        locks.remove(name, this);
+        locks.remove(key, this);
       }
     }
   }

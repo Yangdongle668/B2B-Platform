@@ -38,6 +38,7 @@ public final class SmtpMailTransport implements MailTransport {
   }
 
   public MailSendResult send(MailMessage input, MailServerConfig override) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     var server = override == null ? defaults : override;
     if (server.security() == SmtpSecurity.NONE && !allowPlaintext)
       throw new IllegalStateException("正式环境禁止明文 SMTP");

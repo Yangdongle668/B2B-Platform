@@ -15,3 +15,5 @@ export type { RenderContext, RenderDiagnostic } from './render'
 export { RichTextRenderer } from './richtext'
 export { createRefs, provideDeliveryRefs, useRefs, safePublicUrl, resolveLink, B2bLink, B2bImage, imagePreload, deliveryHead, serializeJsonLd } from './delivery'
 export type { DeliveryRefs, MediaReference, ResolvedRefs, LinkValue, ImageSources, DeliveryHeadInput } from './delivery'
+
+export { createTemplateResolver } from './template-renderer'

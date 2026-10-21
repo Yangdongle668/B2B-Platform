@@ -4,19 +4,22 @@ import { useRuntimeConfig } from '#imports'
 import { onMounted, onBeforeUnmount, shallowRef, ref, watch, nextTick } from 'vue'
 import { acceptEditorMessage, envelope, isLayoutDocument, patchDocument } from '@b2bweb/shared/editor-protocol'
 import type { EditorEnvelope, LayoutDocument } from '@b2bweb/shared/editor-protocol'
-import { createLayoutRenderer, text } from '@b2bweb/website-kit'
+import { createLayoutRenderer, provideDeliveryRefs, text } from '@b2bweb/website-kit'
+import type { DeliveryRefs } from '@b2bweb/website-kit'
 import { schemaCatalog } from '@b2bweb/component-schemas'
 import { themeRegistry } from '../theme'
 import texts from '../texts/zh-CN'
 const token = String(useRoute().query.token ?? ''), adminOrigin = useRuntimeConfig().public.adminOrigin
 const document = shallowRef<LayoutDocument>({ version: 1, sections: [] }), renderer = shallowRef<ReturnType<typeof createLayoutRenderer>>()
 const selected = ref<string | null>(null), failure = ref(false), readonly = ref(false), authorized = ref(false)
+const deliveryRefs = shallowRef<DeliveryRefs>({})
+provideDeliveryRefs(deliveryRefs)
 let pendingLayout: LayoutDocument | undefined
 let sequence = 0, timer: ReturnType<typeof setTimeout> | undefined, refresh: ReturnType<typeof setInterval> | undefined, stopped = false
 useSeoHead({}, true)
 function send(message: EditorEnvelope) { if (window.parent !== window) window.parent.postMessage(message, adminOrigin) }
-function fail() { sequence++; authorized.value = false; failure.value = true; renderer.value = undefined; document.value = { version: 1, sections: [] }; send(envelope('preview:error', { sectionId: null, message: text(texts, 'preview.unavailable') })) }
-interface PreviewData { snapshot: { payload: { parts?: { layout?: unknown } } }; siteId: string; enabledModules: string[]; readonly: boolean; locale: string }
+function fail() { sequence++; authorized.value = false; failure.value = true; deliveryRefs.value = {}; renderer.value = undefined; document.value = { version: 1, sections: [] }; send(envelope('preview:error', { sectionId: null, message: text(texts, 'preview.unavailable') })) }
+interface PreviewData { refs: DeliveryRefs; snapshot: { payload: { parts?: { layout?: unknown } } }; siteId: string; enabledModules: string[]; readonly: boolean; locale: string }
 async function resolve(layout?: LayoutDocument): Promise<void> {
   const current = ++sequence
   try {
@@ -24,7 +27,7 @@ async function resolve(layout?: LayoutDocument): Promise<void> {
     if (!response.ok) throw new Error()
     const data = await response.json() as PreviewData
     if (stopped || current !== sequence) return
-    readonly.value = data.readonly; authorized.value = true; failure.value = false
+    deliveryRefs.value = data.refs; readonly.value = data.readonly; authorized.value = true; failure.value = false
     const next = layout ?? data.snapshot.payload.parts?.layout
     if (next !== undefined && !isLayoutDocument(next)) throw new Error()
     if (next) document.value = next

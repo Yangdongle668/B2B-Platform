@@ -34,7 +34,7 @@ export function defineTheme(definition: ThemeDefinition): ThemeDefinition {
   return Object.freeze(definition)
 }
 
-const NeutralLayout = defineComponent({ name: 'BaseLayout', setup: (_, { slots }) => () => slots.default?.() })
+const NeutralLayout = defineComponent({ name: 'BaseLayout', inheritAttrs: false, setup: (_, { slots }) => () => slots.default?.() })
 const EmptyRegion = defineComponent({ name: 'BaseEmptyRegion', setup: () => () => null })
 const emptyRegion: VariantSet = { default: 'default', variants: { default: async () => EmptyRegion } }
 export const baseTheme = defineTheme({ key: 'base', label: kitTexts.baseTheme, layouts: { default: async () => NeutralLayout, landing: async () => NeutralLayout, blank: async () => NeutralLayout }, header: emptyRegion, footer: emptyRegion, templates: { generic: async () => NeutralLayout }, components: {}, texts: async () => ({}) })

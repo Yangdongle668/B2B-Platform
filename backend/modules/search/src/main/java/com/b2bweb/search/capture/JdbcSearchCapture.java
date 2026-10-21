@@ -7,7 +7,7 @@ import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** M0 protocol fragment only: no query, rebuild worker, or search administration is implemented. */
+/** Transaction-bound source journal; generation workers share the same state-row barrier. */
 @Extension(module = "search")
 public class JdbcSearchCapture implements SearchChangeCapture {
   private final JdbcTemplate jdbc;

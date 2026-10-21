@@ -9,9 +9,9 @@
     "build": "nuxt build"
   },
   "dependencies": {
-    "nuxt": "4.6.2",
-    "vue": "3.5.44",
-    "@nuxt/image": "2.2.0",
+    "nuxt": "catalog:",
+    "vue": "catalog:",
+    "@nuxt/image": "catalog:",
     "@b2bweb/website-kit": "workspace:*",
     "@b2bweb/design-tokens": "workspace:*",
     "@b2bweb/component-schemas": "workspace:*",
@@ -19,7 +19,7 @@
     "@b2bweb/shared": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "vue-tsc": "3.3.13"
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:"
   }
 }

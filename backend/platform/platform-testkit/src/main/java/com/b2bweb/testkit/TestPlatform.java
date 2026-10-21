@@ -131,7 +131,7 @@ public final class TestPlatform {
   final FakeVirusScanner scanner = new FakeVirusScanner(clock);
   final FakeTranslationEngine engine = new FakeTranslationEngine();
   final InMemoryRateLimiter limiter = new InMemoryRateLimiter(sites, clock);
-  final InMemoryDistributedLock locks = new InMemoryDistributedLock(clock);
+  final InMemoryDistributedLock locks = new InMemoryDistributedLock(clock, sites);
 
   public com.b2bweb.testkit.media.InMemoryMediaApi mediaApi() {
     return media;
@@ -390,26 +390,56 @@ public final class TestPlatform {
 
   /** Explicit ephemeral M0 browser fixture; never a production content provider. */
   public Map<String, Object> previewFixture(com.b2bweb.api.content.PreviewPurpose purpose) {
-    content.addType(new com.b2bweb.api.content.ContentTypeDefinition("PAGE", "page", "页面", false,
-        null, List.of(), Set.of(), true, false, true, false, false, "/page/pages/{contentId}"));
-    content.previewPart("layout", layout -> {
-      if (!layout.isObject() || layout.path("version").asInt() != 1 || !layout.path("sections").isArray()
-          || layout.path("sections").size() > 100) throw new IllegalArgumentException("布局无效");
-      Set<String> seen = new HashSet<>();
-      for (var section : layout.path("sections")) {
-        if (!section.path("id").asString().matches("[A-Za-z0-9_-]{1,80}") || !seen.add(section.path("id").asString())
-            || !section.path("component").asString().equals("hero") || section.path("componentVersion").asInt() != 1
-            || !section.path("props").path("title").isString() || section.path("props").path("title").asString().isBlank()
-            || !section.path("props").path("description").isString()
-           ) throw new IllegalArgumentException("组件属性无效");
-      }
-    });
+    content.addType(
+        new com.b2bweb.api.content.ContentTypeDefinition(
+            "PAGE",
+            "page",
+            "页面",
+            false,
+            null,
+            List.of(),
+            Set.of(),
+            true,
+            false,
+            true,
+            false,
+            false,
+            "/page/pages/{contentId}"));
+    content.previewPart(
+        "layout",
+        layout -> {
+          if (!layout.isObject()
+              || layout.path("version").asInt() != 1
+              || !layout.path("sections").isArray()
+              || layout.path("sections").size() > 100) throw new IllegalArgumentException("布局无效");
+          Set<String> seen = new HashSet<>();
+          for (var section : layout.path("sections")) {
+            if (!section.path("id").asString().matches("[A-Za-z0-9_-]{1,80}")
+                || !seen.add(section.path("id").asString())
+                || !section.path("component").asString().equals("hero")
+                || section.path("componentVersion").asInt() != 1
+                || !section.path("props").path("title").isString()
+                || section.path("props").path("title").asString().isBlank()
+                || !section.path("props").path("description").isString())
+              throw new IllegalArgumentException("组件属性无效");
+          }
+        });
     var json = tools.jackson.databind.json.JsonMapper.builder().build();
-    var layout = json.readTree("{\"version\":1,\"sections\":[{\"id\":\"hero-one\",\"component\":\"hero\",\"componentVersion\":1,\"props\":{\"title\":\"M0预览夹具\",\"description\":\"仅用于开发环境协议验收\"}}]}");
-    var created = content.create(new com.b2bweb.api.content.CreateContentCommand("PAGE", "zh-CN", "M0预览夹具", null));
+    var layout =
+        json.readTree(
+            "{\"version\":1,\"sections\":[{\"id\":\"hero-one\",\"component\":\"hero\",\"componentVersion\":1,\"props\":{\"title\":\"M0预览夹具\",\"description\":\"仅用于开发环境协议验收\"}}]}");
+    var created =
+        content.create(
+            new com.b2bweb.api.content.CreateContentCommand("PAGE", "zh-CN", "M0预览夹具", null));
     content.putDraftPart(created.localizationId(), "layout", layout);
-    var token = content.createPreviewToken(created.localizationId(), new com.b2bweb.api.content.PreviewMode.Draft(), purpose, Duration.ofMinutes(10));
-    return Map.of("token", token.token(), "layout", layout, "expiresAt", token.expiresAt(), "fixture", true);
+    var token =
+        content.createPreviewToken(
+            created.localizationId(),
+            new com.b2bweb.api.content.PreviewMode.Draft(),
+            purpose,
+            Duration.ofMinutes(10));
+    return Map.of(
+        "token", token.token(), "layout", layout, "expiresAt", token.expiresAt(), "fixture", true);
   }
 
   public com.b2bweb.api.event.EventMetaFactory eventMetaFactory() {

@@ -8,18 +8,18 @@
     "build": "vite build"
   },
   "dependencies": {
-    "vue": "3.5.44",
-    "vue-router": "4.6.3",
-    "element-plus": "2.14.7",
+    "vue": "catalog:",
+    "vue-router": "catalog:",
+    "element-plus": "catalog:",
     "@b2bweb/admin-kit": "workspace:*",
     "@b2bweb/api-client": "workspace:*",
-    "qrcode": "1.5.4"
+    "qrcode": "catalog:"
   },
   "devDependencies": {
-    "vite": "7.3.7",
-    "@vitejs/plugin-vue": "6.0.10",
-    "typescript": "5.9.3",
-    "vue-tsc": "3.3.13",
-    "@types/qrcode": "1.5.6"
+    "vite": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "typescript": "catalog:",
+    "vue-tsc": "catalog:",
+    "@types/qrcode": "catalog:"
   }
 }

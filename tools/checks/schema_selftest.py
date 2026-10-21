@@ -10,8 +10,12 @@ def main():
   shutil.copytree(ROOT/'frontend/packages/component-schemas',package,ignore=shutil.ignore_patterns('node_modules'))
   (package/'node_modules').symlink_to(ROOT/'frontend/packages/component-schemas/node_modules',target_is_directory=True)
   (package.parent/'design-tokens').symlink_to(ROOT/'frontend/packages/design-tokens',target_is_directory=True)
+  shutil.copy2(ROOT/'package.json',copy/'package.json')
+  shutil.copy2(ROOT/'pnpm-workspace.yaml',copy/'pnpm-workspace.yaml')
+  shutil.copy2(ROOT/'pnpm-lock.yaml',copy/'pnpm-lock.yaml')
+  (copy/'node_modules').symlink_to(ROOT/'node_modules',target_is_directory=True)
   (copy/'backend').symlink_to(ROOT/'backend',target_is_directory=True)
-  env=os.environ.copy();env['GIT_DIR']=git;env['GIT_WORK_TREE']=str(ROOT)
+  env=os.environ.copy();env['GIT_DIR']=git;env['GIT_WORK_TREE']=str(ROOT);env['PNPM_HOME']=str(ROOT/'.dev/pnpm-home')
   file=package/'components/page/hero.json';original=json.loads(file.read_text());results=[]
   def run(name,definition,expected,reason=''):
    file.write_text(json.dumps(definition,ensure_ascii=False)+'\n')
@@ -31,5 +35,20 @@ def main():
   run('relaxed_limit',value,True)
   value=fresh();value['propsSchema']['properties']['optionalFlag']={'title':'可选标记','type':'boolean','x-translatable':False}
   run('optional_property',value,True)
+  # Prove the CLI executes a real TypeScript migration fixture, not just that files exist.
+  history=package/'components/page/history';history.mkdir(exist_ok=True)
+  (history/'hero.v1.json').write_text(json.dumps(original,ensure_ascii=False)+'\n')
+  migration=package/'components/page/migrations';migration.mkdir(exist_ok=True)
+  (migration/'hero.ts').write_text("import { defineMigrations } from '@b2bweb/component-schemas/migrations'\nexport default defineMigrations('hero', { 1: props => ({ ...props, migratedFlag: true }) })\n")
+  value=fresh();value['version']=2;value['migrations']='migrations/hero.ts'
+  value['propsSchema']['properties']['migratedFlag']={'title':'迁移标记','type':'boolean','x-translatable':False}
+  fixture=package/'components/page/__fixtures__/hero/v1.json';fixture.parent.mkdir(parents=True,exist_ok=True)
+  sample={'title':'框架示例标题','description':'框架示例说明'}
+  fixture.write_text(json.dumps({'input':sample,'expected':{**sample,'migratedFlag':True}},ensure_ascii=False)+'\n')
+  file.write_text(json.dumps(value,ensure_ascii=False)+'\n')
+  subprocess.run(['node',str(package/'scripts/check.mjs'),'--write-index','--base','HEAD'],cwd=copy,env=env,text=True,capture_output=True,check=True)
+  run('migration_fixture_executes',value,True)
+  fixture.write_text(json.dumps({'input':sample,'expected':{**sample,'migratedFlag':False}},ensure_ascii=False)+'\n')
+  run('wrong_migration_output_is_rejected',value,False)
  out=ROOT/'.reports/schema-selftest.json';out.parent.mkdir(exist_ok=True);out.write_text(json.dumps({'isolated_copy':True,'cases':results},indent=2)+'\n');print(json.dumps({'isolated_copy':True,'gate_cases':len(results),'matched':True}))
 if __name__=='__main__':main()

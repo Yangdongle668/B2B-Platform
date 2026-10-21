@@ -61,16 +61,16 @@ class LocalPortDoublesTest {
   void expiredLockOwnerCannotReleaseOrExtendANewLease() {
     var clock = new ManualClock();
     var lock = new InMemoryDistributedLock(clock);
-    var old = lock.tryAcquire("sample", Duration.ofSeconds(1)).orElseThrow();
-    assertThat(lock.tryAcquire("sample", Duration.ofSeconds(1))).isEmpty();
+    var old = lock.tryAcquire("graph.sample:1", Duration.ofSeconds(1)).orElseThrow();
+    assertThat(lock.tryAcquire("graph.sample:1", Duration.ofSeconds(1))).isEmpty();
     clock.advance(Duration.ofSeconds(2));
-    var current = lock.tryAcquire("sample", Duration.ofSeconds(2)).orElseThrow();
+    var current = lock.tryAcquire("graph.sample:1", Duration.ofSeconds(2)).orElseThrow();
     assertThat(old.extend(Duration.ofSeconds(5))).isFalse();
     old.close();
-    assertThat(lock.tryAcquire("sample", Duration.ofSeconds(1))).isEmpty();
+    assertThat(lock.tryAcquire("graph.sample:1", Duration.ofSeconds(1))).isEmpty();
     current.close();
     current.close();
-    assertThat(lock.tryAcquire("sample", Duration.ofSeconds(1))).isPresent();
+    assertThat(lock.tryAcquire("graph.sample:1", Duration.ofSeconds(1))).isPresent();
   }
 
   @Test

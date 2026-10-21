@@ -10,8 +10,23 @@ import org.springframework.web.bind.annotation.*;
 @RestControllerAdvice
 public class ProblemAdvice {
   @ExceptionHandler(PlatformException.class)
-  void platform(PlatformException e, HttpServletResponse response) throws IOException {
-    Problems.write(response, e);
+  void platform(
+      PlatformException e,
+      jakarta.servlet.http.HttpServletRequest request,
+      HttpServletResponse response)
+      throws IOException {
+    if (e.errorCode().status() >= 500) com.b2bweb.core.observability.ErrorReporting.capture(e);
+    if (e instanceof VersionConflictException && request.getHeader("If-Match") != null) {
+      com.b2bweb.core.support.web.ETags.parse(request.getHeader("If-Match"));
+      Problems.write(
+          response,
+          412,
+          e.errorCode().code(),
+          e.errorCode().title(),
+          e.getMessage(),
+          e.errors(),
+          e.properties());
+    } else Problems.write(response, e);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -57,6 +72,7 @@ public class ProblemAdvice {
   @ExceptionHandler(Exception.class)
   void unexpected(Exception e, HttpServletResponse response) throws IOException {
     org.slf4j.LoggerFactory.getLogger(getClass()).error("系统请求处理失败", e);
+    com.b2bweb.core.observability.ErrorReporting.capture(e);
     Problems.write(response, 500, "CORE_INTERNAL_ERROR", "系统暂时无法处理请求");
   }
 }

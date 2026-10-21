@@ -88,10 +88,15 @@ public class SecurityConfiguration {
 
   @Bean
   @Order(0)
-  SecurityFilterChain management(HttpSecurity http,@Value("${management.server.port:8081}") int port) throws Exception {
-    return http.securityMatcher(request -> request.getLocalPort()==port && request.getRequestURI().startsWith("/actuator/"))
-      .csrf(c->c.disable()).sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-      .authorizeHttpRequests(c->c.anyRequest().permitAll()).build();
+  SecurityFilterChain management(
+      HttpSecurity http, @Value("${management.server.port:8081}") int port) throws Exception {
+    return http.securityMatcher(
+            request ->
+                request.getLocalPort() == port && request.getRequestURI().startsWith("/actuator/"))
+        .csrf(c -> c.disable())
+        .sessionManagement(c -> c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(c -> c.anyRequest().permitAll())
+        .build();
   }
 
   @Bean
@@ -104,7 +109,8 @@ public class SecurityConfiguration {
       JdbcTemplate jdbc,
       Clock clock,
       com.b2bweb.core.module.ModuleCatalog catalog,
-      com.b2bweb.api.site.SiteApi siteApi)
+      com.b2bweb.api.site.SiteApi siteApi,
+      com.b2bweb.api.port.RateLimiter limits)
       throws Exception {
     var csrf = CookieCsrfTokenRepository.withHttpOnlyFalse();
     csrf.setCookieCustomizer(c -> c.secure(true).sameSite("Lax").path("/"));
@@ -121,6 +127,7 @@ public class SecurityConfiguration {
             new SessionIdentityFilter(accounts, sites, users, jdbc, clock),
             AuthorizationFilter.class)
         .addFilterAfter(new ModuleGuardFilter(catalog, siteApi, sites), SessionIdentityFilter.class)
+        .addFilterAfter(new AdminRateLimitFilter(limits, users), ModuleGuardFilter.class)
         .exceptionHandling(
             c ->
                 c.authenticationEntryPoint(

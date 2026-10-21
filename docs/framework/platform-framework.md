@@ -11649,7 +11649,7 @@ frontend/packages/component-schemas/
 
 ```ts
 // frontend/packages/component-schemas/components/page/migrations/hero.ts
-import { defineMigrations, inlineFromText } from '@b2bweb/component-schemas'
+import { defineMigrations, inlineFromText } from '@b2bweb/component-schemas/migrations'
 
 export default defineMigrations('hero', {
   /** 1 → 2：subtitle（纯文本）改为 description（行内富文本） */
@@ -11675,6 +11675,8 @@ resolveVariant(type: string, variant: string): string                           
 | 执行方 | Admin 打开草稿时执行（保存的总是最新版本）；Nuxt 渲染旧快照时即时执行（旧内容无需重新发布）（系统设计 10.9）；后端不执行 TypeScript 迁移 |
 | 后端如何处理旧版本 | 保存时只接受当前版本并用当前 Schema 校验；读取已发布的旧版本布局（如翻译提取、`x-ref` 收集、SEO 检查）时，按 Section 的 `componentVersion` 使用 `history/` 中对应版本的定义 |
 | 变体改名或删除 | 在 `variantAliases` 中登记映射，视为破坏性变更 |
+
+迁移文件从无注册依赖的`@b2bweb/component-schemas/migrations`子路径导入助手，避免与静态Schema目录形成循环加载；CLI拒绝从包根导入迁移助手。隔离自检实际构建v2定义/迁移/历史/夹具，并确认错误期望输出阻断检查。
 
 **破坏性变更**（`pnpm check:schemas --base origin/main` 判定）：删除或改名属性、改变类型、新增必填属性、收紧约束（`maxLength` 变小、`enum` 减少、`pattern` 变化）、改变 `$ref` 目标、删除或改名变体、从 `allowedIn` 中移除位置。破坏性变更必须同时：`version` 恰好 +1、提供该步迁移与测试、归档旧定义（系统设计 10.9、29.3；`CLAUDE.md` 提交前检查）。新增可选属性、放宽约束、新增变体不是破坏性变更，版本不变。模板的区域变化按同样规则判定（模板没有迁移函数：删除区域时插槽中的组件在渲染时忽略，并由 page 模块提供数据修正，见其模块设计文档）。
 

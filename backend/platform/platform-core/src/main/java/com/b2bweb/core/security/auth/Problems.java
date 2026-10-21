@@ -31,7 +31,16 @@ public final class Problems {
         error.errorCode().title(),
         error.detail(),
         error.errors(),
-        error.properties());
+        error instanceof com.b2bweb.api.common.ExternalServiceException external
+            ? withRetryable(error.properties(), external.retryable())
+            : error.properties());
+  }
+
+  private static java.util.Map<String, Object> withRetryable(
+      java.util.Map<String, Object> properties, boolean retryable) {
+    var copy = new java.util.HashMap<String, Object>(properties);
+    copy.put("retryable", retryable);
+    return copy;
   }
 
   public static void write(
@@ -44,6 +53,9 @@ public final class Problems {
       java.util.Map<String, Object> properties)
       throws IOException {
     response.setStatus(status);
+    if (status == 503) response.setHeader("Retry-After", "120");
+    if (status == 429 && properties.get("retryAfter") instanceof Number number)
+      response.setHeader("Retry-After", Long.toString(Math.max(1, number.longValue())));
     response.setContentType("application/problem+json;charset=UTF-8");
     response.setHeader("Cache-Control", "no-store");
     var body =

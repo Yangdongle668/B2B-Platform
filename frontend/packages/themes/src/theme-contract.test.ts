@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest'
-import { definitions } from '@b2bweb/component-schemas'
+import { definitions, templates } from '@b2bweb/component-schemas'
 import { ThemeRegistry } from '@b2bweb/website-kit'
 import { industrialTheme } from './index'
 
@@ -12,4 +12,9 @@ it('implements every declared current schema variant in the delivered theme', as
     expect(resolved?.variant).toBe(variant)
     expect(await resolved!.component()).toBeTruthy()
   }
+})
+
+it('loads every implemented template in the theme', async () => {
+ const registry = new ThemeRegistry(definitions, [industrialTheme])
+ for (const template of templates) { expect(industrialTheme.templates[template.key]).toBeDefined(); expect(await registry.template('industrial', template.key)()).toBeTruthy() }
 })

@@ -34,6 +34,7 @@ public final class MeilisearchClient implements SearchEngineClient {
   }
 
   JsonNode call(String method, String path, JsonNode body, boolean missingAllowed) {
+    com.b2bweb.infrastructure.http.RemoteCalls.outsideTransaction();
     try {
       var request =
           HttpRequest.newBuilder(base.resolve(path))
@@ -197,7 +198,8 @@ public final class MeilisearchClient implements SearchEngineClient {
     if (input.filter() != null) body.put("filter", input.filter());
     body.set("facets", json.valueToTree(input.facets()));
     body.set("sort", json.valueToTree(input.sort()));
-    if (!input.attributesToRetrieve().isEmpty()) body.set("attributesToRetrieve", json.valueToTree(input.attributesToRetrieve()));
+    if (!input.attributesToRetrieve().isEmpty())
+      body.set("attributesToRetrieve", json.valueToTree(input.attributesToRetrieve()));
     body.set("attributesToHighlight", json.valueToTree(input.attributesToHighlight()));
     var res = call("POST", index(name) + "/search", body, false);
     List<JsonNode> hits = new ArrayList<>();
