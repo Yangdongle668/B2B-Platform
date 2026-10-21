@@ -42,14 +42,14 @@ public final class TestPlatform {
   final InMemoryTaggedCache cache = new InMemoryTaggedCache(sites, clock);
   final InMemoryBufferStore buffer = new InMemoryBufferStore(sites, clock);
   final InMemoryFormApi forms = new InMemoryFormApi(store, sites);
-  final InMemoryNotificationApi notifications =
-      new InMemoryNotificationApi(store, sites, clock, ids);
   final com.b2bweb.testkit.directory.InMemoryUsers directory =
       new com.b2bweb.testkit.directory.InMemoryUsers(store, sites, users, permissions);
+  final InMemoryNotificationApi notifications =
+      new InMemoryNotificationApi(store, sites, clock, ids, directory);
   final com.b2bweb.testkit.content.InMemoryContentApi content =
       new com.b2bweb.testkit.content.InMemoryContentApi(
           store, sites, siteApi, users, directory, ids, clock, meta, events::publish);
-  final InMemoryTranslationApi translation = new InMemoryTranslationApi(sites, clock);
+  final InMemoryTranslationApi translation = new InMemoryTranslationApi(sites, siteApi, clock);
   final InMemoryObjectStorage storage = new InMemoryObjectStorage(clock);
   final com.b2bweb.testkit.job.InMemoryJobApi jobs =
       new com.b2bweb.testkit.job.InMemoryJobApi(store, sites, users, siteApi, ids, clock, storage);

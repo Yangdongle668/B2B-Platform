@@ -10,24 +10,29 @@ public final class InMemoryTranslationApi implements TranslationApi {
   final Clock clock;
   final SiteContextProvider sites;
   final Map<String, SegmentOriginStats> stats = new HashMap<>();
-  boolean enabled = true;
+  final SiteApi siteApi;
+  final Map<Long, Boolean> enabled = new HashMap<>();
 
-  public InMemoryTranslationApi(SiteContextProvider sites, Clock clock) {
+  public InMemoryTranslationApi(SiteContextProvider sites, SiteApi siteApi, Clock clock) {
     this.sites = sites;
+    this.siteApi = siteApi;
     this.clock = clock;
   }
 
   public void available(boolean enabled) {
-    this.enabled = enabled;
+    this.enabled.put(sites.requireSiteId(), enabled);
   }
 
   public boolean isTextTranslationAvailable() {
     sites.requireSiteId();
-    return enabled;
+    return siteApi.isModuleEnabled("translation") && enabled.getOrDefault(sites.requireSiteId(), true);
   }
 
   public TextTranslation translateText(TextTranslationRequest request) {
-    if (!isTextTranslationAvailable()) throw new ModuleDisabledException("translation");
+    if (!siteApi.isModuleEnabled("translation")) throw new ModuleDisabledException("translation");
+    if (!isTextTranslationAvailable()) throw new BusinessException(TranslationErrors.FEATURE_DISABLED, "站点已关闭该翻译功能");
+    if (request.text() == null || request.text().isBlank()) throw new IllegalArgumentException("翻译文本不能为空");
+    if (request.text().length() > 5000) throw new BusinessException(TranslationErrors.TEXT_TOO_LONG, "待翻译文本过长");
     boolean same = Objects.equals(request.sourceLocale(), request.targetLocale());
     return new TextTranslation(
         same ? request.text() : "[" + request.targetLocale() + "] " + request.text(),

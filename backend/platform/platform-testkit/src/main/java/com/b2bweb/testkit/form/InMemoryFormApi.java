@@ -40,7 +40,8 @@ public final class InMemoryFormApi implements FormApi {
   }
 
   public Optional<FormSummary> findForm(String key) {
-    return forms(null).stream().filter(f -> f.formKey().equals(key)).findFirst();
+    String prefix = prefix() + "definition:";
+    return store.atomic(rows -> rows.entrySet().stream().filter(e -> e.getKey().startsWith(prefix)).map(e -> (FormSummary)e.getValue()).filter(form -> form.formKey().equals(key)).findFirst());
   }
 
   public List<FormSummary> forms(FormPurpose purpose) {
@@ -50,7 +51,7 @@ public final class InMemoryFormApi implements FormApi {
             rows.entrySet().stream()
                 .filter(e -> e.getKey().startsWith(prefix))
                 .map(e -> (FormSummary) e.getValue())
-                .filter(f -> purpose == null || f.purpose() == purpose)
+                .filter(f -> f.status() == FormStatus.ACTIVE && (purpose == null || f.purpose() == purpose))
                 .sorted(Comparator.comparingLong(FormSummary::formId))
                 .toList());
   }

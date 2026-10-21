@@ -12,16 +12,18 @@ public final class InMemoryNotificationApi implements NotificationApi {
   final SiteContextProvider sites;
   final Clock clock;
   final IdGenerator ids;
+  final com.b2bweb.api.security.UserDirectory directory;
   final Map<String, Set<String>> templates = new HashMap<>();
 
   record Message(NotificationRequest request, Recipient recipient, MessageStatusView status) {}
 
   public InMemoryNotificationApi(
-      MemoryStore store, SiteContextProvider sites, Clock clock, IdGenerator ids) {
+      MemoryStore store, SiteContextProvider sites, Clock clock, IdGenerator ids, com.b2bweb.api.security.UserDirectory directory) {
     this.store = store;
     this.sites = sites;
     this.clock = clock;
     this.ids = ids;
+    this.directory = directory;
   }
 
   String prefix() {
@@ -47,33 +49,21 @@ public final class InMemoryNotificationApi implements NotificationApi {
               return ids.stream().map(id -> (Long) id).toList();
             }
           }
-          String locale = request.locale() == null ? "zh-CN" : request.locale();
-          if (!templateAvailable(request.templateKey(), locale) && request.fallbackLocale() != null)
-            locale = request.fallbackLocale();
-          var vars =
-              templates.get(sites.requireSiteId() + ":" + request.templateKey() + ":" + locale);
-          if (vars == null)
-            throw new BusinessException(NotificationErrors.TEMPLATE_NOT_FOUND, "通知模板不存在");
-          for (String key : vars)
-            if (!request.model().hasNonNull(key))
-              throw new BusinessException(NotificationErrors.MODEL_INVALID, "缺少模板变量");
           if (request.recipients().isEmpty())
             throw new BusinessException(NotificationErrors.RECIPIENT_INVALID, "缺少收件人");
           List<Long> result = new ArrayList<>();
           for (Recipient recipient : request.recipients()) {
+            boolean staff = recipient instanceof Recipient.StaffUser;
+            if (recipient instanceof Recipient.StaffUser user && directory.find(user.userId()).filter(com.b2bweb.api.security.UserSummary::active).isEmpty()) continue;
+            String locale = staff || request.locale() == null ? "zh-CN" : request.locale();
+            if (!staff && !templateAvailable(request.templateKey(), locale) && request.fallbackLocale() != null) locale = request.fallbackLocale();
+            var vars = templates.get(sites.requireSiteId() + ":" + request.templateKey() + ":" + locale);
+            if (vars == null) throw new BusinessException(NotificationErrors.TEMPLATE_NOT_FOUND, "通知模板不存在");
+            for (String key : vars) if (!request.model().hasNonNull(key)) throw new BusinessException(NotificationErrors.MODEL_INVALID, "缺少模板变量");
             long id = ids.nextId();
-            var status =
-                new MessageStatusView(
-                    id,
-                    request.templateKey(),
-                    NotificationChannel.EMAIL,
-                    MessageStatus.PENDING,
-                    0,
-                    null,
-                    null,
-                    clock.instant());
-            rows.put(prefix + "message:" + id, new Message(request, recipient, status));
-            result.add(id);
+            var snapshot = new NotificationRequest(request.templateKey(), List.of(recipient), locale, null, request.model().deepCopy(), request.replyTo(), request.dedupKey(), request.notBefore(), request.relatedType(), request.relatedId());
+            var status = new MessageStatusView(id, request.templateKey(), NotificationChannel.EMAIL, MessageStatus.PENDING, 0, null, null, clock.instant());
+            rows.put(prefix + "message:" + id, new Message(snapshot, recipient, status)); result.add(id);
           }
           if (request.dedupKey() != null)
             rows.put(prefix + "dedup:" + request.dedupKey(), List.copyOf(result));
