@@ -24,10 +24,23 @@ jobs:
       - run: python tools/checks/architecture.py
       - run: python tools/checks/migrations.py
       - run: ./mvnw -q verify
+      - run: cp .reports/backend.json .reports/backend-standard.json
       - run: python tools/generators/client.py
       - run: ./mvnw -q -Pdevelopment verify
+      - run: cp .reports/backend.json .reports/backend-development.json
       - run: python tools/checks/new_module_exercise.py
       - run: python tools/verification/m0-compatibility/verify_backend.py --cache /tmp/b2b-m0-compat/m2
+      - name: Retain sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: backend-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .reports/backend-standard.json
+            .reports/backend-development.json
+
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -59,6 +72,18 @@ jobs:
       - run: python tools/checks/schema_selftest.py
       - run: python tools/frontend/form_browser.py
       - run: pnpm generate:client && git diff --exit-code -- frontend/packages/api-client/src/schema.d.ts
+      - name: Retain sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frontend-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .reports/frontend/browser.json
+            .reports/frontend/form-browser.json
+            .reports/schema-selftest.json
+
   local-stack:
     needs: [backend, frontend]
     runs-on: ubuntu-latest
@@ -77,12 +102,26 @@ jobs:
       - run: pnpm install --frozen-lockfile && pnpm build
       - run: ./mvnw -q -Pdevelopment -DskipTests package
       - run: python tools/dev/stack.py up --no-build
+      - run: python tools/checks/runtime_stack.py
       - run: python tools/frontend/auth_browser.py
       - run: python tools/frontend/permissions_browser.py
       - run: python tools/frontend/preview_browser.py
       - run: python tools/checks/cache_restart.py
       - if: always()
         run: python tools/dev/stack.py down
+      - name: Retain sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: local-stack-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .reports/frontend/preview-browser.json
+            .reports/frontend/permissions-browser.json
+            .reports/cache-restart.json
+            .reports/runtime-stack.json
+
   security:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -97,6 +136,17 @@ jobs:
           python-version: '3.12'
       - run: pnpm install --frozen-lockfile
       - run: python tools/checks/security.py
+      - name: Retain sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: security-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .reports/security/summary.json
+            .reports/security/pnpm-audit.json
+
   backend-security:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -107,3 +157,13 @@ jobs:
           python-version: '3.12'
       - run: ./mvnw -q -DskipTests org.cyclonedx:cyclonedx-maven-plugin:2.9.1:makeAggregateBom -DoutputFormat=json -DoutputDirectory=/workspace/.reports/security
       - run: python tools/checks/backend_security.py
+
+      - name: Retain sanitized verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: backend-security-evidence
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            .reports/security/backend-osv.json
