@@ -16,3 +16,16 @@ it('compiles shared reference schemas without accepting executable or raw intern
   for (const href of ['/zh/private', 'javascript:alert(1)', 'https://user:secret@example.com']) expect(catalog.validate('ref-test', { link: { href } })).toBe(false)
   expect(() => new SchemaCatalog([{ type: 'bad', version: 1, module: 'page', label: '错误', variants: ['default'], propsSchema: { $ref: 'https://example.com/schema' } }])).toThrow('External schema reference')
 })
+
+it('rejects migrations that mutate snapshots, drop references, return async results or invalid props', async () => {
+  const { defineMigrations } = await import('./index')
+  const definition = { type: 'test', version: 2, module: 'page', name: '测试', variants: ['default'], propsSchema: { type: 'object' } }
+  const input = { image: { $media: '9007199254740993' }, related: { $content: '2' }, source: { $source: 'product.list', params: { category: { $term: '3' } } } }
+  for (const step of [() => ({}), (props: Record<string, unknown>) => { props.image = null; return props }, () => [] as unknown as Record<string, unknown>]) {
+    const catalog = new SchemaCatalog([definition], { test: defineMigrations('test', { 1: step }) })
+    expect(() => catalog.migrate('test', input, 1)).toThrow()
+    expect(input.image.$media).toBe('9007199254740993')
+  }
+  const catalog = new SchemaCatalog([definition], { test: defineMigrations('test', { 1: props => ({ renamedImage: props.image, related: props.related, source: props.source }) }) })
+  expect(catalog.migrate('test', input, 1).props.renamedImage).toEqual(input.image)
+})

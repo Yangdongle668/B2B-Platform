@@ -166,6 +166,10 @@ importers:
       vue:
         specifier: 3.5.44
         version: 3.5.44(typescript@5.9.3)
+    devDependencies:
+      '@b2bweb/component-schemas':
+        specifier: workspace:*
+        version: link:../component-schemas
 
   frontend/packages/website-kit:
     dependencies:

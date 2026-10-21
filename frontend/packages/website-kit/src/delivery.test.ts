@@ -35,3 +35,24 @@ it('serializes JSON-LD without a script-closing injection or executable separato
   expect(encoded).not.toMatch(/[<>&\u2028\u2029]/u); expect(JSON.parse(encoded)).toEqual(value)
   expect(() => serializeJsonLd('untrusted')).toThrow()
 })
+it('selects only the exact server-resolved media preset and refuses private or mismatched sources', () => {
+  const table = { media: { '3': { url: null, imageSources: { HERO: sources } }, '4': { url: null, visibility: 'PRIVATE' as const, imageSources: { HERO: { ...sources, mediaId: '4' } } }, '5': { url: null, imageSources: { HERO: sources } } } }
+  const resolver = createRefs(table)
+  expect(resolver.image({ $media: '3' }, 'HERO')).toEqual(sources)
+  expect(resolver.image({ $media: '3' }, 'CARD')).toBeNull()
+  expect(resolver.image({ $media: '4' }, 'HERO')).toBeNull()
+  expect(resolver.image({ $media: '5' }, 'HERO')).toBeNull()
+})
+it('isolates reference tables between SSR apps and follows current navigation state', async () => {
+  const { ref, defineComponent } = await import('vue')
+  const { provideDeliveryRefs, useRefs } = await import('./delivery')
+  const table = ref({ content: { '1': { title: 'Site A', url: '/zh/a' } } })
+  let refs: ReturnType<typeof useRefs> | undefined
+  const Child = defineComponent({ setup() { refs = useRefs(); return () => h('span', refs!.content({ $content: '1' })?.title) } })
+  const app = createSSRApp({ setup() { provideDeliveryRefs(table); return () => h(Child) } })
+  expect(await renderToString(app)).toContain('Site A')
+  table.value = { content: { '1': { title: 'Site B', url: '/zh/b' } } }
+  expect(refs!.content({ $content: '1' })?.title).toBe('Site B')
+  const isolated = createSSRApp({ render: () => h(Child) })
+  expect(await renderToString(isolated)).not.toContain('Site B')
+})

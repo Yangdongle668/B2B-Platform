@@ -1,12 +1,12 @@
-import { Fragment, defineComponent, h } from 'vue'
-import type { PropType } from 'vue'
+import { Fragment, computed, defineComponent, h, inject, provide, toValue } from 'vue'
+import type { ComputedRef, InjectionKey, MaybeRefOrGetter, PropType } from 'vue'
 
 export type ContentReference = { $content: string }
 export type MediaReference = { $media: string }
 export type TermReference = { $term: string }
 export interface PublishedContentReference { title: string; url: string | null; path?: string | null; [key: string]: unknown }
 export interface PublishedTermReference { name: string; url: string | null; path?: string | null; [key: string]: unknown }
-export interface PublicMediaReference { url: string | null; width?: number; height?: number; alt?: string | null; fileName?: string; mime?: string; size?: number; visibility?: 'PUBLIC' | 'PRIVATE'; [key: string]: unknown }
+export interface PublicMediaReference { url: string | null; width?: number; height?: number; alt?: string | null; fileName?: string; mime?: string; size?: number; visibility?: 'PUBLIC' | 'PRIVATE'; imageSources?: Partial<Record<ImageSources['preset'], ImageSources>>; [key: string]: unknown }
 /** Tables already resolved by Delivery for the current site and language; no additional requests. */
 export interface DeliveryRefs { content?: Readonly<Record<string, PublishedContentReference>>; media?: Readonly<Record<string, PublicMediaReference>>; terms?: Readonly<Record<string, PublishedTermReference>> }
 export function safePublicUrl(value: unknown, allowPath = true): string | undefined {
@@ -28,9 +28,21 @@ export function createRefs(table: DeliveryRefs) {
     const value = id(reference?.$term) ? table.terms?.[reference.$term] : undefined
     return value && typeof value.name === 'string' && (value.path == null || safePublicUrl(value.path)) && (value.url == null || safePublicUrl(value.url)) ? value : null
   }
-  return Object.freeze({ content, media, term, file: (reference: MediaReference) => { const value = media(reference); return value && typeof value.fileName === 'string' && typeof value.mime === 'string' && typeof value.size === 'number' ? value : null } })
+  const image = (reference: MediaReference, preset: ImageSources['preset']): ImageSources | null => {
+    const value = id(reference?.$media) ? table.media?.[reference.$media] : undefined
+    const source = value?.visibility !== 'PRIVATE' ? value?.imageSources?.[preset] : undefined
+    return source && source.mediaId === reference.$media && source.preset === preset && imagePreload(source) ? source : null
+  }
+  return Object.freeze({ content, media, image, term, file: (reference: MediaReference) => { const value = media(reference); return value && typeof value.fileName === 'string' && typeof value.mime === 'string' && typeof value.size === 'number' ? value : null } })
 }
 export type ResolvedRefs = ReturnType<typeof createRefs>
+const deliveryRefsKey: InjectionKey<ComputedRef<ResolvedRefs>> = Symbol('b2bweb.delivery.refs')
+/** Per Vue app/request, reactive to navigation; never a module-level table shared between SSR requests. */
+export function provideDeliveryRefs(table: MaybeRefOrGetter<DeliveryRefs>): void { provide(deliveryRefsKey, computed(() => createRefs(toValue(table)))) }
+export function useRefs(): ResolvedRefs {
+  const resolved = inject(deliveryRefsKey, computed(() => createRefs({})))
+  return Object.freeze({ content: reference => resolved.value.content(reference), media: reference => resolved.value.media(reference), image: (reference, preset) => resolved.value.image(reference, preset), term: reference => resolved.value.term(reference), file: reference => resolved.value.file(reference) })
+}
 export type LinkValue = ContentReference | { href: string; rel?: Array<'nofollow' | 'sponsored'> }
 export function resolveLink(link: LinkValue, refs: ResolvedRefs): { href: string; rel?: string } | null {
   if (!link || typeof link !== 'object') return null

@@ -20,6 +20,9 @@ def main():
    results.append({'case':name,'expected_pass':expected,'matched':True})
   def fresh():return json.loads(json.dumps(original))
   run('unchanged',fresh(),True)
+  generated=package/'src/generated.ts';saved=generated.read_text();generated.write_text('// missing imports\n')
+  run('missing_client_catalog_entry',fresh(),False,'Client schema catalog drift')
+  generated.write_text(saved)
   value=fresh();value['propsSchema']['properties']['title']['maxLength']=110
   run('tightened_limit_without_version',value,False,'breaking schema change requires version +1')
   value=fresh();value['propsSchema']['properties']['title'].update({'enum':['框架示例标题'],'x-translatable':False})
