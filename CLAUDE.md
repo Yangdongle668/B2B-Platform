@@ -6,14 +6,14 @@
 
 模块化 B2B 企业网站平台（Modular B2B Website Platform）：一家企业自用的多站点、多语言企业官网与询盘获客平台，模块化、SEO 原生、由设计系统驱动。
 
-**当前状态：M0正式工程候选版推进中，完整G0尚未通过**。最新实现、证据及剩余工程关卡见 `docs/reviews/m0-foundation-closeout-2026-10-21.md`。业主已明确要求完成M0，backend/frontend工程骨架、Core运行机制、testkit与开发栈已落地；media/search各有M0事务接收器片段，其余业务功能仍是骨架，不得标成M1已实现。`tools/verification/m0-compatibility/`仍为隔离协议原型，不能替代正式提供方及testkit验收。按README执行实际检查，继续补齐M0，不自动签审或发布1.0.0。
+**当前状态：M0正式工程候选版推进中，完整G0尚未通过**。最新实现、证据及剩余工程关卡见 `docs/reviews/m0-foundation-final-review-2026-10-21.md`。业主已明确要求完成M0，backend/frontend工程骨架、Core运行机制、testkit与开发栈已落地；media/search各有M0事务接收器片段，其余业务功能仍是骨架，不得标成M1已实现。`tools/verification/m0-compatibility/`仍为隔离协议原型，不能替代正式提供方及testkit验收。按README执行实际检查，继续补齐M0，不自动签审或发布1.0.0。
 计划目录（系统设计 29.1）：`backend/`（`platform/platform-core`、`platform/platform-api`、`modules/<模块>`、`infrastructure`、`application`）、`frontend/`（`apps/website`、`apps/admin`、`packages/*`）、`docs/`、`deploy/`、`tools/`。
 
 ## 文档索引
 
 | 路径 | 内容 | 状态 |
 |---|---|---|
-| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.11 |
+| `docs/architecture/system-design.md` | 系统设计说明书（顶层约束） | V1.12 |
 | `docs/design/visual-direction.md` | 前台视觉基线：Tesla 风格参考、Token 建议、页面结构与视觉验收 | 方向已确定，视觉稿待交付 |
 | `docs/reviews/design-issue-resolution-2026-10-20.md` | 11 项设计问题统一方案、契约映射和故障验收 | 方案已补齐，ADR 待评审 |
 | `docs/reviews/formal-design-review-2026-10-20.md` | 正式技术评审、DR-01～09及实库DDL证据 | 允许M0整改验证；暂不冻结契约 |

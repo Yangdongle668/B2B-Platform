@@ -48,6 +48,9 @@
 | AWS SDK v2 | S3端口 | 2.57.0；真实S3Mock验证，不等于MinIO认证 |
 | JSON Schema / ShedLock | 设置校验与调度 | networknt 3.0.8 / 7.10.1；未冻结 |
 | MySQL / Redis / Meilisearch | 本地真实服务 | 8.4 / 7.4 / 1.15.2；镜像摘要见验证脚本 |
+| imgproxy | 图片处理与签名 | 3.30.1，真实S3取图/四格式/裁切与签名拒绝验证；摘要见验证脚本，未冻结 |
+| TSID正数编码 | ID生成候选 | 自有41/10/12位实现，纪元2020-01-01 UTC，数据库节点租约；ADR-032待评审 |
+| Actuator / Prometheus | Core观测 | Spring Boot 4.0.8 / Micrometer 1.16.7（BOM管理），未冻结 |
 | S3Mock / Mailpit | 本地开发候选 | 4.11.0 / 1.27.9；MinIO下载受限，ADR-028待评审 |
 
    其他组件沿用 2.4 的选型（如 MySQL 8.4 LTS、Redis 7 或兼容的 Valkey、Element Plus、Tiptap），锁定时可以一并记入此表。

@@ -1,0 +1,1382 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "efaf0863de4ee79824dbae85b5d8e72bf1df837d",
+  "implementation_revision": "9f9d1902f7de9b055c209b28b770539462dd06f3",
+  "scope": "M0 candidate engineering additions; full G0 not passed",
+  "sources": [
+    {
+      "path": ".github/workflows/verify.yml",
+      "sha256": "c76a4b68db94fa219fcecc78cc14e83e4f00c41a9028fe5a2fd7a7b420bac3bd"
+    },
+    {
+      "path": "backend/application/src/main/resources/application-test.properties",
+      "sha256": "a23064d7f2ccf0aff9bc849bef435e4b18f723ddbe34bfe85b163915c758780f"
+    },
+    {
+      "path": "backend/application/src/main/resources/application.properties",
+      "sha256": "7c3a2a482a40c75dce01f056bdbb50a72463a1b6dc41298fb9bb86189fe5ac3c"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/CoreSharedContractsTest.java",
+      "sha256": "c8d0465098cdf91f294dd6a7d45a37115b3ab8bd90866f6d566be67bc6113768"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/DomainEventsRealContractTest.java",
+      "sha256": "7bd29e345586f7e8887a3fd8cd1809f18dc10f4924dc7f7550720eb1d4dd33a3"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/RuntimeMaintenanceTest.java",
+      "sha256": "db5a8daae89d1b9d7157cd5b56e60cf8b2a6310f15a516baf581bc4ae4635459"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/ImagesRealContractTest.java",
+      "sha256": "9cbfb02fb8d6c8d1630c6223aa4f6900259966190796f6852c33afaa78d48ee0"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/ImgproxyIntegrationTest.java",
+      "sha256": "ae7405282a2db8345f9cec502795fbce76ac2e4152dd07f71806e049fded57d0"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/TranslationRealContractTest.java",
+      "sha256": "f8b040260b3be6a3287c30838d79d55e4d96499cfa5cd220eb8ca4084aa74bae"
+    },
+    {
+      "path": "backend/platform/platform-core/pom.xml",
+      "sha256": "1d8519379ed403e5bbc8eef346eeb500d22539266d3cd7da27fda8ac6fb12fee"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/CoreConfiguration.java",
+      "sha256": "30a3f6c68be87913fd42fd7745849afb8d2cfd32bee18013d10cbe53db1b420a"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/directory/AuditRetention.java",
+      "sha256": "295fa45b12a77a67f9b7bd97d4161df2074024034e376f1bcd7ea9f7eb8b2ad7"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/directory/DatabaseAudit.java",
+      "sha256": "1e8bb178e45a04f112bbc6c7c70f41d3e40f6b25f16849e3a9c149776fb135f1"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/event/ListenerContexts.java",
+      "sha256": "b7510064329d952d17d95cf62f432815fd1f518767dc6c974214d054ffd7122f"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/job/ScheduledTasks.java",
+      "sha256": "46020eeee63e1739d710c63f74968c599dd394b9fe702b912da9b55cdec2e78f"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/module/ModuleMigrations.java",
+      "sha256": "1f7e876e19ebd662c2a59735b12573ce546be0509b8da27e4b14f885a66378b2"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/observability/DatabaseMetrics.java",
+      "sha256": "308744f6cd43d98a725db5578646f690e6bef5d73206a896ef93d8e667325e5c"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/observability/RuntimeObservability.java",
+      "sha256": "b285644ab0d1f3ae098ebda77680acedd660ea873b9bb11345dbd4645f99bacb"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/SecurityConfiguration.java",
+      "sha256": "062fad37d3d09bf6ddd26bc85c65f3cb42d8472f9701c75bc5af8dfb20fc1433"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/LeasedTsidIds.java",
+      "sha256": "78bbc73cc2d813152aefa3f94b4add3572336ca2e36ffa9324a87af7afca6483"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/TsidIds.java",
+      "sha256": "8cd7d291a0d8cdd8dcb8b172c707c9a9dcf00a747eb7662c493b2147862d5a1e"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/cache/LocalCaches.java",
+      "sha256": "e0b06f0791fc0f7f94a6f43e37b1df0ba3dbebef431b3e8222ae18b106520133"
+    },
+    {
+      "path": "backend/platform/platform-testkit/README.md",
+      "sha256": "08538181c7382e912034d22a68ab7011aa896355cfe72553857017f1a954ec67"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/SearchDocumentProviderConformance.java",
+      "sha256": "3acc7abc39762f784f33a5b9d014020540460f66ebc1e9ba55a75631f418a830"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/TranslatableContentProviderConformance.java",
+      "sha256": "c766a19355f731fd40f4b175db1d86a51a450bb0ccf008605ff97990eadc0dee"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/TranslatableResourceProviderConformance.java",
+      "sha256": "3ab664eb23192fff0a381e24bce05870c7ff50593fb3c741e722cdf6e810a3b2"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/ContractSuites.java",
+      "sha256": "225336600aeba96fa86fe8e7171347b9ce60f9377a704899035be6200821deab"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/DomainEventContract.java",
+      "sha256": "c897d98d0f45c905248192406b914089fbae5c46e9f21673801ef1e912ab0e69"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/common/DictApiContract.java",
+      "sha256": "17b9ba02e8395784ad142cc097240135dcf889bc0918b02722c384f16b8ee27f"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/common/IdGeneratorContract.java",
+      "sha256": "a008bdd7570ece29c73fa1af660cfde0ff0852f5f2fd956df20ad6784cf49698"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/common/ProjectionChangeApiContract.java",
+      "sha256": "567c630d9c1d9007735783cf2c5524299eca5630d1712eff2c054ea28f5e034e"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/common/ReferenceWriteApiContract.java",
+      "sha256": "557b508737b143ff9fcc65e1a588502e364721fa5a3c21b2b3871b0f6bb1cb32"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/common/TransactionMutexApiContract.java",
+      "sha256": "d6c0da9f5d605a3c868eeed4f5090a3dc9b6d0d85c7084575a01a128ea4ac1a7"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/event/EventMetaFactoryContract.java",
+      "sha256": "cf805d9412da5cb7a8afd65d940b2751ff176b93480a1cfa81a1250c7f972d1a"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/extension/ExtensionRegistryContract.java",
+      "sha256": "c6c8bbab0529c459b867596dde88ae28332d2fbea600f3dd9dbef268c5ff2332"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/media/MediaApiContract.java",
+      "sha256": "23706c9ee137d8b983443f5eaa5fea474707974694a3d0a53eb9babfa1860cd5"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/BufferStoreContract.java",
+      "sha256": "686ad6e01804844fa91b5fe26ad3d8caeae5cf5bbe57b5773bec254bf00aaf60"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/CaptchaVerifierContract.java",
+      "sha256": "6f4407416bd79998d51924c46ffdd14352491870c3689425aa8f0f2b1f9857ed"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/CdnPurgerContract.java",
+      "sha256": "1cf2237b9375c8d5421d64b39d9526493679cc0b67144463df8f32a2957d067a"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/DistributedLockContract.java",
+      "sha256": "916cc8325f528b8e0660e06e4a002ecd48fa4494964c296f512be9291b30eef9"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/GeoIpResolverContract.java",
+      "sha256": "e0183688d5cb9f21ca3b2983581c7d9ccae728f9a2f44b4ec19cb20b4db603ef"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/ImageUrlSignerContract.java",
+      "sha256": "c40c26280edd1ae006616f0579b47eb66e1e0a400ace2731cf1dcc27581c4742"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/IndexNowClientContract.java",
+      "sha256": "4febc17e9b38843c79ab12bedc83485b795b12ec3d8642a4076d83401379d4ce"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/MailTransportContract.java",
+      "sha256": "58825cc65a28026387dc56f3ec559beeba0467f7c515ae10a3b980a1ba397258"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/MxRecordCheckerContract.java",
+      "sha256": "becba704066297f63a04e59c30b0c8ae8550d21040599e4b7c42982362bb6cba"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/RateLimiterContract.java",
+      "sha256": "9477f80f0b79d8ebc7d942a55731124f223072535fcc7e8b7bee52eab3bef8b4"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/RemoteFileFetcherContract.java",
+      "sha256": "73eae00f5d45645485230a16163f987d7e48d9ef6e3b3e98932e8ac09688eea6"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/TranslationEngineContract.java",
+      "sha256": "3c7a615e3a2080e52e5f54226d71f520b4f842193c5062b2f60c2aef40d57ec6"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/VirusScannerContract.java",
+      "sha256": "1036bc8f36b9c5159f481932be22ec2600d3f5895d502ba874f8c26b29dc33bc"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/WebhookTransportContract.java",
+      "sha256": "99723485f93ec6cb974f582d00cd0a450ba827be046d1280ab0f08b66dad85c6"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/security/AuditApiContract.java",
+      "sha256": "7be3f932b91e6a542ebb5d07097b4f065ccd055dd6e50a08551b24fc3a687889"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/security/CurrentUserProviderContract.java",
+      "sha256": "0663ddf0c73aa07337371a9f94d7bfb076c8d9d5169be9f95190c82e2d14e3f7"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/security/SecretCipherContract.java",
+      "sha256": "0ab850ba55f7b9f90ed387a48e9a028905b92d1e56873c92d24c28ad014394fd"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/security/UserDirectoryContract.java",
+      "sha256": "d620179923afb3ed3bd907ddc7f0ba402cc285610155e87666915e3d338d8fcc"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/site/SettingsApiContract.java",
+      "sha256": "f5dbb905e90141c99176dee18ce8daf792cf8a9bc70bde4799c36554b7f31366"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/site/SiteApiContract.java",
+      "sha256": "16c6a2d8e933dafa8ba87b7383048b9b6574be72f66a6e9497ac7dd58f8f1f38"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/site/SiteContextProviderContract.java",
+      "sha256": "521adc7f0cb6f5e88d869ada5e974640eb6e90a90e2dcf94524ae8c2d3005422"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/site/SiteProfileApiContract.java",
+      "sha256": "7dbbb74be99ab11b63df0da4a82d49c21c492115c89c3161936711c615d14847"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/site/UiTextApiContract.java",
+      "sha256": "9fe89bf5223e56b9b27bd61cf2c3774b77939e8f1fb836699a46547344c2b048"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/taxonomy/TaxonomyApiContract.java",
+      "sha256": "356fdfad5d2d0b306eeed696a32667dd8fce36cf3f02007daa7ba1a3dc1468db"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/url/UrlApiContract.java",
+      "sha256": "dcd2b7f54ae4c0206131c3558e611cee4d4f349367b7ece4449d4fbe0538ad1f"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/event/EventSamples.java",
+      "sha256": "0e06d2145f09adaa906f4f5f3d5744c084196f34dd02f08c3317cb26c12aa3b8"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/example/SampleExtensions.java",
+      "sha256": "17eada44b635160d6edb8a1adf1204607c69a6a397ec4afa99d9b60fd6d0ef90"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/fixture/ContractTransactions.java",
+      "sha256": "ba9a06eeb22b838347cf6a38df7e7178e72b99dbaa27f8b6661c57d67fbad991"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/port/FakeImageUrlSigner.java",
+      "sha256": "38ef988d7ccae766c4171983dacf3daccb99df1b0e505e8133f26912692ab85b"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/port/FakeTranslationEngine.java",
+      "sha256": "1f36a16db254deb1c0fdeb2e184c4227a0480342ee52d53ea5f1a4f6218e9b80"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/security/RecordedAudit.java",
+      "sha256": "c7718f0f9f4b17c97cd3582dcdb7320ab1d0b26ee3c105bad0031438fed038be"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/resources/META-INF/b2bweb/testkit/contract-catalog.json",
+      "sha256": "0a7b818caff25b8d82b2a6d8480371092b66ce886e0858fe229851925f63a012"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/ContractCatalogTest.java",
+      "sha256": "e731af485aeb5e283c1b2768166d0dc7747a267e046d7b3221269aab88c180cc"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/DomainEventsTest.java",
+      "sha256": "79a5fd94db9a904edfc8e3b5f36a5edf3420d2cc771fd9acd13e438a7fda7fb9"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/SampleConformanceTest.java",
+      "sha256": "b7a4ef8e983907cecbb41c8b3432b16dccdd3f22f233aeb1f7961454b2624043"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/SharedPortsTest.java",
+      "sha256": "761794af8854f01ffc66de79623a54a54f94796de2a08b9d45aa162f8f9558fd"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/SharedServicesTest.java",
+      "sha256": "a6540bfebee8f9c571e50efcdf0fb3784da212e5ca319340df1e811363ea9e1e"
+    },
+    {
+      "path": "docs/adr/0011-technology-versions.md",
+      "sha256": "c4b504fc415e90e84dab451a8f57d4c48c898005966fdd5eaa7c6ad6dbe11e4c"
+    },
+    {
+      "path": "docs/adr/0028-local-s3-provider.md",
+      "sha256": "2892fa49101eaec0bc05a66e26ad98cb331ab95bd2f154da2a4a49adb9cf9e27"
+    },
+    {
+      "path": "docs/adr/0032-core-runtime-maintenance.md",
+      "sha256": "a61eb61737d260f11b0719898eb2b179abc8c10832df0ed9cbe4b7815a4a7b3c"
+    },
+    {
+      "path": "docs/adr/README.md",
+      "sha256": "18b7c341f32ba2b320433b086df1e206ed801d5bb48fa0006cf18e5449e96827"
+    },
+    {
+      "path": "docs/architecture/system-design.md",
+      "sha256": "79404d0675975004eb3858ee62a91a0f21e1936874f84e6281bbb5b14730b399"
+    },
+    {
+      "path": "docs/framework/platform-framework.md",
+      "sha256": "8b665e16492e7fd9cedd55d24e1b01e3c6518aa75118b992b8e03239df4fd590"
+    },
+    {
+      "path": "docs/plans/development-plan.md",
+      "sha256": "8adfc2e7e3cc0d3428bf431f0530a96f74be0bfbbd12e5ae32cd90b4f5730b0f"
+    },
+    {
+      "path": "frontend/apps/website/app/components/B2bImage.vue",
+      "sha256": "2859a842a73c7728a48825a732b450c95f29836348a44bf5a076bb0004c35f3b"
+    },
+    {
+      "path": "frontend/apps/website/app/composables/useImagePreload.ts",
+      "sha256": "b9f4b39109c8cd7bd354d7bb22b6fa5c9180904af0c102bb3db6b2456cc608eb"
+    },
+    {
+      "path": "frontend/packages/component-schemas/scripts/check.mjs",
+      "sha256": "67f2354f6fd72c188aaf1a7c720d8b8cda12acbea5e2648f6129a2a4cbe663ee"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/catalog.test.ts",
+      "sha256": "7f48e1b676ddc3365a73b1fd9214336800bf01bbf5a36557be70e584d1f6ea87"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/generated.ts",
+      "sha256": "2bd0d25222b6a3ad830375f6068fd914fff3a5c9605db3ac5edc706f17390e5f"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/index.ts",
+      "sha256": "2936611d7e77edfebdc74fef75a19cec9277115c259343bc647c6ad0a7a4ca55"
+    },
+    {
+      "path": "frontend/packages/themes/package.json",
+      "sha256": "e8c77b76e7319474e8eeb74934a059619213bfa086ed40d0ad14d70d40e5eaad"
+    },
+    {
+      "path": "frontend/packages/themes/src/theme-contract.test.ts",
+      "sha256": "6e33f96f1a7e4d56270b97ea6d2496d15b2de50c7b6caef9c07797de71dea7ea"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/delivery.test.ts",
+      "sha256": "988a450389ae8ec81f027ae4b4bb39f47182616d1fc82ba4c62803033cefef55"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/delivery.ts",
+      "sha256": "52be35ffb9afd16099be14dfd64084e8fce95abaab6546565023cf2ed3fe5a13"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/index.ts",
+      "sha256": "ecc1552477453844797f9eeb5e2106a9f4cd284d1932050425a547061d23f927"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "add72829ee37a2d350e6af0c3e979200befa40215c05af8386ccb6265b29b75f"
+    },
+    {
+      "path": "tools/checks/architecture.py",
+      "sha256": "9876f8e7c4777f47cc15fcdb0dd2947ce3b51b67cd21581b75bbba05e843d1bf"
+    },
+    {
+      "path": "tools/checks/runtime_stack.py",
+      "sha256": "ac91eb10cbc356ca98a5457e35066031fb51dc1d3f79f8ce41bc94e946625857"
+    },
+    {
+      "path": "tools/checks/schema_selftest.py",
+      "sha256": "709e5005e8e150e8f12dfddde2cefd66648eca206beb8dac3663e98e3e274bec"
+    },
+    {
+      "path": "tools/dev/maven.py",
+      "sha256": "7f0622ee280ac8b4af8921bfe13159e7b729dd59b1d28f08eae3934af9232182"
+    },
+    {
+      "path": "tools/dev/stack.py",
+      "sha256": "9f76603cdfabd66754a32c4a6d31bfd982c31c22a8981418dd5d448046055e02"
+    },
+    {
+      "path": "tools/dev/verify_backend.py",
+      "sha256": "499df67e2612fb5660349524a23067810eb91dadd13a8d5be405ae254d711cb5"
+    },
+    {
+      "path": "tools/generators/catalog.py",
+      "sha256": "7155818f1e2ae81af613c009a70ed307e9c97a399b54188ae20931839a1f395a"
+    }
+  ],
+  "catalog": {
+    "services": 25,
+    "ports": 17,
+    "extensions": 25,
+    "events": 34,
+    "interfaces_with_shared_basic_behavior_suite": 42,
+    "full_semantic_acceptance": false
+  },
+  "backend_standard": {
+    "reactor_arguments": [
+      "-q",
+      "verify"
+    ],
+    "suites": [
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ArchitectureTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CacheRecoveryTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ComponentSchemasTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoordinatorsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreDirectoriesTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreSharedContractsTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.DomainEventsRealContractTest"
+      },
+      {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.JobsIntegrationTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.LocalCachesTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModularityTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleLifecycleTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleToggleTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.OpenApiExportTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PermissionsIntegrationTest"
+      },
+      {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PlatformIntegrationTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PreviewHttpTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProblemsIntegrationTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProductionSafetyTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RedisCacheContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RequestContextsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RuntimeMaintenanceTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ScheduledTasksTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImagesRealContractTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImgproxyIntegrationTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImgproxySignerTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.LocalAdaptersTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.SearchRealContractTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.StorageRealContractTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.TranslationHttpTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.TranslationRealContractTest"
+      },
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.api.ValueObjectsTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.CorePrimitivesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.ExtensionsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CacheDoublesTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentDoubleTest"
+      },
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentPreviewDoubleTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContractCatalogTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CoreDoublesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.DomainEventsTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ExtraPortsTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.FormDoubleContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.JobDoubleTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.LocalPortDoublesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.NotificationDoubleContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.PermissionDoubleTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.RemainingServicesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SampleConformanceTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SearchDoubleContractTest"
+      },
+      {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SharedPortsTest"
+      },
+      {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SharedServicesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.StorageDoubleContractTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.TaggedCacheDoubleContractTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.TranslationDoubleContractTest"
+      }
+    ],
+    "tests": 282,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+      "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+      "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+      "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538",
+      "imgproxy": "ghcr.io/imgproxy/imgproxy:v3.30.1@sha256:3b709e4a0e5e8e0e959b556b7031229202b4b8e7e7d955c517ea7abed68ee34d"
+    },
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "backend_development": {
+    "reactor_arguments": [
+      "-q",
+      "-Pdevelopment",
+      "verify"
+    ],
+    "suites": [
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ArchitectureTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CacheRecoveryTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ComponentSchemasTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoordinatorsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreDirectoriesTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreSharedContractsTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.DomainEventsRealContractTest"
+      },
+      {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.JobsIntegrationTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.LocalCachesTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModularityTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleLifecycleTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleToggleTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.OpenApiExportTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PermissionsIntegrationTest"
+      },
+      {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PlatformIntegrationTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PreviewHttpTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProblemsIntegrationTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProductionSafetyTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RedisCacheContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RequestContextsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RuntimeMaintenanceTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ScheduledTasksTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImagesRealContractTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImgproxyIntegrationTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.ImgproxySignerTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.LocalAdaptersTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.SearchRealContractTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.StorageRealContractTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.TranslationHttpTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.TranslationRealContractTest"
+      },
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.api.ValueObjectsTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.CorePrimitivesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.ExtensionsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CacheDoublesTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentDoubleTest"
+      },
+      {
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentPreviewDoubleTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContractCatalogTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CoreDoublesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.DomainEventsTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ExtraPortsTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.FormDoubleContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.JobDoubleTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.LocalPortDoublesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.NotificationDoubleContractTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.PermissionDoubleTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.RemainingServicesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SampleConformanceTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SearchDoubleContractTest"
+      },
+      {
+        "tests": 23,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SharedPortsTest"
+      },
+      {
+        "tests": 21,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.SharedServicesTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.StorageDoubleContractTest"
+      },
+      {
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.TaggedCacheDoubleContractTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.TranslationDoubleContractTest"
+      }
+    ],
+    "tests": 282,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+      "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+      "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+      "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538",
+      "imgproxy": "ghcr.io/imgproxy/imgproxy:v3.30.1@sha256:3b709e4a0e5e8e0e959b556b7031229202b4b8e7e7d955c517ea7abed68ee34d"
+    },
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "frontend": {
+    "lint": true,
+    "typecheck": true,
+    "test_files": 11,
+    "tests": 49,
+    "admin_build": true,
+    "nuxt_build": true
+  },
+  "schema_guard_selftest": {
+    "isolated_copy": true,
+    "cases": [
+      {
+        "case": "unchanged",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "missing_client_catalog_entry",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "tightened_limit_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "new_enum_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "relaxed_limit",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "optional_property",
+        "expected_pass": true,
+        "matched": true
+      }
+    ]
+  },
+  "new_module_exercise": {
+    "module": "sandbox",
+    "isolated_copy": true,
+    "elapsed_seconds": 91.006,
+    "budget_seconds": 3600,
+    "tests": 282,
+    "failures": 0,
+    "business_implementation": false,
+    "human_merge_review": false
+  },
+  "browser": {
+    "general": {
+      "viewports": [
+        {
+          "width": 1440,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 768,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 390,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 360,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        }
+      ],
+      "auth_scope": "UI injected failure handling; real API/session/MFA is tested by backend integration suite",
+      "ssr_without_js": true,
+      "admin_failure_state": true,
+      "admin_axe_violations": []
+    },
+    "form": {
+      "reactive_model_updates_and_validation": true,
+      "conditional_fields_and_secret_omission": true,
+      "recursive_repeater": true,
+      "typed_reference_selection": true,
+      "source_params_schema": true,
+      "real_tiptap_json_editing": true,
+      "readonly_and_automatic_language": true
+    },
+    "permissions": {
+      "transport": "real local HTTPS",
+      "injected_responses": false,
+      "ephemeral_member": true,
+      "route_guard_forbidden": true,
+      "server_denies_same_permission": true,
+      "empty_permission_snapshot": true,
+      "fixtures_removed": true
+    },
+    "preview": {
+      "transport": "real local HTTPS iframe",
+      "injected_responses": false,
+      "content_provider": "explicit development-only in-memory fixture; not production content",
+      "ephemeral_editor": true,
+      "sharing_cannot_enter_editor": true,
+      "server_gate_csp_and_private_headers": true,
+      "share_preview_ssr": true,
+      "real_iframe_init_and_patch": true,
+      "selection_roundtrip": true,
+      "unsafe_patch_rejected": true,
+      "wrong_window_source_rejected": true,
+      "live_issuer_revocation": true,
+      "fixtures_removed": true
+    },
+    "full_auth_browser_rerun": false
+  },
+  "runtime_stack": {
+    "private_readiness": "UP",
+    "management_publicly_accessible": false,
+    "prometheus_backlog_metrics": true,
+    "same_origin_https_image": true,
+    "actual_s3_png_dimensions": [
+      80,
+      60
+    ],
+    "tampered_signature_status": 403,
+    "fixture_removed": true,
+    "production_storage_certification": false
+  },
+  "cache_process_failures": {
+    "provider": "formal Core RedisTaggedCache + CacheRecovery",
+    "real_process_restart": true,
+    "old_ready_rdb_rejected": true,
+    "old_fence_cannot_refill": true,
+    "recovery_reopens_after_confirmation": true,
+    "outage_read_bypass_seconds": 1.014,
+    "outage_invalidation_fails_closed": true
+  },
+  "security": {
+    "summary": {
+      "gitleaks": true,
+      "pnpm_high_gate": false,
+      "automatic_waivers": false
+    },
+    "pnpm_vulnerability_counts": {
+      "info": 0,
+      "low": 0,
+      "moderate": 1,
+      "high": 2,
+      "critical": 0
+    },
+    "unfixed_high_advisories": [
+      "GHSA-86w9-cpqp-85rv",
+      "GHSA-vfj7-8cjw-p6xm"
+    ],
+    "backend": {
+      "scanner": "OSV querybatch",
+      "automatic_waivers": false,
+      "status": "error",
+      "packages": 259,
+      "findings": [],
+      "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    "remote_actions": "unconfirmed; gh run list API request Forbidden"
+  },
+  "g0_approved": false,
+  "adrs_automatically_accepted": false,
+  "main_merged": false,
+  "release_tag_created": false,
+  "remaining_engineering_queue": [
+    "full per-method service and port behavior matrix",
+    "remaining SPI consumer conformance and provider pairing",
+    "remaining chapter 5 support and observability matrix",
+    "formal search lock/kill/generation retention fault matrix",
+    "remaining chapter 8 delivery/template/schema/visual gates",
+    "remaining chapter 10 CI gates"
+  ],
+  "human_review_requirement": "Two independent human reviewers including architecture owner"
+}

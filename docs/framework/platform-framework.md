@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | V1.9 |
+| 文档版本 | V1.10 |
 | 状态 | 草案（Draft），待评审 |
 | 更新日期 | 2026-10-21 |
 | 项目代号 | B2B Web Platform |
-| 依据 | 《系统设计说明书》V1.11（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-031（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
+| 依据 | 《系统设计说明书》V1.12（`docs/architecture/system-design.md`）；架构决策记录 ADR-000 至 ADR-032（`docs/adr/`），重点为 ADR-001、ADR-002、ADR-003、ADR-004、ADR-009、ADR-012、ADR-014、ADR-017、ADR-018 |
 | 定位 | 里程碑 M0 的交付物设计；全部跨模块契约的唯一定义处；各模块并行开发的前提 |
 | 文档负责人 | 架构负责人 |
 
@@ -185,6 +185,7 @@ M0 完成的判定见 13.1；系统设计 30 章的 M0 验收标准（“示例�
 | V1.6 | 2026-10-20 | M0-07C反馈：恢复门闩覆盖读写与旧RDB代次，可靠失效不经BufferStore去抖，统一freshUntil示例；保持既有DDL和跨模块签名 |
 | V1.7 | 2026-10-20 | 正式工程RC：完整契约编译、设置对象与启动回调统一、模块停用策略读取、Core技术表V002/V003、实际任务/调度与事务协调器；ADR-026～029待评审。保留G0完整门槛，不以目录覆盖代替全部契约语义验收 |
 | V1.8 | 2026-10-21 | ADR-030：补齐预览用途、签发人及编辑授权契约，统一内容权限码；保持待评审 |
+| V1.10 | 2026-10-21 | 42接口共享基础行为套件、34事件样例及目录门禁；ADR-032节点租约/审计维护/观测候选；真实imgproxy链和SSR引用预设装配，未替代完整G0与人工签审 |
 | V1.9 | 2026-10-21 | 正式HTTP预览、画布及Schema底座；ADR-031持久恢复边界和Core V004追加迁移；搜索空投影契约说明统一；G0仍待完整行为、安全和人工评审 |
 
 ---
@@ -8457,7 +8458,7 @@ OptimisticUpdates.updateById(ruleMapper, po, expectedVersion,
 
 | 项 | 规定 |
 |---|---|
-| 结构 | 时间戳 + 10 位节点号 + 序列；纪元与位宽以 BOM 中 TSID 库的默认值为准（M0 写入 ADR-011） |
+| 结构 | ADR-032候选使用正数long的41位UTC毫秒 + 10位节点 + 12位序列，纪元2020-01-01；实现未引入TSID库，见ADR-011候选表，待正式评审 |
 | 节点号 | 启动时在 `sys_lock` 中租用 `core:tsid-node:{n}`（n = 0–1023，取第一个可用），租期 5 分钟、每分钟续租；续租失败时实例 readiness 变为 DOWN 并停止生成 ID，避免与接手该节点号的实例冲突（ADR-014“多实例不冲突”） |
 | 时钟回拨 | 1 秒以内等待；更大时拒绝生成并告警 |
 | 启动顺序 | 迁移（步骤 4）完成后租用；`--mode=migrate` 同样租用（`onInstall` 需要 ID） |
@@ -8790,8 +8791,8 @@ core 的本地缓存：
 |---|---|
 | 自动填充 | 操作人 ID 与姓名快照（`CurrentUserProvider.actor()`）、IP 与 UA（`RequestContext`）、`trace_id`、站点（`systemLevel = true` 时为空，否则当前站点）、时间 |
 | 事务 | `record` 加入调用方事务（业务回滚则审计一并回滚；审计写入失败使业务失败，不静默丢弃）；`recordIndependently` 为 `REQUIRES_NEW` |
-| 差异 | `diff` 序列化为 JSON，超过 64 KB 时截断并标记 `truncated`；`AuditChange.masked()` 原样记录为掩码；值为 `Secret` 时自动掩码 |
-| 只追加 | Mapper 只有 insert 与 select（ArchUnit，第 6 章不变量 16）；唯一的删除路径是保留期清理 `core.audit_retention`（默认 365 天，`core.retention` 设置，系统设计 26.5） |
+| 差异 | `diff` 序列化为 JSON，超过64KiB时按完整字段删除并以`__truncated: {from:null,to:true}`标记，不截断UTF-8/JSON；`AuditChange.masked()` 原样记录为掩码；值为 `Secret` 时自动掩码 |
+| 只追加 | Mapper 只有 insert 与 select（ArchUnit，第 6 章不变量 16）；唯一的删除路径是保留期清理 `core.audit_retention`（默认 365 天，`core.retention` 设置，系统设计 26.5）；候选实现每批1000、每次最多10批，保留边界等于cutoff的记录 |
 | IP | 审计记录保存完整 IP（安全用途，保留期内可查）；应用日志中的 IP 按 5.13 截断 |
 | 查询 | `/api/admin/v1/system/audit-logs`（`system:audit:view`）：表已豁免站点过滤，站点内查询显式带 `site_id = 当前站点`；系统级记录与全部站点只对系统管理员开放 |
 
@@ -8987,7 +8988,7 @@ public class B2bWebApplication {
 | `migrate` | 生产发布第 1 步（系统设计 27.3） | 用迁移账号执行步骤 1–6 后退出；不启动 Web、任务执行器与定时任务 |
 | `purge` | 彻底删除模块数据（5.2.3） | 检查前置条件、执行 `onPurge` 后退出 |
 
-**优雅停机**：`server.shutdown = graceful`，`spring.lifecycle.timeout-per-shutdown-phase = 30s`。停机时先把 readiness 置为 DOWN，执行器停止认领新任务；执行中的任务在超时前没有结束则保持 `RUNNING`，由其他实例的 `core.job_reaper` 回收；释放 TSID 节点号租约。
+**优雅停机**：`server.shutdown = graceful`，`spring.lifecycle.timeout-per-shutdown-phase = 30s`。停机时先把 readiness 置为 DOWN，执行器停止认领新任务；执行中的任务在超时前没有结束则保持 `RUNNING`，由其他实例的 `core.job_reaper` 回收；停止发号，保留剩余TSID租期作为交接隔离窗口（ADR-032候选）；不在关闭时立即复用节点。
 
 #### 5.14.2 配置的分类
 
@@ -11385,6 +11386,8 @@ export interface SectionComponentProps<P> {
 | 链接 | `<B2bLink :link="props.link">`：`$content` 取 refs 中的路径；外部链接加 `rel="noopener"`，并按链接对象输出 `nofollow` / `sponsored`；没有可用目标时只渲染文字 |
 | 禁止 | 前台不得用 ID、slug 自行拼接 URL；不得为缺失的引用发起额外请求 |
 
+前端M0候选的`provideDeliveryRefs`按Vue应用/SSR请求注入当前站点、当前语言引用表；导航后响应式更新，不能使用模块级全局表。`refs.media[id].imageSources[preset]`保存Media已签名的`ImageSources`；`useRefs().image(ref,preset)`只取完全匹配的mediaId/预设，私有、缺失或无效数据返回null。Nuxt的`B2bImage`按上表接收media与preset，底层图片VNode仅接收解析结果。正式Delivery/Media业务提供方的批量装配仍需配对验收，辅助函数不自行发请求。
+
 #### 8.3.8 富文本渲染器
 
 | 层 | 内容 |
@@ -11666,7 +11669,7 @@ resolveVariant(type: string, variant: string): string                           
 | 规则 | 说明 |
 |---|---|
 | 签名 | 每一步 `(props) => props`，键为起始版本（系统设计 10.9 的 `(props, fromVersion) => props` 由 `migrate` 组合） |
-| 纯函数 | 不访问网络、存储、时间与随机数；不改写文本内容本身（只调整结构），不丢弃 `$media` / `$content` / `$term` / `$source` 引用 |
+| 纯函数 | 不访问网络、存储、时间与随机数；不改写文本内容本身（只调整结构），不丢弃 `$media` / `$content` / `$term` / `$source` 引用。M0候选逐步冻结输入并比对引用集合，拒绝异步/非法结果；每步复制结果后才继续 |
 | 测试 | 每一步在 `__fixtures__/<type>/` 中有输入与期望输出，Vitest 逐步验证（9.6.1）；迁移结果必须通过当前版本的 `propsSchema` |
 | 归档 | 破坏性变更时，把变更前的定义复制到 `history/<type>.v<N>.json`（检查脚本校验存在） |
 | 执行方 | Admin 打开草稿时执行（保存的总是最新版本）；Nuxt 渲染旧快照时即时执行（旧内容无需重新发布）（系统设计 10.9）；后端不执行 TypeScript 迁移 |
@@ -11674,6 +11677,8 @@ resolveVariant(type: string, variant: string): string                           
 | 变体改名或删除 | 在 `variantAliases` 中登记映射，视为破坏性变更 |
 
 **破坏性变更**（`pnpm check:schemas --base origin/main` 判定）：删除或改名属性、改变类型、新增必填属性、收紧约束（`maxLength` 变小、`enum` 减少、`pattern` 变化）、改变 `$ref` 目标、删除或改名变体、从 `allowedIn` 中移除位置。破坏性变更必须同时：`version` 恰好 +1、提供该步迁移与测试、归档旧定义（系统设计 10.9、29.3；`CLAUDE.md` 提交前检查）。新增可选属性、放宽约束、新增变体不是破坏性变更，版本不变。模板的区域变化按同样规则判定（模板没有迁移函数：删除区域时插槽中的组件在渲染时忽略，并由 page 模块提供数据修正，见其模块设计文档）。
+
+客户端Schema索引由`pnpm check:schemas --write-index`从当前JSON文件生成；普通检查对比静态导入目录，不能只增加JSON却遗漏Admin/Nuxt注册。主题套件枚举当前全部Schema变体并实际加载，禁止用默认变体回退掩盖缺失。
 
 #### 8.4.5 后端加载
 
