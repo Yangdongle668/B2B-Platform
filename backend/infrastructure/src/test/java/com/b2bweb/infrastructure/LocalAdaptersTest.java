@@ -67,8 +67,10 @@ class LocalAdaptersTest {
             .credentialsProvider(credentials)
             .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
             .build();
-    for (String bucket : List.of("public-assets", "private-assets"))
-      s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build());
+    for (String bucket : List.of("public-assets", "private-assets")) {
+      try { s3.createBucket(CreateBucketRequest.builder().bucket(bucket).build()); }
+      catch (BucketAlreadyOwnedByYouException alreadyOwned) { /* Shared contract suites reuse the same disposable service. */ }
+    }
     storage =
         new S3ObjectStorage(
             s3,

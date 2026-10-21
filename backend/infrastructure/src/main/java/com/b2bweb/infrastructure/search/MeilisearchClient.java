@@ -197,7 +197,7 @@ public final class MeilisearchClient implements SearchEngineClient {
     if (input.filter() != null) body.put("filter", input.filter());
     body.set("facets", json.valueToTree(input.facets()));
     body.set("sort", json.valueToTree(input.sort()));
-    body.set("attributesToRetrieve", json.valueToTree(input.attributesToRetrieve()));
+    if (!input.attributesToRetrieve().isEmpty()) body.set("attributesToRetrieve", json.valueToTree(input.attributesToRetrieve()));
     body.set("attributesToHighlight", json.valueToTree(input.attributesToHighlight()));
     var res = call("POST", index(name) + "/search", body, false);
     List<JsonNode> hits = new ArrayList<>();

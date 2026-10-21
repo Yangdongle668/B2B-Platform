@@ -6506,6 +6506,7 @@ public record SearchIndexSettings(String primaryKey, List<String> searchableAttr
 /**
  * @param filter 过滤表达式：由 search 用白名单字段构造，值必须经 SearchFilters 转义，不得拼接用户输入
  * @param sort   如 "published_at:desc"；字段必须在 sortableAttributes 中
+ * @param attributesToRetrieve 空表示默认全部字段；非空仅返回指定字段，*表示全部（ADR-026候选澄清）
  * @param limit  1–100
  */
 public record SearchRequest(String query, @Nullable String filter, List<String> facets, List<String> sort,
