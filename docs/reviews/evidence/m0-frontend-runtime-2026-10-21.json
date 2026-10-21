@@ -1,0 +1,597 @@
+{
+  "date": "2026-10-21",
+  "user_timezone": "Asia/Shanghai",
+  "base_commit": "72a5984879970a37db42e80b0f79b78db2ecfcba",
+  "normal": {
+    "reactor_arguments": [
+      "-q",
+      "verify"
+    ],
+    "suites": [
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ArchitectureTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoordinatorsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreDirectoriesTest"
+      },
+      {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.JobsIntegrationTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModularityTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleLifecycleTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleToggleTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.OpenApiExportTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PermissionsIntegrationTest"
+      },
+      {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PlatformIntegrationTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProblemsIntegrationTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProductionSafetyTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RequestContextsTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ScheduledTasksTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.LocalAdaptersTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.api.ValueObjectsTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.CorePrimitivesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.ExtensionsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CacheDoublesTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentDoubleTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContractCatalogTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CoreDoublesTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ExtraPortsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.JobDoubleTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.LocalPortDoublesTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.PermissionDoubleTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.RemainingServicesTest"
+      }
+    ],
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+      "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+      "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+      "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538"
+    },
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "development": {
+    "reactor_arguments": [
+      "-q",
+      "-Pdevelopment",
+      "verify"
+    ],
+    "suites": [
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ArchitectureTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoordinatorsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.CoreDirectoriesTest"
+      },
+      {
+        "tests": 14,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.JobsIntegrationTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModularityTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleLifecycleTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ModuleToggleTest"
+      },
+      {
+        "tests": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.OpenApiExportTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PermissionsIntegrationTest"
+      },
+      {
+        "tests": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.PlatformIntegrationTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProblemsIntegrationTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ProductionSafetyTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.RequestContextsTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.application.ScheduledTasksTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.infrastructure.LocalAdaptersTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.api.ValueObjectsTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.CorePrimitivesTest"
+      },
+      {
+        "tests": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.core.ExtensionsTest"
+      },
+      {
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CacheDoublesTest"
+      },
+      {
+        "tests": 10,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContentDoubleTest"
+      },
+      {
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ContractCatalogTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.CoreDoublesTest"
+      },
+      {
+        "tests": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.ExtraPortsTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.JobDoubleTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.LocalPortDoublesTest"
+      },
+      {
+        "tests": 7,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.PermissionDoubleTest"
+      },
+      {
+        "tests": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "name": "com.b2bweb.testkit.RemainingServicesTest"
+      }
+    ],
+    "tests": 156,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "images": {
+      "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+      "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+      "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+      "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+      "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+      "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538"
+    },
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "frontend": {
+    "tests": 24,
+    "lint": true,
+    "typecheck": true,
+    "admin_build": true,
+    "nuxt_build": true,
+    "unit_suites": [
+      "AdminRuntime: 7",
+      "ThemeRegistry: 5",
+      "freshness and boundaries: 12"
+    ],
+    "module_catalog": {
+      "admin_modules": 18,
+      "contributed_routes": 1,
+      "menu_routes_pending_business_implementation": 28
+    }
+  },
+  "browser": {
+    "viewports": [
+      {
+        "width": 1440,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 768,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 390,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 360,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      }
+    ],
+    "auth_scope": "UI injected failure handling; real API/session/MFA is tested by backend integration suite",
+    "ssr_without_js": true,
+    "admin_failure_state": true,
+    "admin_axe_violations": []
+  },
+  "https_admin": {
+    "transport": "real local HTTPS",
+    "injected_responses": false,
+    "single_use_recovery": true,
+    "secure_redis_session": true,
+    "dynamic_module_route": true,
+    "module_deep_link_refresh": true,
+    "real_permission_snapshot": true,
+    "unregistered_route_denied": true,
+    "logout_revokes_access": true
+  },
+  "https_unprivileged_member": {
+    "transport": "real local HTTPS",
+    "injected_responses": false,
+    "ephemeral_member": true,
+    "route_guard_forbidden": true,
+    "server_denies_same_permission": true,
+    "empty_permission_snapshot": true,
+    "fixtures_removed": true
+  },
+  "new_module": {
+    "module": "sandbox",
+    "isolated_copy": true,
+    "elapsed_seconds": 107.87,
+    "budget_seconds": 3600,
+    "tests": 156,
+    "failures": 0,
+    "business_implementation": false,
+    "human_merge_review": false
+  },
+  "security": {
+    "gitleaks": true,
+    "pnpm_high_gate": false,
+    "automatic_waivers": false
+  },
+  "actual_openapi_paths": 18,
+  "api_client_regenerated": true,
+  "g0_passed": false,
+  "limitations": [
+    "iframe draft preview authorization not implemented",
+    "full SectionRenderer, schema form and frontend chapter 8 checks still incomplete",
+    "only one Hero schema and one Core route; 28 declared menu routes remain in business milestones",
+    "remaining shared service/port behavior and SPI conformance suites",
+    "remaining Core and formal cache-recovery matrices",
+    "MinIO and remaining local/production adapter candidates",
+    "two high build dependency advisories, backend vulnerability database access and remote CI verification",
+    "formal architecture and module owner approval, main merge and version freeze"
+  ],
+  "source_sha256": {
+    "backend/application/src/test/java/com/b2bweb/application/PermissionsIntegrationTest.java": "a69293896a390718f83fba4697909db4c5a19f7f34fbb3d39c14c545f26cc64a",
+    "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/BootstrapController.java": "4e090cb5df2feafbba8fe700a4bde3ff48bfebdb0df6db2d2d07b49327262703",
+    "eslint.config.mjs": "a6a67211a7d298ffb4d31cc193afa76ce95812aae7af4c358b20530d4ddce222",
+    "frontend/apps/admin/index.html": "ff65fd4564170460dccc47394a7259788a25e425eabb61c9d3c645aeac314a5d",
+    "frontend/apps/admin/package.json": "6fbb13566aaffcbeb3ff1ae417d1de2f8fb7267424fd4dd06a2dbe246f2b49d5",
+    "frontend/apps/admin/src/App.vue": "be0bd0fdfda631a664121ed6e47f94cbb3c0786d8b751d1becadbc54368d5c3b",
+    "frontend/apps/admin/src/core/RouteStatus.vue": "dc0660715488da8cea5c9ce5b4e9e805d7e0e9fa8f27e11da6e98a1a7d1c8087",
+    "frontend/apps/admin/src/core/router.ts": "875bcc34dcf91b4e63ade9abec3453b23bd3c93f57c8ab6ab737214ba545c082",
+    "frontend/apps/admin/src/main.ts": "7dcff5b8b3d98ae0c21b91c927b9078d8f8c5bbc12b617b07ec68332bd6fb79d",
+    "frontend/apps/admin/src/modules/article/index.ts": "e41f0d5cc8e8a43a7b08a5fabaaeb509c48f9c9bf0a072cbc713c2e624bf798a",
+    "frontend/apps/admin/src/modules/content/index.ts": "4a35034c0eae84f7cb2502a5635debad9dfa86598a83ad714bf80058362774ee",
+    "frontend/apps/admin/src/modules/delivery/index.ts": "9fd4c9d4aa56d77213e335c20de7148b6d296fb11cfa53ae3d41a3596e22f554",
+    "frontend/apps/admin/src/modules/form/index.ts": "14a41900ce1234d3c6010cb7ee6ef67c386142a48bd88e437183dddfe4cf9695",
+    "frontend/apps/admin/src/modules/graph/index.ts": "b6f75e4d0a7d8735305b80c9cc26c5d6ac93b9ca3d03859c86694871dd6d6f5d",
+    "frontend/apps/admin/src/modules/index.ts": "c94c4757ea0caa3ec5e0f40f1975ce5aa2d26b57c1f9938936c7aa202e4fd6b7",
+    "frontend/apps/admin/src/modules/inquiry/index.ts": "1a97b2289407bc271280de269b5492dbc5e63c8d688ad3420e53b08b227257c1",
+    "frontend/apps/admin/src/modules/media/index.ts": "72ac83485bb776e2a749d018f7e71fc0e99a827a3c076b5b8dcd357e0d35516f",
+    "frontend/apps/admin/src/modules/navigation/index.ts": "e6066c9b8d3c05eb2fad5a180c032570e226b58edd53b6a3bda6606467a4be37",
+    "frontend/apps/admin/src/modules/notification/index.ts": "3b632c094a6b51a8c646c076face165228e6f40ac7ce17dcfe4b98750e73dfaa",
+    "frontend/apps/admin/src/modules/page/index.ts": "d8cf16445041be1b1c151f1490de51cafe30199a216a430976e647aa4fffa48c",
+    "frontend/apps/admin/src/modules/product/index.ts": "1933c82c2d10e040d840f8709d204a615163d9dca555fdbcac96769addd6568d",
+    "frontend/apps/admin/src/modules/search/index.ts": "b8f9cfcb84a8216907a57dc048fdc4d380e6143004af0f3882f478f37f30b4cb",
+    "frontend/apps/admin/src/modules/seo/index.ts": "4fa6d7db2d5f252c66cf80e1cfed8889ce1ca215e9c28fa50ff37caed6c186f3",
+    "frontend/apps/admin/src/modules/system/index.ts": "f3e55b2632006efdf623b397d8cf1059c389cfe3171e3b6c5febcc21f7cb8513",
+    "frontend/apps/admin/src/modules/system/texts.ts": "7fa32312578c2bdaedcd333222135c505fe420042b0586f7c6385990d17cd5e5",
+    "frontend/apps/admin/src/modules/system/views/ModuleList.vue": "a356f7303a6d43e68caa4dada2fb482a18dfeda9b9e4fbe21e5054f5ef9b57b5",
+    "frontend/apps/admin/src/modules/taxonomy/index.ts": "4761f0b5c37f012a4139a5d412b05f29515ea47da36db97ccdd2418cb772386d",
+    "frontend/apps/admin/src/modules/tracking/index.ts": "8041469101a690b56a05ccb2df63bdbacaa60b5bb25a46296e52cc8c902b74e4",
+    "frontend/apps/admin/src/modules/translation/index.ts": "2bc90a7cf478b1c0826bdc6c8fd3fbdcfbd4fa8895f72d1e297d5c742848344c",
+    "frontend/apps/admin/src/modules/url/index.ts": "2e06bbafd6bfa739b9b68bae0a834894cfc7919d1c7af67a8567597a241fe9b2",
+    "frontend/apps/admin/src/texts/index.ts": "3b6bde7a5ba4e8563b27b47449327fd2f2169cefcd2fed2db7e847df4269e9b5",
+    "frontend/apps/admin/tsconfig.json": "9e31e9890a7dde06fba8bf52b8bd8b8b6889b2235c2aba9bb9379b556fc9830a",
+    "frontend/apps/admin/vite.config.ts": "faf8ea7991f98fd801861736a52c78c524d0f623e528e3bb8f99b4857537c759",
+    "frontend/apps/website/app/app.vue": "ecdc95b40adc190558c14b0c9e6dd01bf5008d34ade3167a27ff081782e9aa93",
+    "frontend/apps/website/app/assets/industrial.css": "80b74f8ebe5fd1287aecc6c12015321dcdf5219a22001a998a0455426f36cab1",
+    "frontend/apps/website/app/pages/index.vue": "2353fb2ee4ad209d3a4a970a6fa3eacf4b1ec7f2e18edaf5f8dc4eda0d5c8395",
+    "frontend/apps/website/app/pages/zh/gallery.vue": "1c1f4de375dcd762dee23c9a7228fafdd9324f97d7cd80be78d4ffc2929481e4",
+    "frontend/apps/website/app/pages/zh/index.vue": "65edef35ef0246034e6f695ced587b436e9243429eb93cdff653eb966f127aed",
+    "frontend/apps/website/app/texts/zh-CN.ts": "b992d695ae800ad88f0434b8da68fc088e6f38a66e02f50af4888f0c9108be89",
+    "frontend/apps/website/app/theme.ts": "399138d9ffad0d486f0a229c96f479a54f7789ed39e92467225f7126c31e2c80",
+    "frontend/apps/website/nuxt.config.ts": "5916a43e89cc8f07196ead5f69faed09c4b4c39d6b2667c28beaed96e4bb4038",
+    "frontend/apps/website/package.json": "065c052795ff9a0f9ea6aa1ef39739ff5aa597a405a2776d044c000826658fdd",
+    "frontend/apps/website/tsconfig.json": "e02fab3fb7003c84c771b43a9dd8ea5f3dea615eb88c94734ddf13a7ec22988e",
+    "frontend/packages/admin-kit/package.json": "856ce78e821ae2906673911cadc181fed354d6e91303e3e6b26c0f9147d1b2ee",
+    "frontend/packages/admin-kit/src/admin.css": "29c2ab8792b95d723bf4bc4df6e9cdba28a67e9bc5e3006714d4a449cd3ad035",
+    "frontend/packages/admin-kit/src/index.ts": "587f9e8fc9438b5e72ecfb560987ed39d8b873126b83ae2b086c9c22e1d971a5",
+    "frontend/packages/admin-kit/src/runtime.test.ts": "6de58ac793d7d0d94f196bdb49775ebcd68c195b3762ac41be0a25884c109c9d",
+    "frontend/packages/admin-kit/src/runtime.ts": "01d428fc51ba3e6ea2274810582dfef2c0602a742c9c75831bb75d56a84d4391",
+    "frontend/packages/api-client/openapi.json": "4d0b508be123a0ccb1fb0c21aa3d7eb11c1f39e53cce114e655973e8186ed872",
+    "frontend/packages/api-client/package.json": "479406fb01ed36bc7da6b7eaeee08bbee736312bcf428947d08f30e5765b7436",
+    "frontend/packages/api-client/src/index.ts": "29e112dfaa6e422aa554d5af584d25c2c156ec81a98468c8103f1e78cfcf5fff",
+    "frontend/packages/api-client/src/schema.d.ts": "d7b515bd5b93d92ea0d7a05cd0ee02b3be88ff70dd08695cd6edc104a7d4091e",
+    "frontend/packages/component-schemas/package.json": "e3c3ae0a8cc56403c484259451527a6746edb99baac5b61738e89d351eb6aa6b",
+    "frontend/packages/component-schemas/src/index.ts": "df4690d52eeabeb05539158643bfdd77524d1c6b0127c3fe286eed7c40a49a0d",
+    "frontend/packages/design-tokens/package.json": "262ab84c8227561e4f51c07a07de0c1d70ae4c7315eb58ec593177cfe732d251",
+    "frontend/packages/design-tokens/src/index.ts": "8d19b3158bf2dba8e373256589476094ae5bfa506981d60c6312090e6a121afc",
+    "frontend/packages/design-tokens/src/tokens.css": "5527e3966fa5f2e543fdefee94680946340b669ba2e79d8883147ab8a9a228ca",
+    "frontend/packages/themes/industrial/texts/zh-CN.json": "bac4a02c5737c89bfe9575087747ad98cc72c2fdfb46ecc08a2d5bb91082ba73",
+    "frontend/packages/themes/package.json": "7ed0637195d0f55fe8e394f807045b4d7840dd2f1e9ed485d43d19b010a197e9",
+    "frontend/packages/themes/src/index.ts": "8d1ee29dc81e71129128b32ff143164014b567de3d81f58c1e37d919faf5c2f3",
+    "frontend/packages/website-kit/package.json": "13e636666f3b3b972df77f2951a724bf4eecef51fa1fc374c035ea75cbc16dbd",
+    "frontend/packages/website-kit/src/index.test.ts": "245bf34ac7207342f869873f9608b6d0b0e7f348dfc901733c6d1a3925ab376a",
+    "frontend/packages/website-kit/src/index.ts": "cd22b34af4265443492a599d89fdba2e633a58955a6e2ea9f713b09d44419999",
+    "frontend/packages/website-kit/src/texts/zh-CN.ts": "d040f975636c54fd5cd1edea3eb6cb31fa11fea521c5877017a1feef0d7423f5",
+    "frontend/packages/website-kit/src/theme.test.ts": "e88694c682e69e20a34aebab8d5fc02ca79679f10fc03c44bbea893381e3db4c",
+    "frontend/packages/website-kit/src/theme.ts": "7fa89567c82f5b0e7b348eef1b6b8052f9f2b0642b4a83e546dd22919f8f346b",
+    "frontend/tsconfig.json": "33ed793b4bd715ed6009e3109eb5bf0447402eafa5e1035510d6d9084cae262d",
+    "package.json": "b8356d60e2ad25bb8889fb992406e7c1a0043f7eee31a2f3bc3c4a1e64eaa7f4",
+    "pnpm-lock.yaml": "a875840f79d4cee2d262224c158e7c926985b7af5b8ccd08f7e189b99062d8bd",
+    "tools/frontend/auth_browser.py": "b46a7b8bf0c63ac4a0ec0b2c93beed5ab4f6fc736536be6dcf39cec99096daee",
+    "tools/frontend/modules.mjs": "80f5b083a1016925900879d1c06d39002ea71cddaca14254ba25d99d03495ceb",
+    "tools/frontend/permissions_browser.py": "3cb0f04e38bcdf9db747b7780c81587b6e85c429c950d4e852340619edd215db"
+  }
+}

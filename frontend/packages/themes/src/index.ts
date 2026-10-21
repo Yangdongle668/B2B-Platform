@@ -1,3 +1,10 @@
 import { defineComponent, h } from 'vue'
+import type { PropType } from 'vue'
+import { baseTheme, defineTheme } from '@b2bweb/website-kit'
+import dictionary from '../industrial/texts/zh-CN.json'
 export interface HeroProps { title: string; description: string; actionLabel: string; actionPath: string; headingLevel?: 1 | 2 }
 export const Hero = defineComponent({ name: 'IndustrialHero', props: { headingLevel: { type: Number, default: 1, validator: (value: number) => value === 1 || value === 2 }, title: { type: String, required: true }, description: { type: String, required: true }, actionLabel: { type: String, required: true }, actionPath: { type: String, required: true } }, setup: props => () => h('section', { class: 'industrial-hero' }, [h(props.headingLevel === 2 ? 'h2' : 'h1', props.title), h('p', props.description), h('a', { href: props.actionPath, class: 'industrial-action' }, props.actionLabel)]) })
+
+const IndustrialHeader = defineComponent({ name: 'IndustrialHeader', props: { brand: { type: String, required: true }, links: { type: Array as PropType<Array<{ label: string; path: string }>>, default: () => [] } }, setup: props => () => h('header', h('nav', [h('span', props.brand), ...props.links.map(link => h('a', { href: link.path }, link.label))])) })
+const IndustrialFooter = defineComponent({ name: 'IndustrialFooter', props: { label: { type: String, required: true }, homeLabel: { type: String, required: true }, homePath: { type: String, required: true } }, setup: props => () => h('footer', { class: 'industrial-footer' }, [h('span', props.label), h('a', { href: props.homePath }, props.homeLabel)]) })
+export const industrialTheme = defineTheme({ key: 'industrial', label: dictionary['theme.label'], extends: 'base', layouts: baseTheme.layouts, header: { default: 'solid', variants: { solid: async () => IndustrialHeader } }, footer: { default: 'default', variants: { default: async () => IndustrialFooter } }, templates: {}, components: { 'page.hero': { default: 'default', variants: { default: async () => Hero } } }, texts: async () => ({ ...dictionary }) })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Hero } from '@b2bweb/themes'
+import { HeroView as Hero } from '../../theme'
 import { text } from '@b2bweb/website-kit'
 import texts from '../../texts/zh-CN'
 useHead({ htmlAttrs: { lang: 'zh-CN' }, title: text(texts,'gallery.title'), meta: [{ name: 'robots', content: 'noindex,nofollow' }] })

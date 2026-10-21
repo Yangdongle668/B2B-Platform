@@ -140,6 +140,9 @@ importers:
 
   frontend/packages/themes:
     dependencies:
+      '@b2bweb/website-kit':
+        specifier: workspace:*
+        version: link:../website-kit
       vue:
         specifier: 3.5.44
         version: 3.5.44(typescript@5.9.3)

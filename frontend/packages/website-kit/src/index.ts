@@ -1,4 +1,6 @@
 export type Texts = Readonly<Record<string,string>>
+export { defineTheme, baseTheme, ThemeRegistry, themeComponent } from './theme'
+export type { ThemeDefinition, VariantSet, ResolvedVariant, ThemeDiagnostic } from './theme'
 export function text(texts: Texts, key: string, values: Record<string,string> = {}): string { const value = texts[key]; if (value === undefined) throw new Error(`Missing text: ${key}`); return value.replace(/\{([a-zA-Z][a-zA-Z0-9]*)\}/g, (_, name: string) => values[name] ?? `{${name}}`) }
 export interface FreshResponse { deadline?: string; status: number; private?: boolean; preview?: boolean; startedAt: number }
 export function freshnessHeaders(response: FreshResponse, now: number, dependencyDeadlines: readonly string[] = []): Record<string,string> {

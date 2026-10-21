@@ -7,5 +7,6 @@
   "hero.action": "了解更多",
   "gallery.title": "组件预览",
   "gallery.description": "首屏展示",
-  "error.title": "服务暂不可用"
+  "error.title": "服务暂不可用",
+  "theme.label": "工业"
 }
