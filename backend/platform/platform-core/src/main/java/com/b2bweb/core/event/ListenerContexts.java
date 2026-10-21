@@ -16,8 +16,13 @@ public class ListenerContexts {
   final SiteContexts sites;
   final UserContexts users;
   final SiteApi siteApi;
+  final io.micrometer.core.instrument.MeterRegistry metrics;
 
   public ListenerContexts(SiteContexts sites, UserContexts users, SiteApi siteApi) {
+    this(sites,users,siteApi,new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
+  }
+  public ListenerContexts(SiteContexts sites,UserContexts users,SiteApi siteApi,io.micrometer.core.instrument.MeterRegistry metrics) {
+    this.metrics=metrics;
     this.sites = sites;
     this.users = users;
     this.siteApi = siteApi;
@@ -32,13 +37,24 @@ public class ListenerContexts {
         break;
       }
     if (event == null) return call.proceed();
+    var sample=io.micrometer.core.instrument.Timer.start(metrics);String outcome="success";
+    try { return invokeEvent(call,event); }
+    catch(Throwable failure){outcome="failure";throw failure;}
+    finally { sample.stop(metrics.timer("b2bweb.core.events.listener","event",event.eventType(),"module",module(call),"outcome",outcome)); }
+  }
+  private String module(ProceedingJoinPoint call) {
+    var match=java.util.regex.Pattern.compile("com\\.b2bweb\\.([a-z][a-z0-9]*)\\.").matcher(call.getTarget().getClass().getName());return match.find()?match.group(1):"core";
+  }
+  private Object invokeEvent(ProceedingJoinPoint call,DomainEvent event) throws Throwable {
     var matcher =
         java.util.regex.Pattern.compile("com\\.b2bweb\\.([a-z][a-z0-9]*)\\.")
             .matcher(call.getTarget().getClass().getName());
     String module = matcher.find() ? matcher.group(1) : "core";
     if (event.siteId() != null
         && !event.deliverWhenModuleDisabled()
-        && !siteApi.isModuleEnabled(event.siteId(), module)) return null;
+        && !siteApi.isModuleEnabled(event.siteId(), module)) {
+      metrics.counter("b2bweb.core.events.skipped","event",event.eventType(),"module",module).increment();return null;
+    }
     try (var user = users.withoutUser();
         var actor = users.asActor(com.b2bweb.api.common.ActorRef.SYSTEM)) {
       if (event.siteId() == null) {

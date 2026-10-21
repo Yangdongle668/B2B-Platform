@@ -79,3 +79,4 @@ ADR-000、ADR-005、ADR-009、ADR-017、ADR-018 为 Accepted，其余为 Propose
 | ADR-029 | 站点模块停用策略与事务锁 | Proposed | [0029-module-disable-policy-contract.md](0029-module-disable-policy-contract.md) |
 | ADR-030 | 预览用途、编辑器签发人与覆盖权限 | Proposed | [0030-preview-purpose-and-editor-authorization.md](0030-preview-purpose-and-editor-authorization.md) |
 | ADR-031 | 缓存恢复的持久边界与事件发布屏障 | Proposed | [0031-cache-recovery-publication-barrier.md](0031-cache-recovery-publication-barrier.md) |
+| ADR-032 | Core节点租约与运行维护候选 | Proposed | [0032-core-runtime-maintenance.md](0032-core-runtime-maintenance.md) |

@@ -31,8 +31,8 @@ public class CoreConfiguration {
   }
 
   @Bean(destroyMethod="close")
-  com.b2bweb.core.support.cache.LocalCaches localCaches(org.springframework.data.redis.connection.RedisConnectionFactory factory, tools.jackson.databind.json.JsonMapper json) {
-    return new com.b2bweb.core.support.cache.LocalCaches(factory,json);
+  com.b2bweb.core.support.cache.LocalCaches localCaches(org.springframework.data.redis.connection.RedisConnectionFactory factory, tools.jackson.databind.json.JsonMapper json, io.micrometer.core.instrument.MeterRegistry metrics) {
+    return new com.b2bweb.core.support.cache.LocalCaches(factory,json,metrics);
   }
 
   @Bean
@@ -62,9 +62,9 @@ public class CoreConfiguration {
     return Clock.systemUTC();
   }
 
-  @Bean
-  IdGenerator ids(Clock clock, @Value("${b2bweb.node-id:0}") int node) {
-    return new TsidIds(clock, node);
+  @Bean(destroyMethod="close")
+  LeasedTsidIds ids(javax.sql.DataSource source, Clock clock, @Value("${b2bweb.node-id:0}") int node) {
+    return new LeasedTsidIds(source, clock, node);
   }
 
   @Bean
@@ -145,8 +145,8 @@ public class CoreConfiguration {
 
   @Bean
   com.b2bweb.core.event.ListenerContexts listenerContexts(
-      SiteContexts sites, UserContexts users, SiteApi api) {
-    return new com.b2bweb.core.event.ListenerContexts(sites, users, api);
+      SiteContexts sites, UserContexts users, SiteApi api, io.micrometer.core.instrument.MeterRegistry metrics) {
+    return new com.b2bweb.core.event.ListenerContexts(sites, users, api, metrics);
   }
 
   @Bean
@@ -173,8 +173,8 @@ public class CoreConfiguration {
       IdGenerator ids,
       SiteContexts sites,
       UserContexts users,
-      org.springframework.transaction.PlatformTransactionManager manager) {
-    return new com.b2bweb.core.directory.DatabaseAudit(jdbc, ids, sites, users, manager);
+      org.springframework.transaction.PlatformTransactionManager manager, Clock clock) {
+    return new com.b2bweb.core.directory.DatabaseAudit(jdbc, ids, sites, users, manager,clock);
   }
 
   @Bean

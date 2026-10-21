@@ -22,6 +22,7 @@ public final class ModuleMigrations {
       DataSource source, ModuleCatalog catalog, IdGenerator ids, boolean migrate) {
     if (!migrate) {
       validateOnly(source, "core");
+      if(ids instanceof com.b2bweb.core.support.LeasedTsidIds leased) leased.start();
       for (String id : catalog.order()) validateOnly(source, id);
       return;
     }
@@ -33,6 +34,7 @@ public final class ModuleMigrations {
       }
       try {
         configured(source, "core").migrate();
+        if(ids instanceof com.b2bweb.core.support.LeasedTsidIds leased) leased.start();
         var resources = new ModuleResources(source, ids);
         try (var input =
             ModuleMigrations.class.getResourceAsStream("/META-INF/b2bweb/core-module.json")) {

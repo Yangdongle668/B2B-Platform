@@ -15,12 +15,16 @@ import tools.jackson.databind.json.JsonMapper;
 public final class LocalCaches implements AutoCloseable {
   static final String CHANNEL="sys:core:cache-evict";
   final String origin=UUID.randomUUID().toString();
+  final io.micrometer.core.instrument.MeterRegistry metrics;
   final JsonMapper json;
   final StringRedisTemplate redis;
   final RedisMessageListenerContainer listener;
   final Map<String,Cache<String,Object>> caches=new ConcurrentHashMap<>();
   public LocalCaches(RedisConnectionFactory factory, JsonMapper json) {
-    this.json=json; redis=new StringRedisTemplate(factory);
+    this(factory,json,new io.micrometer.core.instrument.simple.SimpleMeterRegistry());
+  }
+  public LocalCaches(RedisConnectionFactory factory,JsonMapper json,io.micrometer.core.instrument.MeterRegistry metrics) {
+    this.metrics=metrics; this.json=json; redis=new StringRedisTemplate(factory);
     listener=new RedisMessageListenerContainer(); listener.setConnectionFactory(factory);
     class Subscriber implements MessageListener, SubscriptionListener {
       public void onMessage(Message message, byte[] pattern) {
@@ -38,8 +42,9 @@ public final class LocalCaches implements AutoCloseable {
   }
   public <K,V> BroadcastCache<K,V> create(String name, LocalCacheSpec spec) {
     if(!name.matches("[a-z][a-z0-9]*\\.[a-z][a-z0-9_.]*")) throw new IllegalArgumentException("本地缓存名称无效");
-    Cache<String,Object> cache=Caffeine.newBuilder().maximumSize(spec.maximumSize()).expireAfterWrite(spec.ttl()).build();
+    Cache<String,Object> cache=Caffeine.newBuilder().maximumSize(spec.maximumSize()).expireAfterWrite(spec.ttl()).recordStats().build();
     if(caches.putIfAbsent(name,cache)!=null) throw new IllegalArgumentException("本地缓存名称重复");
+    io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics.monitor(metrics,cache,name);
     return new BroadcastCache<>() {
       @SuppressWarnings("unchecked") public Optional<V> getIfPresent(K key) { return Optional.ofNullable((V)cache.getIfPresent(json.writeValueAsString(key))); }
       @SuppressWarnings("unchecked") public V get(K key,Function<? super K,? extends V> loader) { return (V)cache.get(json.writeValueAsString(key),ignored -> loader.apply(key)); }

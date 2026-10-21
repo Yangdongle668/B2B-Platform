@@ -23,6 +23,11 @@ for module in (ROOT/'backend/modules').iterdir():
  for dep in pom.findall('.//m:dependencies/m:dependency',ns):
   artifact=dep.findtext('m:artifactId',namespaces=ns)
   if artifact.startswith('module-') or artifact in ('infrastructure','application'):errors.append(f'{module.name}: forbidden dependency {artifact}')
+# Audit is append-only except for the one bounded retention task.
+for path in (ROOT/'backend/platform/platform-core/src/main/java').rglob('*.java'):
+ source=path.read_text()
+ if re.search(r'\bUPDATE\s+sys_audit_log\b',source,re.I):errors.append(str(path)+': audit records are append-only')
+ if re.search(r'\bDELETE\s+FROM\s+sys_audit_log\b',source,re.I) and path.name!='AuditRetention.java':errors.append(str(path)+': audit delete outside retention task')
 fixtures=[('inquiry','import com.b2bweb.product.domain.Product;', 'cross-module-import'),('inquiry','SELECT * FROM prd_product','cross-module-table'),('product','SELECT * FROM prd_product WHERE id=${id}','unsafe-sql-substitution')]
 for module,source,expected in fixtures:
  if expected not in violations(module,source):errors.append('negative boundary fixture failed: '+expected)

@@ -87,6 +87,14 @@ public class SecurityConfiguration {
   }
 
   @Bean
+  @Order(0)
+  SecurityFilterChain management(HttpSecurity http,@Value("${management.server.port:8081}") int port) throws Exception {
+    return http.securityMatcher(request -> request.getLocalPort()==port && request.getRequestURI().startsWith("/actuator/"))
+      .csrf(c->c.disable()).sessionManagement(c->c.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+      .authorizeHttpRequests(c->c.anyRequest().permitAll()).build();
+  }
+
+  @Bean
   @Order(1)
   SecurityFilterChain admin(
       HttpSecurity http,
