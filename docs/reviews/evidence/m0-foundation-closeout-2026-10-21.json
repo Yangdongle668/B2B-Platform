@@ -1,0 +1,233 @@
+{
+  "date": "2026-10-21",
+  "decision": "M0 engineering candidate; complete G0 has NOT passed",
+  "starting_commit": "b41a0339cc14be403073405915859c9592785b01",
+  "implementation_revision": "2afb40be08452f62a489d06948a93a4da4b96443",
+  "tracked_code_manifest_sha256": "d59988c71e76cf20ed6d1ab71594297bd4a1a6b713270987713e04a996806976",
+  "backend": {
+    "ordinary": {
+      "reactor_arguments": [
+        "-q",
+        "verify"
+      ],
+      "tests": 214,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "images": {
+        "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+        "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+        "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+        "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+        "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+        "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538"
+      },
+      "storage_provider": "S3Mock; MinIO not verified",
+      "status": "passed"
+    },
+    "development": {
+      "reactor_arguments": [
+        "-q",
+        "-Pdevelopment",
+        "verify"
+      ],
+      "tests": 214,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "images": {
+        "mysql": "mysql:8.4@sha256:0f51e63e537a1f176423fa03ef559aabe6fa4372a53160a44bc7e75da7d15364",
+        "redis": "redis:7.4@sha256:4fa24486b8bcca8eec45ee0eb166edc674795e53a2b53d1a9ef263eecebaac85",
+        "maven": "maven:3.9-eclipse-temurin-25@sha256:93b8a14ea2f412782e4e842651273b4d903e35cc496284f178fbbe2d67d00976",
+        "s3-compatible": "adobe/s3mock:4.11.0@sha256:cd49108c0094bc3f420b24bff354073032a9ec1a6f4cc89f8e8f483a308cf99e",
+        "search": "getmeili/meilisearch:v1.15.2@sha256:fe500cf9cca05cb9f027981583f28eccf17d35d94499c1f8b7b844e7418152fc",
+        "mail": "axllent/mailpit:v1.27.9@sha256:b004cc0672d0692f097ba8ab9e5956ae08eeafee3d0a6bf2ab239750101ac538"
+      },
+      "storage_provider": "S3Mock; MinIO not verified",
+      "status": "passed"
+    }
+  },
+  "frontend": {
+    "lint": true,
+    "typecheck": true,
+    "tests": 39,
+    "admin_build": true,
+    "nuxt_build": true
+  },
+  "browser": {
+    "general": {
+      "viewports": [
+        {
+          "width": 1440,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 768,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 390,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        },
+        {
+          "width": 360,
+          "no_overflow": true,
+          "axe_violations": [],
+          "gallery_navigation": true
+        }
+      ],
+      "auth_scope": "UI injected failure handling; real API/session/MFA is tested by backend integration suite",
+      "ssr_without_js": true,
+      "admin_failure_state": true,
+      "admin_axe_violations": []
+    },
+    "form": {
+      "reactive_model_updates_and_validation": true,
+      "conditional_fields_and_secret_omission": true,
+      "recursive_repeater": true,
+      "typed_reference_selection": true,
+      "source_params_schema": true,
+      "real_tiptap_json_editing": true,
+      "readonly_and_automatic_language": true
+    },
+    "preview": {
+      "transport": "real local HTTPS iframe",
+      "injected_responses": false,
+      "content_provider": "explicit development-only in-memory fixture; not production content",
+      "ephemeral_editor": true,
+      "sharing_cannot_enter_editor": true,
+      "server_gate_csp_and_private_headers": true,
+      "share_preview_ssr": true,
+      "real_iframe_init_and_patch": true,
+      "selection_roundtrip": true,
+      "unsafe_patch_rejected": true,
+      "wrong_window_source_rejected": true,
+      "live_issuer_revocation": true,
+      "fixtures_removed": true
+    },
+    "permissions": {
+      "transport": "real local HTTPS",
+      "injected_responses": false,
+      "ephemeral_member": true,
+      "route_guard_forbidden": true,
+      "server_denies_same_permission": true,
+      "empty_permission_snapshot": true,
+      "fixtures_removed": true
+    }
+  },
+  "formal_cache_process_faults": {
+    "provider": "formal Core RedisTaggedCache + CacheRecovery",
+    "real_process_restart": true,
+    "old_ready_rdb_rejected": true,
+    "old_fence_cannot_refill": true,
+    "recovery_reopens_after_confirmation": true,
+    "outage_read_bypass_seconds": 1.019,
+    "outage_invalidation_fails_closed": true
+  },
+  "new_module_exercise": {
+    "module": "sandbox",
+    "isolated_copy": true,
+    "elapsed_seconds": 94.157,
+    "budget_seconds": 3600,
+    "tests": 212,
+    "failures": 0,
+    "business_implementation": false,
+    "human_merge_review": false,
+    "snapshot": "intermediate candidate with 212 tests; not the final 214-test source snapshot"
+  },
+  "inventory": {
+    "canonical_public_types": 397,
+    "services": 25,
+    "ports": 17,
+    "extensions": 25,
+    "business_module_skeletons": 17,
+    "flyway_histories": 18,
+    "migration_files": 23,
+    "create_tables": 123,
+    "alter_tables": 3,
+    "public_api_paths": 19,
+    "shared_suite_families": 10,
+    "interfaces_with_reusable_suites": 9,
+    "implemented_sample_component_definitions": 1,
+    "business_components_declared_for_all_slices": 36
+  },
+  "security": {
+    "gitleaks": true,
+    "pnpm_high_gate": false,
+    "automatic_waivers": false,
+    "pnpm_vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 1,
+      "high": 2,
+      "critical": 0
+    },
+    "high_advisories": [
+      "GHSA-86w9-cpqp-85rv",
+      "GHSA-vfj7-8cjw-p6xm"
+    ],
+    "backend_osv": {
+      "scanner": "OSV querybatch",
+      "automatic_waivers": false,
+      "status": "error",
+      "packages": 241,
+      "findings": [],
+      "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    }
+  },
+  "remaining_m0_queue": [
+    "R1 shared behavior suites",
+    "R2 Core, observability and process failure matrix",
+    "R3 remaining frontend framework and schema/theme gates",
+    "R4 complete local adapter chains",
+    "R5 security and complete remote CI gates",
+    "R6 formal review and freeze"
+  ],
+  "limitations": {
+    "production_content_provider_verified": false,
+    "real_cloud_cdn_verified": false,
+    "imgproxy_process_chain_verified": false,
+    "minio_verified": false,
+    "github_actions_verified": false,
+    "independent_new_member_setup_verified": false,
+    "human_architecture_approval": false,
+    "contract_1_0_release": false,
+    "main_merged": false
+  },
+  "schema_gate_selftest": {
+    "isolated_copy": true,
+    "cases": [
+      {
+        "case": "unchanged",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "tightened_limit_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "new_enum_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "relaxed_limit",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "optional_property",
+        "expected_pass": true,
+        "matched": true
+      }
+    ]
+  }
+}
