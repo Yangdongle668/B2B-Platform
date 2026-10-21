@@ -1,0 +1,908 @@
+{
+  "date": "2026-10-21",
+  "base_revision": "ff47323d48cdef42437fe9f8fcaeb8aca8a1a9cd",
+  "implementation_revision": "405c0d90e37db4066b1fde5331c47d167798b33f",
+  "scope": "M0 candidate implementation and verification; R1-R5 not all closed; G0 not passed",
+  "sources": [
+    {
+      "path": ".github/workflows/verify.yml",
+      "sha256": "29904a09962b8f912fed344fd75f44096c4919e56b76853fedd0672fd2991497"
+    },
+    {
+      "path": "backend/application/pom.xml",
+      "sha256": "392e994cf307ac04c577fcb6907601dd9d05ad78a6cc5886470fcf69a16dbf30"
+    },
+    {
+      "path": "backend/application/src/development-test/java/com/b2bweb/application/LocalFallbackWiringTest.java",
+      "sha256": "e663454a7b04da5d24a3554150df333d188650971a2d5df185b1b641112c5dae"
+    },
+    {
+      "path": "backend/application/src/development/java/com/b2bweb/application/dev/LocalStandIns.java",
+      "sha256": "0d20ee8960377340d71d36b4af0e469cefaceab09f724a139be35fe9cade527b"
+    },
+    {
+      "path": "backend/application/src/development/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports",
+      "sha256": "b2908d51b4f4ca0d89cdda5341fbef6252fd7676ddafeb244b45cc27b4766c98"
+    },
+    {
+      "path": "backend/application/src/main/resources/application-prod.properties",
+      "sha256": "8a6f95600b432bf15169f32e3eb5df72bc4dd1bcd91b04a678893ee4046fdeb2"
+    },
+    {
+      "path": "backend/application/src/main/resources/application.properties",
+      "sha256": "a7821729681c0081d85b128fd5a2bb9116197dafc5341f90b31bce414d53034e"
+    },
+    {
+      "path": "backend/application/src/main/resources/logback-spring.xml",
+      "sha256": "34931d22aee176cdaf7212b0765675e3dc37aff145e2df4230c9c8f5e2680c59"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/PageTemplateContractTest.java",
+      "sha256": "efc5580228a33b28c47545f4c5cc4aa3ed50055a9bce14e61f718f916010d606"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/RedisRuntimeContractsTest.java",
+      "sha256": "24bad4443bac8b89f7ee3e1aa130a261d3651f5d14afbd350497a0ee74279759"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/RuntimeMaintenanceTest.java",
+      "sha256": "820759e279065c5d383c742adc8a56f6a327120cfba8b67dfdce9f3aa3bd4723"
+    },
+    {
+      "path": "backend/application/src/test/java/com/b2bweb/application/SearchGenerationsTest.java",
+      "sha256": "e07aa3f127e7e3f11ef6c532eec94dc5fc7df7f17f07a9c430f7f539ac6a6b94"
+    },
+    {
+      "path": "backend/infrastructure/pom.xml",
+      "sha256": "59cc6169e4d925746b4dc279a22be7bdbe0f853dc645ec5241087a35000aedc5"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/RuntimePorts.java",
+      "sha256": "cd501f2470be83af018d056696980b03d936fab13b41512d3068a7afc413f3bb"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/dns/DnsMxRecordChecker.java",
+      "sha256": "4a2ee1ca3ff78544dd1805162424ded99c6951909e411a834bff9732fbadc31f"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/dns/MaxMindGeoIpResolver.java",
+      "sha256": "eae19447612e1177db1fb02c14d2cbb4cb8e427fde374aceee5805485b9dd880"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/CloudflareCdnPurger.java",
+      "sha256": "afdc2a830eb65b3278be47aea7fe59e62885b1669daa41718424e655e1335bdb"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/HttpIndexNowClient.java",
+      "sha256": "9cef15c05b7575c9a576dc1de3a5dea99e05a0f0c1272cc9e4fd5948c426c409"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/HttpWebhookTransport.java",
+      "sha256": "7aaf713962938577c0c7213785a47acdb34946b9c53a9621d44f74eccceec1dd"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/JsonHttp.java",
+      "sha256": "d14a17bb9752c2fcf4aa7d75b8e0f54f07627791ba24b7748dd95f2586e9a724"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/PinnedHttp.java",
+      "sha256": "bff16a7150a4517df2d97077729b71f27ddde99accd89351799e928dbe82b0f1"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/RemoteCalls.java",
+      "sha256": "d74f0a586b53cd3797e2307ff1a81f6bd1555ac76e68ba1eb5a27e9d4d131320"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/SafeHttpRemoteFileFetcher.java",
+      "sha256": "04cc6119371561d84061cf667bea65831b8831845746daad730a3dc557f14f94"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/SsrfGuard.java",
+      "sha256": "85b03955bd78bb1669f51701cfd9a814fb3b39b1aa8d4d66808f9b40db033288"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/http/TurnstileCaptchaVerifier.java",
+      "sha256": "8b4274b836f07d2aef32e610b7a4d68498ce127bbfb6aaf16256f29b2b10ad8c"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/mail/SmtpMailTransport.java",
+      "sha256": "da0dd412c23bb3d5a9e59f623c1370a0d5253f84ad70a94675391af829e7cf28"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/observability/PortObservations.java",
+      "sha256": "7a8af75c84777cec361715fd9a2d18b282b6336d3818e3ea2809b1d59953450c"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/redis/RedisBufferStore.java",
+      "sha256": "fec9863c3e0cd73bb6e408c1133ced903b3d86f2c1fc9eaf55d4505e95bbc0f4"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/redis/RedisDistributedLock.java",
+      "sha256": "58a57ceabef396a5e38ce940600c6b8395bab1f44258606c3f63355355408a17"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/redis/RedisKeys.java",
+      "sha256": "96d763e4ec86b36cd3c87d457c3ebe7c897c14b705b6b1b5bf8bb5e9df387f30"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/redis/RedisRateLimiter.java",
+      "sha256": "aac585641f818f861d8e4eb93301a59ae00d56fe712808cda4de3bec0878e0a9"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/search/MeilisearchClient.java",
+      "sha256": "804688d69e436a71c7c7264fd3a9be026a430f33473f44db89bb678e3171ce7a"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/storage/S3ObjectStorage.java",
+      "sha256": "a50c0be6c61d9f3dd8f462e6b02098e53dbf6272fcce0c358b20815cae204774"
+    },
+    {
+      "path": "backend/infrastructure/src/main/java/com/b2bweb/infrastructure/virus/ClamAvVirusScanner.java",
+      "sha256": "8483f83cc0528b64b6bc209e84427905d480de791e95d6826dc64743cab8fc0c"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/ClamAvContractTest.java",
+      "sha256": "990463489e3dc1da383c468fab427e699b3227296fd9e41a1484489cc517b77e"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/DnsMxTest.java",
+      "sha256": "7487b958e877d6f3b4eeac15fd7cf6df9da50b2cf707b5896a07c4abb6a44f50"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/GeoIpDatabaseTest.java",
+      "sha256": "d72f7ccc6600ecde277c780e86ba87ce55aca01efcd323d4795cb9a37f7a7d27"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/HttpPortsContractTest.java",
+      "sha256": "1f8f089a02db2e1b9d434382c60f8896ffcd5072fb67c24211742507a84c4381"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/http/JsonHttpDeadlineTest.java",
+      "sha256": "4b28fa18ff4ac4d8d36d283245d934fdb165efdcba66e98de025aa32219a53b9"
+    },
+    {
+      "path": "backend/infrastructure/src/test/java/com/b2bweb/infrastructure/http/SafeHttpTest.java",
+      "sha256": "ad0ba83aa5788a1c7e24cc2f8631cf0ed7d30162b9692987e050ab775f0f3812"
+    },
+    {
+      "path": "backend/infrastructure/src/test/resources/geoip/GeoIP2-City-Test.mmdb",
+      "sha256": "7ecd1a263834096e3948b459713102ef350412a9f18367b4a88efec018153004"
+    },
+    {
+      "path": "backend/infrastructure/src/test/resources/geoip/LICENSE-APACHE",
+      "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe"
+    },
+    {
+      "path": "backend/infrastructure/src/test/resources/geoip/LICENSE-MIT",
+      "sha256": "91276db973f25602d1aa43491f59cbc84cb88e6f151e1d0cc82a755563ce0195"
+    },
+    {
+      "path": "backend/infrastructure/src/test/resources/geoip/README.md",
+      "sha256": "1267dc8ccc058ebe25cb342b853e2bc01127815bf3e81ea8089b7588f62b0b48"
+    },
+    {
+      "path": "backend/modules/delivery/src/main/java/com/b2bweb/delivery/assembly/DeliveryAssembly.java",
+      "sha256": "456f1dfb3d422aaa011d409af828b94abc9397ecdd97572e555d9879f6a2bef5"
+    },
+    {
+      "path": "backend/modules/delivery/src/main/java/com/b2bweb/delivery/assembly/DeliveryReferences.java",
+      "sha256": "50c93099d1d8078bee0f1eec64c77d501abcae474298d442ff12ffe612b5197e"
+    },
+    {
+      "path": "backend/modules/delivery/src/main/java/com/b2bweb/delivery/preview/PreviewController.java",
+      "sha256": "478a16f0e83541137bbd708bf20b53a21a958b1d18a530a39ca811dd90644e68"
+    },
+    {
+      "path": "backend/modules/page/src/main/java/com/b2bweb/page/PageTemplates.java",
+      "sha256": "54e582021e6c04aa98c527274c0cd55bc49d6656dccb1f8d42a441ffdfc59855"
+    },
+    {
+      "path": "backend/modules/search/src/main/java/com/b2bweb/search/capture/JdbcSearchCapture.java",
+      "sha256": "947de73ab82d558547bbcc003194888e5a42d010e07f7e73492918fcce5fd513"
+    },
+    {
+      "path": "backend/modules/search/src/main/java/com/b2bweb/search/generation/GenerationBuilder.java",
+      "sha256": "74905b7385212e163ecd20f1dcfee24c09790fbe0c95f08840cb0e3945b20821"
+    },
+    {
+      "path": "backend/modules/search/src/main/java/com/b2bweb/search/generation/GenerationStore.java",
+      "sha256": "7ac825d50065057942c4a3998fafcd85138cb650a8036f687ad88a98af7f9c9d"
+    },
+    {
+      "path": "backend/platform/platform-core/pom.xml",
+      "sha256": "91fa011536149d26fa6bb676efcf7c8ad5b71c75ec1f7749275b41ff70d368a3"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/context/ExecutionConfiguration.java",
+      "sha256": "bd0881fc9deec958099f63047d3ba659346a1782ece8b55070f3f2931e52cb72"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/context/PlatformTaskDecorator.java",
+      "sha256": "3973f0c8da2b35d2ecdcd22c820b36e783ae47cd22ad9b5482e20837f7bd1fa0"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/context/SiteContexts.java",
+      "sha256": "b9150b2522c125da8c2e9524ae0eb5cbe1b55af8251774c1ec67e6316afdf2f1"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/context/UserContexts.java",
+      "sha256": "dd1ca824597d34847c778aaccd6d99308dcb1f0039fd5d0d70713e73b40dcc0f"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/directory/DatabaseAudit.java",
+      "sha256": "ee20ab4f3befb09ed338b2f2496e560a6f59219b1ac003833af7255bd20775a2"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/job/DatabaseJobs.java",
+      "sha256": "f406210c98fb757a997ed95d12ad6f82fc7a48202a0f32ee655047c7f3d7385b"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/observability/ErrorReporting.java",
+      "sha256": "31f41ab24d228c8a14b9edaa24cf3094acc8fd209ebb951b21bcd3d15d90fb56"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/observability/SafeLogLayout.java",
+      "sha256": "be85e2a6ef0371666df44cebbfedf085dbf1ac1a7ca04003f72a1b3cbb4cd0bc"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/persistence/PersistenceSupport.java",
+      "sha256": "279f2668947a3155145834621601f75911593e0499044bdc8b8f6a9c41da3e84"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/persistence/SiteLineConfiguration.java",
+      "sha256": "4611f2de9706ca065c1dfe947cc7fbd0ae482c09fbe2bc6c2053e703906ed02f"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/AdminRateLimitFilter.java",
+      "sha256": "159d63ad4394b2216bc7473904d16c02e702ba9530649b2a25a77da066039b0a"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/AuthController.java",
+      "sha256": "fc0e2d2ea2d2e91320be4f214f9f71a89c1f625f174848fd3ee4544b7768f5c5"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/ProblemAdvice.java",
+      "sha256": "82b9581d2a49d1fd0526bd9b9bf0b485a07441f20f078a39b5551db232469557"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/Problems.java",
+      "sha256": "49271bb98e04b5a894515fb2e5ee11121ebfacbcd2d6ce8a9df1641b1f7bf64f"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/security/auth/SecurityConfiguration.java",
+      "sha256": "fd371708e3c4dc5d853284da3c9f13928c74d9e8d9dbe914983132d242c1ba23"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/concurrent/PlatformExecutors.java",
+      "sha256": "296636c2a8079533cc97a6cffd84e5f748addcca21db544b9f3b14562d414132"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/concurrent/package-info.java",
+      "sha256": "5b62333f615c2e7b7fe14135137e83fcba449979e4a847a426cbc20ee266f5a4"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/log/ContextMdc.java",
+      "sha256": "cb2f024cc79d61ec69e04e8cf8954f547f452b4df900f12e4f070ea1418f68d1"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/log/IpAnonymizer.java",
+      "sha256": "c976ff4cc2ef75f7999ad1923e613041da6faf77327683c6c68de1d4dc36cd45"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/log/LogSafe.java",
+      "sha256": "451efe0d59333c2e07c86ff4248143f5778fd95accdcdb9d64acff6ec44157ce"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/log/package-info.java",
+      "sha256": "9fb817e7798b5c860b099063e61f4f5580891e82e662a67867817eaacab11707"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/module/AbstractPlatformModule.java",
+      "sha256": "43377681c23754d94b965b952de5ce45ecbba54671a27130e57f798a8ad9d914"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/module/package-info.java",
+      "sha256": "b09604395f4e67d9b48225def4f48d6f165b08321ec6936721c09a264d8aa400"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/BasePO.java",
+      "sha256": "9f8a8db740e89bb21a94ce1bd30f91b86a6d2a456ff73e88eba991eef20b0a46"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/GlobalTable.java",
+      "sha256": "9a91e71ac038dbe742d4a8f4275b3a9f952f5911bea9d6cb1fab28eab6cbae93"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/JsonNodeTypeHandler.java",
+      "sha256": "33bd60dd0d2ea5e2d53ec5677666b1fc15108bf28d406a97242dc31c673a3af1"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/OptimisticUpdates.java",
+      "sha256": "5d0a9c557cbaea8144f87ba2bfe21d3d7b213a4c0ccc8c6f1aa810ec6a2af101"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/SitePO.java",
+      "sha256": "8b62614471741b0154b732b9b8fb82173ca46d375f6dc284303814f876a0f1d5"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/SortColumns.java",
+      "sha256": "f6444efbe062d4b1d2d3a3b993a03f03361ce7455711326c9825140c0f0b25b1"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/persistence/package-info.java",
+      "sha256": "ad8d903c381aad97317eb5c9e8081b0f991844c6ab738441d02a1482e1344cbb"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/validation/HttpUrl.java",
+      "sha256": "74f21a947d676f7fcd008b62653828c510d5a0c1bb55b930f2504a9a05a753ed"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/validation/JsonSchemaValidator.java",
+      "sha256": "9e3b415d24e3b9308d2d7aece623e35f4a7a57678a6e8b8801ab7b5f9fe641c3"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/validation/LocaleCode.java",
+      "sha256": "67d7ce93a1d18a30d66bb29edf98921271d768598c4d0bca90d1ac5360d55e3a"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/validation/PlainText.java",
+      "sha256": "69a4bda47107fb0ece97cdc670886a5fcf46c3c51d22a0accb51771d0d5bbd73"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/validation/package-info.java",
+      "sha256": "aefd5cd27e332c90ccfb8fbb946b1efb7d8722bb21452f538b4b25a1fc6239e5"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/AdminController.java",
+      "sha256": "3769d1c094dfa502d27431b8ac547321691418efb4421eaa3f64bcfc07ab7f45"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/ApiPaths.java",
+      "sha256": "a3af96da834e5b162d9cc2b019f33ad79e15023aa640150d2cc0310d7fec45a5"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/ETags.java",
+      "sha256": "ada0c5df93e3b754302a7185fc63aec72a40024ab4f4a38222cfb881e269979d"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/IdempotencyKey.java",
+      "sha256": "12a758a3d8018ee17b31e2027b4a8712d85ba01fe89ff2c13894912d8ead69b2"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/IfMatchVersion.java",
+      "sha256": "a52fe1f9ff5bc3588b21fbec084f485ac39bea7f3304cf37345422469bbb95c5"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/InternalController.java",
+      "sha256": "0886886d83d190e2b1bb1a843030cb56cb6be6726008fa4d553261a8d4536a9c"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/PageDefault.java",
+      "sha256": "f31a40cc593c9d39220517d18f006701b309c577f6fefe8ad8c5650cccfbe736"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/PublicController.java",
+      "sha256": "a75981b67d8e53d4e95256f87477e40ff150a831fadb55b7b09361ed66a5a8c9"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/Sortable.java",
+      "sha256": "fe27a582dbd6f78d5565455d7b6d010bdc0b1bbe7661dda304356c243a233469"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/SystemLevel.java",
+      "sha256": "9a3c82b01cf7ff581af656af37e51174a193a0e9becdd7f6ed0d42ef5fa3dfab"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/support/web/package-info.java",
+      "sha256": "ae084dad07a1a03ca757f7de50771b5b4419d541da04cc9177b268e69e5fb369"
+    },
+    {
+      "path": "backend/platform/platform-core/src/main/java/com/b2bweb/core/web/PlatformArguments.java",
+      "sha256": "38ce68fe767871ec5947cc5df4cd743101c3e5fb18c81d7b88f4cb1803ff3c16"
+    },
+    {
+      "path": "backend/platform/platform-core/src/test/java/com/b2bweb/core/ErrorReportingTest.java",
+      "sha256": "25ea50a543a48f0108fe81240532a3b0f5d538f03a9a807686e06e186d38f332"
+    },
+    {
+      "path": "backend/platform/platform-core/src/test/java/com/b2bweb/core/PersistenceSupportTest.java",
+      "sha256": "892051c1ee757e8b579b43099f745db83fc4938c586c23a59c7eea88087ff9ca"
+    },
+    {
+      "path": "backend/platform/platform-testkit/README.md",
+      "sha256": "c01475a895088b473d470bf304aae90a6b459bac743697f6fcf152ad3b41c607"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/TestPlatform.java",
+      "sha256": "87dbada2307b711dcfbe9c30ee798f5269d832111f867c8da0521e3c9627de79"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/ContentTypeProviderConformance.java",
+      "sha256": "d60ace70bd8b5000d46697e89d31da04ce39dc3dd8a5d1c3fa5378952368c25b"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/DataSourceProviderConformance.java",
+      "sha256": "3d298c6c836426bbaa985c37de3145631ed8e9be208a24fb303088598e19e739"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/MediaReferenceCollectorConformance.java",
+      "sha256": "75f5a92a0ea7c37f8a5df21a91987672801b4895e969e0526fb7a88ec5d56dc4"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/NotificationTemplateProviderConformance.java",
+      "sha256": "86d55963404ea96b24ff16e4317c5cee953334cea1770af8e79b3aceaddc27ad"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/PersonalDataProviderConformance.java",
+      "sha256": "0d020d5bfe295305929368f03e5bea8928b2cbbe026a881031bc7b8bea4d34c3"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/PublishContributorConformance.java",
+      "sha256": "244f51c1f3f0310da6112f578c8239fa40757f0d6eacd42192fb4ebb11ede24d"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/conformance/TemplateProviderConformance.java",
+      "sha256": "420039d9e6989e47049a3bb622f85d662c9638df6abeb0147a2896044b4caa96"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/contract/port/DistributedLockContract.java",
+      "sha256": "bc2d603d0e284c4f3637877e8c1c54d8cab2619649158f1254da5bf65e299f2f"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/example/SampleExtensions.java",
+      "sha256": "7b9761747417a055165aa74420e1810a67f54c0900760c66a7e8260d4fca2d1b"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/main/java/com/b2bweb/testkit/port/InMemoryDistributedLock.java",
+      "sha256": "c7963c6841d3fea51fb2f3d7a5ae9a977431a8651d4565bec82fb47e1c0b11a2"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/LocalPortDoublesTest.java",
+      "sha256": "2abd76e00bcd5c46292df5ab5c70e21bc7087f4e9fbe29481ffda359788b0601"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/RemainingConformanceTest.java",
+      "sha256": "86ff4355dfb4d8f65effe31ca10727254902b3bb8f8ab4c0eed7f4ad827619e9"
+    },
+    {
+      "path": "backend/platform/platform-testkit/src/test/java/com/b2bweb/testkit/SharedPortsTest.java",
+      "sha256": "bfce45c9640a3ae6050edd7e8888666556714c8903de724277570f3409e7746e"
+    },
+    {
+      "path": "frontend/apps/admin/package.json",
+      "sha256": "2946b138cf8c72b15154a3f28ce1b99d3ac5d0b6c57e5cf40bceda5acf3f6d02"
+    },
+    {
+      "path": "frontend/apps/website/app/pages/__editor.vue",
+      "sha256": "5374a401f0a89a4acc964f2ce7270cfa004dc3bf58736cf881514953d7b37dd2"
+    },
+    {
+      "path": "frontend/apps/website/app/pages/__preview/[token].vue",
+      "sha256": "f1a7b80466779e0327e8796b8b2395158d5db977acc6828e597e4a6906254285"
+    },
+    {
+      "path": "frontend/apps/website/app/pages/zh/gallery.vue",
+      "sha256": "843016609e1eaf455e3601db607ca4a30e5bf6d7d84f9a977f9f592bb83f4b9f"
+    },
+    {
+      "path": "frontend/apps/website/package.json",
+      "sha256": "479af55998db401ae33fc0bb0cfc537768bee3fc806d37585d21773b4a95b7e8"
+    },
+    {
+      "path": "frontend/packages/admin-kit/package.json",
+      "sha256": "c835e926d4c46e8a2efb9cd6805ecd6c8c448e1e35b8399ccdaa11cf0b67a1ec"
+    },
+    {
+      "path": "frontend/packages/component-schemas/package.json",
+      "sha256": "c40f5d279dee23a0432fb1459d41a178f166d759967bc24a0c52333ace48bd2e"
+    },
+    {
+      "path": "frontend/packages/component-schemas/scripts/check.mjs",
+      "sha256": "d3c13ed1a83c21a3be84b1c2705a1d9a7079545db68532496f9033fd1758a9bf"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/generated.ts",
+      "sha256": "dbd8d3e85c0481dbc6e21fb8439741f6a2af58b6d0e11d112e633ccfb8d36a4a"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/index.ts",
+      "sha256": "36a10f462f3b330b8eeac0f563b76c79db7dc39ee24eb6c84e3b3d505dc638ab"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/migration-fixtures.test.ts",
+      "sha256": "963b25780ca7566bb4ff546ff244bf9f901ba01a5d2c1062710c54a7a19c4d06"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/migrations.ts",
+      "sha256": "4fd6d341368be7a92aea34f15066441ba3702f8192180081e69d5f626251a66c"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/schema-fixtures.d.ts",
+      "sha256": "0ea27c5e27b424445cfa1a304cd0bc0535c9e3488985bbab8ad131691c0b8b0d"
+    },
+    {
+      "path": "frontend/packages/component-schemas/src/templates.ts",
+      "sha256": "c6cf868a0ea3401e47b2abec6ab4f6b23039b609d4091b3df420cf9f2561c2d1"
+    },
+    {
+      "path": "frontend/packages/component-schemas/templates/page/generic.json",
+      "sha256": "4579909e5c8a83b68c6a232ce37e6ea14a0b572db28ff989d8b8b5d6cd4296a6"
+    },
+    {
+      "path": "frontend/packages/themes/package.json",
+      "sha256": "89201e833181e1bbc8061ff62da0eaec0ba2547d6b0c84cc1767766ca9cee0ae"
+    },
+    {
+      "path": "frontend/packages/themes/src/index.ts",
+      "sha256": "06c4712e2580416f6592f775cccfe903dbad6b0a7e9ff9f14e0afde27ca0ba9b"
+    },
+    {
+      "path": "frontend/packages/themes/src/theme-contract.test.ts",
+      "sha256": "4fbc8b75436acb8fe85915f18f1b996613a8b94e4b5a24f32ac6bd913e9d7369"
+    },
+    {
+      "path": "frontend/packages/website-kit/package.json",
+      "sha256": "e83abec63e1be9115e5509b7e4a51672e9bea42f924481c8d27ce992b5b96d9b"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/index.ts",
+      "sha256": "4228a4b417823dbfa29ab4243db21b47891a2422c5f0e255ef4dff3887cfdf76"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/render.ts",
+      "sha256": "5289f4b1c1d586df6c1dbe43e61cf1d0ae0216ba8fe3852c1fdbfcd81475bb2d"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/template-renderer.test.ts",
+      "sha256": "b8e1c85103ad6a7dbe9f7c4d4066641bd386ea80a4780c5da7d6aeaab545fbed"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/template-renderer.ts",
+      "sha256": "164e809522db5be1a1c2058ac5ea50dc335683759cc474950807029a69a70d03"
+    },
+    {
+      "path": "frontend/packages/website-kit/src/theme.ts",
+      "sha256": "677b92ab777daf1c2fce0f9e68434c36b514f6da1b0f9c9f09623b3be75cde64"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3f12157b5f58dae33eed18fef76ce90fd210edf86034f89a5cdb2575a9d9c934"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "sha256": "223a15b1a54ef01affdd6a817b3df8886a6091c6ea85d7c8a522e2c0b314f6ab"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "bc157211ee022f07f52e56d84166c7a19a8ebdf403586f63cd9802d94f69165e"
+    },
+    {
+      "path": "pom.xml",
+      "sha256": "d871d3479981e4ad65cd0c79b77f7fa7b40e3f214f2c6454a5158c87703b8d6f"
+    },
+    {
+      "path": "tools/checks/api_compatibility.py",
+      "sha256": "22c353d1a38c2b5bb89fd4c6ed3c6891c078100724a0c43332a3eadbc63b3088"
+    },
+    {
+      "path": "tools/checks/bundle-budget.json",
+      "sha256": "dd6b524276e9ebc2ee63571c6f16fe639b0a63cfd14fc2350059af9a9830edf5"
+    },
+    {
+      "path": "tools/checks/bundle_budget.py",
+      "sha256": "8d7bc41610d8a358a207cfcdf5d0d0fd9c7b3fcce0642bdd2b1575fda68eb353"
+    },
+    {
+      "path": "tools/checks/contract_matrix.py",
+      "sha256": "1bb1f3ba5ff5d2f4475db4176ae458d2ae6344be4c951555b5cb5c0385bc24c5"
+    },
+    {
+      "path": "tools/checks/dependency_catalog.py",
+      "sha256": "5538356297b5370a4fbc4a0d5739d1e4fb91091e95085a4f3198901168094666"
+    },
+    {
+      "path": "tools/checks/gate_selftest.py",
+      "sha256": "cb8cf6deb4ad2198af7f36eee241d1d91ad2e9610f150823c1970a2482865994"
+    },
+    {
+      "path": "tools/checks/migration_immutable.py",
+      "sha256": "5390a6173d0855b01585480053e313e6e5cc091dd954e3225946a3ff59555d8f"
+    },
+    {
+      "path": "tools/checks/schema_selftest.py",
+      "sha256": "142a6b46b9ee642dfdc84043514b8ef15c51ff9bd730ee01589f377d3d93a7d1"
+    }
+  ],
+  "backend_standard": {
+    "reactor_arguments": [
+      "-q",
+      "verify"
+    ],
+    "tests": 317,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "backend_development": {
+    "reactor_arguments": [
+      "-q",
+      "-Pdevelopment",
+      "verify"
+    ],
+    "tests": 318,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "storage_provider": "S3Mock; MinIO not verified"
+  },
+  "frontend": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "test_files": 13,
+    "tests": 54,
+    "admin_build": "passed",
+    "website_build": "passed"
+  },
+  "schema_gate_selftest": {
+    "isolated_copy": true,
+    "cases": [
+      {
+        "case": "unchanged",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "missing_client_catalog_entry",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "tightened_limit_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "new_enum_without_version",
+        "expected_pass": false,
+        "matched": true
+      },
+      {
+        "case": "relaxed_limit",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "optional_property",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "migration_fixture_executes",
+        "expected_pass": true,
+        "matched": true
+      },
+      {
+        "case": "wrong_migration_output_is_rejected",
+        "expected_pass": false,
+        "matched": true
+      }
+    ]
+  },
+  "gate_selftest": {
+    "cases": [
+      "compatible-api",
+      "reject-api-endpoint",
+      "reject-api-field",
+      "reject-api-type",
+      "unchanged-migration",
+      "reject-migration-edit",
+      "reject-migration-delete",
+      "allow-append",
+      "reject-duplicate-sequence"
+    ],
+    "passed": 9,
+    "failed": 0
+  },
+  "contract_inventory": {
+    "services": 25,
+    "ports": 17,
+    "declared_methods": 240,
+    "spi_points": 25,
+    "spi_consumer_suites": 10,
+    "events": 34,
+    "method_inventory_is_not_semantic_acceptance": true
+  },
+  "bundle_budget": {
+    "results": [
+      {
+        "target": "website",
+        "route": "/zh/",
+        "gzip_bytes": 117626,
+        "chunks": 9,
+        "budget_bytes": 153600,
+        "passed": true
+      },
+      {
+        "target": "website",
+        "route": "/zh/gallery",
+        "gzip_bytes": 117735,
+        "chunks": 9,
+        "budget_bytes": 153600,
+        "passed": true
+      },
+      {
+        "target": "admin",
+        "gzip_bytes": 490266,
+        "chunks": 1,
+        "budget_bytes": 539292,
+        "passed": true
+      }
+    ],
+    "scope": "current implemented routes; release Lighthouse budgets remain separate"
+  },
+  "new_module_exercise": {
+    "module": "sandbox",
+    "isolated_copy": true,
+    "elapsed_seconds": 170.255,
+    "budget_seconds": 3600,
+    "tests": 315,
+    "failures": 0,
+    "business_implementation": false,
+    "human_merge_review": false,
+    "timing_scope": "Earlier ordinary candidate, before the last two HTTP hardening tests; not a rerun of the final implementation"
+  },
+  "frontend_browser": {
+    "viewports": [
+      {
+        "width": 1440,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 768,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 390,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      },
+      {
+        "width": 360,
+        "no_overflow": true,
+        "axe_violations": [],
+        "gallery_navigation": true
+      }
+    ],
+    "auth_scope": "UI injected failure handling; real API/session/MFA is tested by backend integration suite",
+    "ssr_without_js": true,
+    "admin_failure_state": true,
+    "admin_axe_violations": []
+  },
+  "schema_form_browser": {
+    "reactive_model_updates_and_validation": true,
+    "conditional_fields_and_secret_omission": true,
+    "recursive_repeater": true,
+    "typed_reference_selection": true,
+    "source_params_schema": true,
+    "real_tiptap_json_editing": true,
+    "readonly_and_automatic_language": true
+  },
+  "permission_browser": {
+    "transport": "real local HTTPS",
+    "injected_responses": false,
+    "ephemeral_member": true,
+    "route_guard_forbidden": true,
+    "server_denies_same_permission": true,
+    "empty_permission_snapshot": true,
+    "fixtures_removed": true
+  },
+  "preview_browser": {
+    "transport": "real local HTTPS iframe",
+    "injected_responses": false,
+    "content_provider": "explicit development-only in-memory fixture; not production content",
+    "ephemeral_editor": true,
+    "sharing_cannot_enter_editor": true,
+    "server_gate_csp_and_private_headers": true,
+    "share_preview_ssr": true,
+    "real_iframe_init_and_patch": true,
+    "selection_roundtrip": true,
+    "unsafe_patch_rejected": true,
+    "wrong_window_source_rejected": true,
+    "live_issuer_revocation": true,
+    "fixtures_removed": true
+  },
+  "runtime_stack": {
+    "private_readiness": "UP",
+    "management_publicly_accessible": false,
+    "prometheus_backlog_metrics": true,
+    "same_origin_https_image": true,
+    "actual_s3_png_dimensions": [
+      80,
+      60
+    ],
+    "tampered_signature_status": 403,
+    "fixture_removed": true,
+    "production_storage_certification": false
+  },
+  "cache_restart": {
+    "provider": "formal Core RedisTaggedCache + CacheRecovery",
+    "real_process_restart": true,
+    "old_ready_rdb_rejected": true,
+    "old_fence_cannot_refill": true,
+    "recovery_reopens_after_confirmation": true,
+    "outage_read_bypass_seconds": 1.011,
+    "outage_invalidation_fails_closed": true
+  },
+  "security": {
+    "gitleaks_source_tree": "passed",
+    "automatic_waivers": false,
+    "pnpm_high_gate": "failed",
+    "high_advisories": [
+      {
+        "package": "node-forge",
+        "version": "1.4.0",
+        "advisory": "GHSA-86w9-cpqp-85rv",
+        "published_fix": false
+      },
+      {
+        "package": "braces",
+        "version": "3.0.3",
+        "advisory": "GHSA-vfj7-8cjw-p6xm",
+        "published_fix": false
+      }
+    ],
+    "backend_osv": {
+      "scanner": "OSV querybatch",
+      "automatic_waivers": false,
+      "status": "error",
+      "packages": 291,
+      "findings": [],
+      "error": "URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    }
+  },
+  "external_validation": {
+    "minio": "not verified; Docker Hub and Quay pulls denied",
+    "vendor_accounts": "not certified; local protocol fixtures used",
+    "github_actions": "not confirmed; API access denied by environment policy"
+  },
+  "open_engineering": {
+    "R1": [
+      "Remaining 15 SPI consumer suites",
+      "Complete per-method success/error/transaction/site/module/concurrency matrix and provider pairing"
+    ],
+    "R2": [
+      "Generic idempotent response replay",
+      "Remaining technical support and complete observability/concurrency matrix",
+      "Formal source integration and process-kill search verification"
+    ],
+    "R3": [
+      "Formal LIVE delivery and complete Media/Content providers",
+      "Remaining Schema rules",
+      "Reviewed screenshot baselines and visual comparison gate"
+    ],
+    "R4": [
+      "Complete adapter semantics, large-buffer cost and vendor validation",
+      "MinIO and production object-store/IAM/CDN validation"
+    ],
+    "R5": [
+      "Frontend per-package coverage threshold",
+      "Remaining chapter 10 gates",
+      "High-risk dependency resolution/review and accessible vulnerability database"
+    ],
+    "R6": [
+      "Independent human review",
+      "ADR acceptance",
+      "M1 DoR and mainline/version freeze approval"
+    ]
+  },
+  "all_r1_r5_complete": false,
+  "g0_passed": false,
+  "main_merged": false,
+  "version_frozen": false
+}
