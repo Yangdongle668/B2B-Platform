@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useSeoHead } from '../composables/useSeoHead'
 import { useRuntimeConfig } from '#imports'
 import { onMounted, onBeforeUnmount, shallowRef, ref, watch, nextTick } from 'vue'
 import { acceptEditorMessage, envelope, isLayoutDocument, patchDocument } from '@b2bweb/shared/editor-protocol'
@@ -12,7 +13,7 @@ const document = shallowRef<LayoutDocument>({ version: 1, sections: [] }), rende
 const selected = ref<string | null>(null), failure = ref(false), readonly = ref(false), authorized = ref(false)
 let pendingLayout: LayoutDocument | undefined
 let sequence = 0, timer: ReturnType<typeof setTimeout> | undefined, refresh: ReturnType<typeof setInterval> | undefined, stopped = false
-useHead({ meta: [{ name: 'robots', content: 'noindex,nofollow' }] })
+useSeoHead({}, true)
 function send(message: EditorEnvelope) { if (window.parent !== window) window.parent.postMessage(message, adminOrigin) }
 function fail() { sequence++; authorized.value = false; failure.value = true; renderer.value = undefined; document.value = { version: 1, sections: [] }; send(envelope('preview:error', { sectionId: null, message: text(texts, 'preview.unavailable') })) }
 interface PreviewData { snapshot: { payload: { parts?: { layout?: unknown } } }; siteId: string; enabledModules: string[]; readonly: boolean; locale: string }

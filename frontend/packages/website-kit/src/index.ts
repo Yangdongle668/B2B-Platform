@@ -13,3 +13,5 @@ export function freshnessHeaders(response: FreshResponse, now: number, dependenc
 export { createLayoutRenderer, sectionClasses } from './render'
 export type { RenderContext, RenderDiagnostic } from './render'
 export { RichTextRenderer } from './richtext'
+export { createRefs, safePublicUrl, resolveLink, B2bLink, B2bImage, imagePreload, deliveryHead, serializeJsonLd } from './delivery'
+export type { DeliveryRefs, ResolvedRefs, LinkValue, ImageSources, DeliveryHeadInput } from './delivery'
