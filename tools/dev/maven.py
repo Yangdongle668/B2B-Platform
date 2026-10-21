@@ -13,14 +13,14 @@ def main():
   settings=ET.Element('settings')
   if proxy.hostname:
    item=ET.SubElement(ET.SubElement(settings,'proxies'),'proxy')
-   values={'id':'session','active':'true','protocol':'http','host':proxy.hostname,'port':str(proxy.port or 80),'nonProxyHosts':'localhost|127.*|mysql|redis|meilisearch|minio|storage|mailpit'}
+   values={'id':'session','active':'true','protocol':'http','host':proxy.hostname,'port':str(proxy.port or 80),'nonProxyHosts':'localhost|127.*|mysql|redis|meilisearch|minio|storage|mailpit|imgproxy'}
    if proxy.username:values['username']=urllib.parse.unquote(proxy.username)
    if proxy.password:values['password']=urllib.parse.unquote(proxy.password)
    for k,v in values.items():ET.SubElement(item,k).text=v
   path=Path(directory)/'settings.xml';path.touch(mode=0o600);ET.ElementTree(settings).write(path,encoding='unicode')
   args=['docker','--host=unix:///var/run/docker.sock','run','--rm','--name','b2b-build-'+uuid.uuid4().hex[:10],'--memory','3g','--mount',f'type=bind,src={ROOT},dst=/workspace','--mount',f'type=bind,src={cache.resolve()},dst=/m2','--mount',f'type=bind,src={path},dst=/run/settings.xml,readonly','-w','/workspace']
   if network:args+=['--network',network]
-  for key in ('B2BWEB_S3_SIGNING_ENDPOINT','B2BWEB_S3_ENDPOINT','B2BWEB_S3_ACCESS_KEY','B2BWEB_S3_SECRET_KEY','B2BWEB_MAILPIT_URL','B2BWEB_DB_URL','B2BWEB_DB_USER','B2BWEB_DB_PASSWORD','B2BWEB_REDIS_HOST','B2BWEB_MEILI_URL','B2BWEB_MEILI_MASTER_KEY','B2BWEB_SECRET_KEYS','B2BWEB_RECOVERY_CODE_KEY','B2BWEB_DB_MIGRATION_USER','B2BWEB_DB_MIGRATION_PASSWORD','B2BWEB_REDIS_URL'):
+  for key in ('B2BWEB_IMGPROXY_URL','B2BWEB_IMGPROXY_KEY','B2BWEB_IMGPROXY_SALT','B2BWEB_S3_SIGNING_ENDPOINT','B2BWEB_S3_ENDPOINT','B2BWEB_S3_ACCESS_KEY','B2BWEB_S3_SECRET_KEY','B2BWEB_MAILPIT_URL','B2BWEB_DB_URL','B2BWEB_DB_USER','B2BWEB_DB_PASSWORD','B2BWEB_REDIS_HOST','B2BWEB_MEILI_URL','B2BWEB_MEILI_MASTER_KEY','B2BWEB_SECRET_KEYS','B2BWEB_RECOVERY_CODE_KEY','B2BWEB_DB_MIGRATION_USER','B2BWEB_DB_MIGRATION_PASSWORD','B2BWEB_REDIS_URL'):
    if key in os.environ:args+=['-e',key]
   script='set -eu\n'
   cert=os.environ.get('CODEX_PROXY_CERT')

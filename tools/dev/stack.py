@@ -5,20 +5,21 @@ import argparse,base64,contextlib,hashlib,http.client,http.server,importlib.util
 ROOT=Path(__file__).resolve().parents[2];STATE=ROOT/'.dev/stack';CONFIG=STATE/'state.json'
 spec=importlib.util.spec_from_file_location('verify',ROOT/'tools/dev/verify_backend.py');verify=importlib.util.module_from_spec(spec);spec.loader.exec_module(verify);r=verify.r
 PREFIX='b2b-local-'+hashlib.sha256(str(ROOT).encode()).hexdigest()[:8]
-RESOURCES=['backend','mysql','redis','search','storage','mail']
+RESOURCES=['backend','mysql','redis','search','storage','mail','image']
 def docker(*args,**kwargs):return r.docker(*args,**kwargs)
 def save(state):
  STATE.mkdir(parents=True,exist_ok=True);CONFIG.touch(mode=0o600);CONFIG.write_text(json.dumps(state,indent=2)+'\n');CONFIG.chmod(0o600)
 def config():
  if CONFIG.exists():
   value=json.loads(CONFIG.read_text());
+  if 'imageKey' not in value:value.update(imageKey=secrets.token_hex(32),imageSalt=secrets.token_hex(16));save(value)
   if 'internalTokens' not in value:value['internalTokens']=secrets.token_urlsafe(32);save(value)
   return value
- value={'owner':str(ROOT),'prefix':PREFIX,'internalTokens':secrets.token_urlsafe(32),'rootPassword':secrets.token_urlsafe(32),'appPassword':secrets.token_urlsafe(32),'migrationPassword':secrets.token_urlsafe(32),'storageKey':secrets.token_urlsafe(32),'searchKey':secrets.token_urlsafe(32),'bootstrapPassword':secrets.token_urlsafe(24),'secretKeys':'local:'+base64.b64encode(secrets.token_bytes(32)).decode(),'recoveryKey':base64.b64encode(secrets.token_bytes(32)).decode()};save(value);return value
+ value={'owner':str(ROOT),'prefix':PREFIX,'imageKey':secrets.token_hex(32),'imageSalt':secrets.token_hex(16),'internalTokens':secrets.token_urlsafe(32),'rootPassword':secrets.token_urlsafe(32),'appPassword':secrets.token_urlsafe(32),'migrationPassword':secrets.token_urlsafe(32),'storageKey':secrets.token_urlsafe(32),'searchKey':secrets.token_urlsafe(32),'bootstrapPassword':secrets.token_urlsafe(24),'secretKeys':'local:'+base64.b64encode(secrets.token_bytes(32)).decode(),'recoveryKey':base64.b64encode(secrets.token_bytes(32)).decode()};save(value);return value
 
 def env(value):
  subnets=json.loads(docker('network','inspect',PREFIX).stdout)[0]['IPAM']['Config'];cidrs=','.join(['127.0.0.1/32','::1/128']+[entry['Subnet'] for entry in subnets])
- return {'B2BWEB_INTERNAL_TOKENS':value['internalTokens'],'B2BWEB_CORE_INTERNAL_ALLOWED_CIDRS':cidrs,'SPRING_PROFILES_ACTIVE':'local','B2BWEB_DB_URL':'jdbc:mysql://mysql:3306/b2b?allowPublicKeyRetrieval=true&useSSL=false','B2BWEB_DB_USER':'app','B2BWEB_DB_PASSWORD':value['appPassword'],'B2BWEB_DB_MIGRATION_USER':'migrator','B2BWEB_DB_MIGRATION_PASSWORD':value['migrationPassword'],'B2BWEB_REDIS_URL':'redis://redis:6379','B2BWEB_SECRET_KEYS':value['secretKeys'],'B2BWEB_RECOVERY_CODE_KEY':value['recoveryKey'],'B2BWEB_NODE_ID':'0','B2BWEB_S3_ENDPOINT':'http://storage:9090','B2BWEB_S3_SIGNING_ENDPOINT':'http://localhost:9090','B2BWEB_S3_ACCESS_KEY':'local-access','B2BWEB_S3_SECRET_KEY':value['storageKey'],'B2BWEB_MEILI_URL':'http://meilisearch:7700','B2BWEB_MEILI_MASTER_KEY':value['searchKey'],'B2BWEB_BOOTSTRAP_PASSWORD':value['bootstrapPassword'],'B2BWEB_DEV_SEED_ENABLED':'true'}
+ return {'B2BWEB_IMGPROXY_URL':'https://localhost:8443/__images','B2BWEB_IMGPROXY_KEY':value['imageKey'],'B2BWEB_IMGPROXY_SALT':value['imageSalt'],'B2BWEB_INTERNAL_TOKENS':value['internalTokens'],'B2BWEB_CORE_INTERNAL_ALLOWED_CIDRS':cidrs,'SPRING_PROFILES_ACTIVE':'local','B2BWEB_DB_URL':'jdbc:mysql://mysql:3306/b2b?allowPublicKeyRetrieval=true&useSSL=false','B2BWEB_DB_USER':'app','B2BWEB_DB_PASSWORD':value['appPassword'],'B2BWEB_DB_MIGRATION_USER':'migrator','B2BWEB_DB_MIGRATION_PASSWORD':value['migrationPassword'],'B2BWEB_REDIS_URL':'redis://redis:6379','B2BWEB_SECRET_KEYS':value['secretKeys'],'B2BWEB_RECOVERY_CODE_KEY':value['recoveryKey'],'B2BWEB_NODE_ID':'0','B2BWEB_S3_ENDPOINT':'http://storage:9090','B2BWEB_S3_SIGNING_ENDPOINT':'http://localhost:9090','B2BWEB_S3_ACCESS_KEY':'local-access','B2BWEB_S3_SECRET_KEY':value['storageKey'],'B2BWEB_MEILI_URL':'http://meilisearch:7700','B2BWEB_MEILI_MASTER_KEY':value['searchKey'],'B2BWEB_BOOTSTRAP_PASSWORD':value['bootstrapPassword'],'B2BWEB_DEV_SEED_ENABLED':'true'}
 def owned(name):
  result=docker('inspect','--format','{{index .Config.Labels "b2bweb.local.owner"}}',name,check=False)
  if result.returncode==0 and result.stdout.strip()!=str(ROOT):raise RuntimeError('Refusing resource owned by another checkout: '+name)
@@ -26,8 +27,13 @@ def owned(name):
 
 def run_service(role,image,*args):
  name=PREFIX+'-'+role
- if owned(name):docker('start',name);return
- docker('run','-d','--name',name,'--label','b2bweb.local.owner='+str(ROOT),'--network',PREFIX,*args,image)
+ fingerprint=hashlib.sha256(json.dumps([image,*args]).encode()).hexdigest()
+ if owned(name):
+  current=docker('inspect','--format','{{index .Config.Labels "b2bweb.local.spec"}}',name).stdout.strip()
+  if current==fingerprint:docker('start',name);return
+  # Recreate this checkout's container when its image/config changes; named data volumes survive.
+  docker('rm','-f',name)
+ docker('run','-d','--name',name,'--label','b2bweb.local.owner='+str(ROOT),'--label','b2bweb.local.spec='+fingerprint,'--network',PREFIX,*args,image)
 def wait_mysql(value):
  for _ in range(120):
   result=docker('exec','-e','MYSQL_PWD='+value['rootPassword'],PREFIX+'-mysql','mysql','-uroot','-N','-e','SELECT 1',check=False)
@@ -64,6 +70,7 @@ def up(no_build=False):
  run_service('redis',r.REDIS,'--network-alias','redis','--memory','256m','--mount','type=volume,src='+PREFIX+'-redis,dst=/data')
  run_service('search',r.MEILI,'--network-alias','meilisearch','--memory','1536m','-e','MEILI_MASTER_KEY='+value['searchKey'],'-e','MEILI_NO_ANALYTICS=true','--mount','type=volume,src='+PREFIX+'-search,dst=/meili_data')
  run_service('storage',verify.S3MOCK,'--network-alias','storage','--memory','768m','-p','127.0.0.1:9090:9090','-e','COM_ADOBE_TESTING_S3MOCK_STORE_ROOT=/data','-e','COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT=true','-e','COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS=public-assets,private-assets','--mount','type=volume,src='+PREFIX+'-storage,dst=/data')
+ run_service('image',verify.IMGPROXY,'--network-alias','imgproxy','--memory','512m','-p','127.0.0.1:8081:8080','-e','IMGPROXY_KEY='+value['imageKey'],'-e','IMGPROXY_SALT='+value['imageSalt'],'-e','IMGPROXY_USE_S3=true','-e','IMGPROXY_S3_ENDPOINT=http://storage:9090','-e','IMGPROXY_S3_REGION=us-east-1','-e','IMGPROXY_S3_ENDPOINT_USE_PATH_STYLE=true','-e','NO_PROXY='+os.environ.get('NO_PROXY','localhost,127.0.0.1')+',storage,imgproxy','-e','no_proxy='+os.environ.get('no_proxy',os.environ.get('NO_PROXY','localhost,127.0.0.1'))+',storage,imgproxy','-e','AWS_ACCESS_KEY_ID=local-access','-e','AWS_SECRET_ACCESS_KEY='+value['storageKey'],'-e','IMGPROXY_BASE_URL=s3://public-assets/','-e','IMGPROXY_ALLOWED_SOURCES=s3://public-assets/','-e','IMGPROXY_STRIP_METADATA=true')
  run_service('mail',verify.MAILPIT,'--network-alias','mailpit','--memory','128m','-p','127.0.0.1:8025:8025')
  wait_mysql(value)
  sql="CREATE USER IF NOT EXISTS 'app'@'%' IDENTIFIED BY '"+value['appPassword']+"';GRANT SELECT,INSERT,UPDATE,DELETE ON b2b.* TO 'app'@'%';CREATE USER IF NOT EXISTS 'migrator'@'%' IDENTIFIED BY '"+value['migrationPassword']+"';GRANT ALL PRIVILEGES ON b2b.* TO 'migrator'@'%';"
@@ -104,12 +111,14 @@ def serve():
   def handle_request(self):
    if self.path=='/__local_health':
     self.send_response(200);self.send_header('Content-Length','2');self.end_headers();self.wfile.write(b'ok');return
-   port=8080 if self.path.startswith('/api/') else 5173 if self.path=='/admin' or self.path.startswith('/admin/') else 3000
+   image_request=self.path.startswith('/__images/')
+   upstream_path=self.path[len('/__images'):] if image_request else self.path
+   port=8081 if image_request else 8080 if self.path.startswith('/api/') else 5173 if self.path=='/admin' or self.path.startswith('/admin/') else 3000
    body=self.rfile.read(int(self.headers.get('Content-Length','0')))
    headers={k:v for k,v in self.headers.items() if k.lower() not in ('connection','host','transfer-encoding','upgrade','forwarded','x-forwarded-host','x-forwarded-proto')};headers['Host']='localhost'
    connection=http.client.HTTPConnection('127.0.0.1',port,timeout=120)
    try:
-    connection.request(self.command,self.path,body=body,headers=headers);response=connection.getresponse();data=response.read();self.send_response(response.status)
+    connection.request(self.command,upstream_path,body=body,headers=headers);response=connection.getresponse();data=response.read();self.send_response(response.status)
     for key,item in response.getheaders():
      if key.lower() not in ('connection','content-length','transfer-encoding'):self.send_header(key,item)
     self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
